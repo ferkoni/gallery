@@ -22,6 +22,7 @@ export function LoginForm() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
+              data-testid="email-input"
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -32,12 +33,14 @@ export function LoginForm() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
+              data-testid="password-input"
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <button
             type="submit"
+            data-testid="submit-button"
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors"
           >
             Login
