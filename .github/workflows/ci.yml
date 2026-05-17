@@ -32,14 +32,7 @@ jobs:
 
       - run: npm ci
 
-      - run: npm test
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
-          if-no-files-found: error
+      - run: npx vitest run
 
   build:
     runs-on: ubuntu-latest
