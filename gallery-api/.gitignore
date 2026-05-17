@@ -33,3 +33,11 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+# Ignore vscode
+/.vscode
+
+# Ignore rubymine
+/.idea
+
+# Ignore coverage
+/coverage

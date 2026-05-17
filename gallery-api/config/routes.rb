@@ -6,10 +6,14 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   get "health" => "health#show"
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+  devise_for :users
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  namespace :api do
+    resources :users, only: [ :create ] do
+      collection do
+        post :login
+        delete :logout
+      end
+    end
+  end
 end

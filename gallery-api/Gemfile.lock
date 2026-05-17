@@ -75,8 +75,6 @@ GEM
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
-    addressable (2.9.0)
-      public_suffix (>= 2.0.2, < 8.0)
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.22)
@@ -91,15 +89,6 @@ GEM
     bundler-audit (0.9.3)
       bundler (>= 1.2.0)
       thor (~> 1.0)
-    capybara (3.40.0)
-      addressable
-      matrix
-      mini_mime (>= 0.1.3)
-      nokogiri (~> 1.11)
-      rack (>= 1.6.0)
-      rack-test (>= 0.6.3)
-      regexp_parser (>= 1.5, < 3.0)
-      xpath (~> 3.2)
     concurrent-ruby (1.3.6)
     connection_pool (3.0.2)
     crass (1.0.6)
@@ -116,6 +105,8 @@ GEM
     devise-jwt (0.13.0)
       devise (>= 4.0.0, < 6.0.0)
       warden-jwt_auth (~> 0.10)
+    diff-lcs (1.6.2)
+    docile (1.4.1)
     dotenv (3.2.0)
     dotenv-rails (3.2.0)
       dotenv (= 3.2.0)
@@ -136,6 +127,11 @@ GEM
     erubi (1.13.1)
     et-orbi (1.4.0)
       tzinfo
+    factory_bot (6.6.0)
+      activesupport (>= 6.1.0)
+    factory_bot_rails (6.5.1)
+      factory_bot (~> 6.5)
+      railties (>= 6.1.0)
     ffi (1.17.4-x86_64-linux-gnu)
     fugit (1.12.1)
       et-orbi (~> 1.4)
@@ -157,10 +153,9 @@ GEM
       prism (>= 1.3.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    jbuilder (2.14.1)
-      actionview (>= 7.0.0)
-      activesupport (>= 7.0.0)
     json (2.19.5)
+    jsonapi-serializer (2.2.0)
+      activesupport (>= 4.2)
     jwt (3.1.2)
       base64
     kamal (2.11.0)
@@ -187,7 +182,6 @@ GEM
       net-pop
       net-smtp
     marcel (1.1.0)
-    matrix (0.4.3)
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
@@ -230,7 +224,6 @@ GEM
     psych (5.3.1)
       date
       stringio
-    public_suffix (7.0.5)
     puma (8.0.1)
       nio4r (~> 2.0)
     raabro (1.4.0)
@@ -288,7 +281,23 @@ GEM
     responders (3.2.0)
       actionpack (>= 7.0)
       railties (>= 7.0)
-    rexml (3.4.4)
+    rspec-core (3.13.6)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.8)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-rails (8.0.4)
+      actionpack (>= 7.2)
+      activesupport (>= 7.2)
+      railties (>= 7.2)
+      rspec-core (>= 3.13.0, < 5.0.0)
+      rspec-expectations (>= 3.13.0, < 5.0.0)
+      rspec-mocks (>= 3.13.0, < 5.0.0)
+      rspec-support (>= 3.13.0, < 5.0.0)
+    rspec-support (3.13.7)
     rubocop (1.86.1)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -321,14 +330,15 @@ GEM
     ruby-vips (2.3.0)
       ffi (~> 1.12)
       logger
-    rubyzip (3.3.0)
     securerandom (0.4.1)
-    selenium-webdriver (4.43.0)
-      base64 (~> 0.2)
-      logger (~> 1.4)
-      rexml (~> 3.2, >= 3.2.5)
-      rubyzip (>= 1.2.2, < 4.0)
-      websocket (~> 1.0)
+    shoulda-matchers (7.0.1)
+      activesupport (>= 7.1)
+    simplecov (0.22.0)
+      docile (~> 1.1)
+      simplecov-html (~> 0.11)
+      simplecov_json_formatter (~> 0.1)
+    simplecov-html (0.13.2)
+    simplecov_json_formatter (0.1.4)
     solid_cable (3.0.12)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -380,13 +390,10 @@ GEM
       actionview (>= 8.0.0)
       bindex (>= 0.4.0)
       railties (>= 8.0.0)
-    websocket (1.2.11)
     websocket-driver (0.8.0)
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
-    xpath (3.2.0)
-      nokogiri (~> 1.8)
     zeitwerk (2.7.5)
 
 PLATFORMS
@@ -397,22 +404,24 @@ DEPENDENCIES
   bootsnap
   brakeman
   bundler-audit
-  capybara
   debug
   devise
   devise-jwt
   dotenv-rails
+  factory_bot_rails
   image_processing (~> 1.2)
   importmap-rails
-  jbuilder
+  jsonapi-serializer (= 2.2.0)
   kamal
   pg (~> 1.1)
   propshaft
   puma (>= 5.0)
   rack-cors
   rails (~> 8.1.0)
+  rspec-rails
   rubocop-rails-omakase
-  selenium-webdriver
+  shoulda-matchers
+  simplecov
   solid_cable
   solid_cache
   solid_queue
