@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthContext } from '@/features/auth/context/AuthContext';
 import { loginRequest } from '@/features/auth/api/authApi';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import type { AxiosResponse } from 'axios';
 
 vi.mock('@/features/auth/api/authApi');
 const mockLoginRequest = vi.mocked(loginRequest);
@@ -41,7 +42,7 @@ describe('useAuth', () => {
   });
 
   it('calls loginRequest with email and password', async () => {
-    mockLoginRequest.mockResolvedValue({data: {token: 'abc'}} as any);
+    mockLoginRequest.mockResolvedValue({ data: { token: 'abc' } } as AxiosResponse);
     const {wrapper} = makeWrapper();
     const {result} = renderHook(() => useAuth(), {wrapper});
 
@@ -52,7 +53,7 @@ describe('useAuth', () => {
   });
 
   it('calls context login with the token on success', async () => {
-    mockLoginRequest.mockResolvedValue({data: {token: 'xyz789'}} as any);
+    mockLoginRequest.mockResolvedValue({ data: { token: 'xyz789' } } as AxiosResponse);
     const {wrapper, loginFn} = makeWrapper();
     const {result} = renderHook(() => useAuth(), {wrapper});
 
