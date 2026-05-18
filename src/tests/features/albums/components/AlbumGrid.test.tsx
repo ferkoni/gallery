@@ -1,8 +1,7 @@
-import { describe, expect, vi } from "vitest";
+import { describe, expect, vi, type Mock } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AlbumGrid } from "@/features/albums/components/AlbumGrid.tsx";
 import { useListAlbum } from '@/features/albums/albums';
-import type { Mock } from "vitest";
 import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('@/features/albums/albums', () => ({
