@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { AlbumForm } from "@/features/albums/components/AlbumForm.tsx";
 import { useCreateAlbum } from "@/features/albums/albums.ts";
 import { MemoryRouter } from "react-router-dom";
-import { userEvent } from "@testing-library/user-event/dist/cjs/setup/index.js";
+import { userEvent } from "@testing-library/user-event";
 
 vi.mock('@/features/albums/albums', () => ({
   useCreateAlbum: vi.fn(),
