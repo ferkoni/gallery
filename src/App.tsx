@@ -3,8 +3,10 @@ import { LoginPage } from "@/features/pages/LoginPage.tsx";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { WelcomePage } from "@/features/pages/WelcomePage.tsx";
 import { AlbumGrid } from "@/features/albums/components/AlbumGrid.tsx";
+import { AlbumForm } from "@/features/albums/components/AlbumForm.tsx";
 import { NavBar } from "@/components/NavBar.tsx";
 import { AuthContext } from "@/features/auth/context/AuthContext.tsx";
+import { ProtectedRoute } from "@/components/ProtectedRoute.tsx";
 import { useContext } from "react";
 
 function App() {
@@ -17,9 +19,10 @@ function App() {
         <Route path="/login" element={
           token ? <Navigate to="/albums" replace /> : <LoginPage />
         } />
-        <Route path="/albums" element={
-          token ? <AlbumGrid /> : <Navigate to="/login" replace />
-        } />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/albums" element={<AlbumGrid />} />
+          <Route path="/albums/new" element={<AlbumForm />} />
+        </Route>
       </Routes>
     </>
   );
