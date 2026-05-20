@@ -1,29 +1,44 @@
-import { useCreateAlbum } from "@/features/albums/albums.ts";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-export function AlbumForm() {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+type AlbumFormData = {
+  name: string;
+  description: string;
+};
 
-  const createAlbum = useCreateAlbum();
-  const navigate = useNavigate();
+type AlbumFormProps = {
+  defaultValues?: AlbumFormData;
+  onSubmit: (data: AlbumFormData) => void;
+  onCancel: () => void;
+  isPending: boolean;
+  isError: boolean;
+  title: string;
+  submitLabel: string;
+  pendingLabel: string;
+  errorMessage: string;
+};
+
+export function AlbumForm({
+  defaultValues,
+  onSubmit,
+  onCancel,
+  isPending,
+  isError,
+  title,
+  submitLabel,
+  pendingLabel,
+  errorMessage,
+}: AlbumFormProps) {
+  const [name, setName] = useState(defaultValues?.name ?? "");
+  const [description, setDescription] = useState(defaultValues?.description ?? "");
 
   const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
-    createAlbum.mutate(
-      {name, description},
-      {
-        onSuccess: () => {
-          navigate("/albums");
-        }
-      }
-    );
+    onSubmit({ name, description });
   };
 
   return (
     <main className="max-w-lg mx-auto px-6 py-10">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">New Album</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">{title}</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
@@ -48,14 +63,14 @@ export function AlbumForm() {
           />
         </div>
 
-        {createAlbum.isError && (
-          <p className="text-sm text-red-500" data-testid="error-label">Failed to create album.</p>
+        {isError && (
+          <p className="text-sm text-red-500" data-testid="error-label">{errorMessage}</p>
         )}
 
         <div className="flex gap-3 mt-2">
           <button
             type="button"
-            onClick={() => navigate('/albums')}
+            onClick={onCancel}
             data-testid="cancel-button"
             className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors"
           >
@@ -63,11 +78,11 @@ export function AlbumForm() {
           </button>
           <button
             type="submit"
-            disabled={createAlbum.isPending}
+            disabled={isPending}
             data-testid="submit-button"
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition-colors"
           >
-            {createAlbum.isPending ? 'Creating...' : 'Create'}
+            {isPending ? pendingLabel : submitLabel}
           </button>
         </div>
       </form>

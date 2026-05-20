@@ -6,6 +6,10 @@ export function createCrudApi<T>(path: string) {
       const res = await apiClient.get(path);
       return res.data.data.map((item: { attributes: T }) => item.attributes);
     },
+    fetchOne: async (id: number): Promise<T> => {
+      const res = await apiClient.get(`${path}/${id}`);
+      return res.data.data.attributes;
+    },
     create: async (body: Partial<T>): Promise<T> => {
       const res = await apiClient.post(path, body);
       return res.data.data.attributes;

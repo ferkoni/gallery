@@ -9,6 +9,10 @@ export function createCrudHooks<T extends { id: number }>(
     return useQuery({ queryKey: [queryKey], queryFn: api.fetchAll });
   }
 
+  function useGet(id: number) {
+    return useQuery({ queryKey: [queryKey, id], queryFn: () => api.fetchOne(id) });
+  }
+
   function useCreate() {
     const queryClient = useQueryClient();
     return useMutation({
@@ -33,5 +37,5 @@ export function createCrudHooks<T extends { id: number }>(
     });
   }
 
-  return { useList, useCreate, useUpdate, useDestroy };
+  return { useList, useGet, useCreate, useUpdate, useDestroy };
 }

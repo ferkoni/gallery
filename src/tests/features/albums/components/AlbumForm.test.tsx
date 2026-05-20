@@ -1,19 +1,18 @@
-import { describe, type Mock, vi } from "vitest";
+import { describe, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AlbumForm } from "@/features/albums/components/AlbumForm.tsx";
-import { useCreateAlbum } from "@/features/albums/albums.ts";
-import { MemoryRouter } from "react-router-dom";
 import { userEvent } from "@testing-library/user-event";
 
-vi.mock('@/features/albums/albums', () => ({
-  useCreateAlbum: vi.fn(),
-}));
-
-const mockNavigate = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return { ...actual, useNavigate: () => mockNavigate };
-});
+const defaultProps = {
+  title: "Test Title",
+  submitLabel: "Submit",
+  pendingLabel: "Submitting...",
+  errorMessage: "Something went wrong.",
+  isPending: false,
+  isError: false,
+  onSubmit: vi.fn(),
+  onCancel: vi.fn(),
+};
 
 describe('AlbumForm', () => {
   beforeEach(() => {
@@ -21,13 +20,7 @@ describe('AlbumForm', () => {
   });
 
   it('renders form inputs and buttons', () => {
-    (useCreateAlbum as Mock).mockReturnValue({
-      mutate: vi.fn(),
-      isPending: false,
-      isError: false,
-      isSuccess: false
-    });
-    render(<MemoryRouter><AlbumForm></AlbumForm></MemoryRouter>);
+    render(<AlbumForm {...defaultProps} />);
 
     expect(screen.getByTestId('name-input')).toBeInTheDocument();
     expect(screen.getByTestId('description-input')).toBeInTheDocument();
@@ -35,66 +28,47 @@ describe('AlbumForm', () => {
     expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
   });
 
-  it('renders Creating... label for submit button', () => {
-    (useCreateAlbum as Mock).mockReturnValue({
-      mutate: vi.fn(),
-      isPending: true,
-      isError: false,
-      isSuccess: false
-    });
-    render(<MemoryRouter><AlbumForm></AlbumForm></MemoryRouter>);
+  it('renders the title', () => {
+    render(<AlbumForm {...defaultProps} />);
 
-    expect(screen.getByTestId('submit-button')).toBeInTheDocument();
+    expect(screen.getByText('Test Title')).toBeInTheDocument();
+  });
+
+  it('pre-fills inputs from defaultValues', () => {
+    render(<AlbumForm {...defaultProps} defaultValues={{ name: 'My Album', description: 'A desc' }} />);
+
+    expect(screen.getByTestId('name-input')).toHaveValue('My Album');
+    expect(screen.getByTestId('description-input')).toHaveValue('A desc');
+  });
+
+  it('disables submit and shows pendingLabel when isPending', () => {
+    render(<AlbumForm {...defaultProps} isPending={true} />);
+
     expect(screen.getByTestId('submit-button')).toBeDisabled();
-    expect(screen.getByTestId('submit-button')).toHaveTextContent('Creating...');
+    expect(screen.getByTestId('submit-button')).toHaveTextContent('Submitting...');
   });
 
-  it('renders Failed to create album. on error', () => {
-    (useCreateAlbum as Mock).mockReturnValue({
-      mutate: vi.fn(),
-      isPending: false,
-      isError: true,
-      isSuccess: false
-    });
-    render(<MemoryRouter><AlbumForm></AlbumForm></MemoryRouter>);
+  it('shows errorMessage when isError', () => {
+    render(<AlbumForm {...defaultProps} isError={true} />);
 
-    expect(screen.getByTestId('error-label')).toBeInTheDocument();
-    expect(screen.getByTestId('error-label')).toHaveTextContent('Failed to create album.');
+    expect(screen.getByTestId('error-label')).toHaveTextContent('Something went wrong.');
   });
 
-  it('navigates to /albums on successful create', async () => {
-    const mockMutate = vi.fn((_data, { onSuccess }) => onSuccess());
+  it('calls onCancel when cancel button is clicked', async () => {
+    render(<AlbumForm {...defaultProps} />);
 
-    (useCreateAlbum as Mock).mockReturnValue({
-      mutate: mockMutate,
-      isPending: false,
-      isError: false,
-    });
+    await userEvent.click(screen.getByTestId('cancel-button'));
 
-    render(<MemoryRouter><AlbumForm /></MemoryRouter>);
+    expect(defaultProps.onCancel).toHaveBeenCalled();
+  });
+
+  it('calls onSubmit with form data when submitted', async () => {
+    render(<AlbumForm {...defaultProps} />);
 
     await userEvent.type(screen.getByTestId('name-input'), 'My Album');
     await userEvent.type(screen.getByTestId('description-input'), 'A description');
     await userEvent.click(screen.getByTestId('submit-button'));
 
-    expect(mockMutate).toHaveBeenCalledWith(
-      { name: 'My Album', description: 'A description' },
-      expect.objectContaining({ onSuccess: expect.any(Function) })
-    );
-    expect(mockNavigate).toHaveBeenCalledWith('/albums');
-  });
-
-  it('navigates to /albums on Cancel', async () => {
-    (useCreateAlbum as Mock).mockReturnValue({
-      mutate: vi.fn(),
-      isPending: false,
-      isError: false,
-      isSuccess: false
-    });
-    render(<MemoryRouter><AlbumForm></AlbumForm></MemoryRouter>);
-
-    await userEvent.click(screen.getByTestId('cancel-button'));
-
-    expect(mockNavigate).toHaveBeenCalledWith('/albums');
+    expect(defaultProps.onSubmit).toHaveBeenCalledWith({ name: 'My Album', description: 'A description' });
   });
 });

@@ -1,8 +1,9 @@
 import { useListAlbum } from '@/features/albums/albums';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-export function AlbumGrid() {
+export function AlbumListPage() {
   const { data: albums, isPending, isError } = useListAlbum();
+  const navigate = useNavigate();
 
   if (isPending) return <p className="p-6 text-gray-500" data-testid="loading-label">Loading...</p>;
   if (isError) return <p className="p-6 text-red-500" data-testid="failed-label">Failed to load albums.</p>;
@@ -25,7 +26,7 @@ export function AlbumGrid() {
       ) : (
         <ul className="grid grid-cols-2 gap-4">
           {albums.map(album => (
-            <li key={album.id} className="bg-white rounded-xl shadow p-4" data-testid={`album-card-${album.id}`}>
+            <li key={album.id} className="bg-white rounded-xl shadow p-4" data-testid={`album-card-${album.id}`} onClick={() => { navigate(`/albums/${album.id}/edit`); }}>
               <h2 className="font-semibold text-gray-800" data-testid={`album-name-${album.id}`}>{album.name}</h2>
               {album.description && (
                 <p className="text-sm text-gray-500 mt-1" data-testid={`album-description-${album.id}`}>{album.description}</p>
