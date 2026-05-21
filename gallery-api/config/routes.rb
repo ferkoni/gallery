@@ -9,6 +9,8 @@ Rails.application.routes.draw do
   devise_for :users
 
   namespace :api do
+    resources :albums, only: [ :index, :show, :create, :update, :destroy ]
+
     resources :users, only: [ :create ] do
       collection do
         post :login

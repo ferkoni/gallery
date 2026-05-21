@@ -5,6 +5,8 @@ module BaseApi
     before_action :authenticate_user!
 
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity_response
+    rescue_from ActiveRecord::RecordNotFound, with: :render_not_found_response
+    rescue_from Pundit::NotAuthorizedError, with: :render_forbidden_response
   end
 
   def index
@@ -31,6 +33,10 @@ module BaseApi
   end
 
   protected
+  def authorize_resource!
+    authorize(resource)
+  end
+
   def resources
     model_name.all
   end
@@ -41,6 +47,14 @@ module BaseApi
 
   def render_unprocessable_entity_response
     render json: { errors: resource.errors }, status: :unprocessable_content
+  end
+
+  def render_not_found_response
+    render json: { errors: "Not found" }, status: :not_found
+  end
+
+  def render_forbidden_response
+    render json: { errors: "Forbidden" }, status: :forbidden
   end
 
   def model_name

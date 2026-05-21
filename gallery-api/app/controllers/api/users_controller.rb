@@ -24,11 +24,7 @@ class Api::UsersController < ApplicationController
     params.require(:user).permit(:email, :password, :password_confirmation)
   end
 
-  def model_name
-    User
-  end
+  def model_name = User
 
-  def serializer
-    UserSerializer
-  end
+  def serializer = UserSerializer
 end

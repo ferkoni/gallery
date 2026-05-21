@@ -99,6 +99,21 @@ RSpec.describe BaseApi, type: :controller do
       end
     end
 
+    describe 'GET #show' do
+      context 'when record does not exist' do
+        it 'returns http not found' do
+          get :show, params: { id: 0 }
+          expect(response).to have_http_status(:not_found)
+        end
+
+        it 'returns an error message' do
+          get :show, params: { id: 0 }
+          json = JSON.parse(response.body)
+          expect(json['errors']).to be_present
+        end
+      end
+    end
+
     describe 'PATCH #update' do
       it 'updates the record' do
         patch :update, params: { id: user.id, user: { email: 'updated@example.com' } }
