@@ -3,10 +3,17 @@ import { render, screen } from "@testing-library/react";
 import { AlbumListPage } from "@/features/albums/pages/AlbumListPage.tsx";
 import { useListAlbum } from '@/features/albums/albums';
 import { MemoryRouter } from 'react-router-dom';
+import { userEvent } from "@testing-library/user-event";
 
 vi.mock('@/features/albums/albums', () => ({
   useListAlbum: vi.fn(),
 }));
+
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return { ...actual, useNavigate: () => mockNavigate };
+});
 
 describe("AlbumListPage", () => {
   beforeEach(() => {
@@ -32,6 +39,19 @@ describe("AlbumListPage", () => {
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
 
     expect(screen.getByTestId("no-album-label")).toBeInTheDocument();
+  });
+
+  it('navigates to edit page when album card is clicked', async () => {
+    (useListAlbum as Mock).mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: [{ id: 10, name: 'AlbumTest', description: null }],
+    });
+    render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
+
+    await userEvent.click(screen.getByTestId('album-card-10'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/albums/10/edit');
   });
 
   it('renders album cards with items and button', () => {

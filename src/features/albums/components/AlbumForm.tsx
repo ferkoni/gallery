@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-type AlbumFormData = {
-  name: string;
-  description: string;
-};
+const albumSchema = z.object({
+  name: z.string().min(1, "Name is required").max(50, "Name is too long"),
+  description: z.string().max(500, 'Description is too long').optional()
+});
+
+type AlbumFormData = z.infer<typeof albumSchema>;
 
 type AlbumFormProps = {
   defaultValues?: AlbumFormData;
@@ -28,39 +32,40 @@ export function AlbumForm({
   pendingLabel,
   errorMessage,
 }: AlbumFormProps) {
-  const [name, setName] = useState(defaultValues?.name ?? "");
-  const [description, setDescription] = useState(defaultValues?.description ?? "");
-
-  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = (e) => {
-    e.preventDefault();
-    onSubmit({ name, description });
-  };
+  const { register, handleSubmit, formState: { errors } } = useForm<AlbumFormData>({
+    resolver: zodResolver(albumSchema),
+    defaultValues: defaultValues ?? { name: "", description: "" },
+  });
 
   return (
     <main className="max-w-lg mx-auto px-6 py-10">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">{title}</h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">Name</label>
           <input
+            {...register("name")}
             type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
             data-testid="name-input"
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          {errors.name && (
+            <p className="text-xs text-red-500">{errors.name.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">Description</label>
           <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
+            {...register("description")}
             rows={3}
             data-testid="description-input"
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
+          {errors.description && (
+            <p className="text-xs text-red-500">{errors.description.message}</p>
+          )}
         </div>
 
         {isError && (

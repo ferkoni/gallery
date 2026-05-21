@@ -1,5 +1,5 @@
 import { describe, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { AlbumForm } from "@/features/albums/components/AlbumForm.tsx";
 import { userEvent } from "@testing-library/user-event";
 
@@ -65,10 +65,42 @@ describe('AlbumForm', () => {
   it('calls onSubmit with form data when submitted', async () => {
     render(<AlbumForm {...defaultProps} />);
 
-    await userEvent.type(screen.getByTestId('name-input'), 'My Album');
-    await userEvent.type(screen.getByTestId('description-input'), 'A description');
+    fireEvent.change(screen.getByTestId('name-input'), { target: { value: 'My Album' } });
+    fireEvent.change(screen.getByTestId('description-input'), { target: { value: 'A description' } });
     await userEvent.click(screen.getByTestId('submit-button'));
 
-    expect(defaultProps.onSubmit).toHaveBeenCalledWith({ name: 'My Album', description: 'A description' });
+    await waitFor(() => {
+      expect(defaultProps.onSubmit).toHaveBeenCalledWith({ name: 'My Album', description: 'A description' }, expect.anything());
+    });
+  });
+
+  it('shows error and does not submit when name is empty', async () => {
+    render(<AlbumForm {...defaultProps} />);
+
+    await userEvent.click(screen.getByTestId('submit-button'));
+
+    expect(await screen.findByText('Name is required')).toBeInTheDocument();
+    await waitFor(() => expect(defaultProps.onSubmit).not.toHaveBeenCalled());
+  });
+
+  it('shows error and does not submit when name exceeds 50 characters', async () => {
+    render(<AlbumForm {...defaultProps} />);
+
+    fireEvent.change(screen.getByTestId('name-input'), { target: { value: 'A'.repeat(51) } });
+    await userEvent.click(screen.getByTestId('submit-button'));
+
+    expect(await screen.findByText('Name is too long')).toBeInTheDocument();
+    await waitFor(() => expect(defaultProps.onSubmit).not.toHaveBeenCalled());
+  });
+
+  it('shows error and does not submit when description exceeds 500 characters', async () => {
+    render(<AlbumForm {...defaultProps} />);
+
+    fireEvent.change(screen.getByTestId('name-input'), { target: { value: 'My Album' } });
+    fireEvent.change(screen.getByTestId('description-input'), { target: { value: 'A'.repeat(501) } });
+    await userEvent.click(screen.getByTestId('submit-button'));
+
+    expect(await screen.findByText('Description is too long')).toBeInTheDocument();
+    await waitFor(() => expect(defaultProps.onSubmit).not.toHaveBeenCalled());
   });
 });

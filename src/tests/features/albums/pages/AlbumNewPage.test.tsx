@@ -1,5 +1,5 @@
 import { describe, type Mock, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { AlbumNewPage } from "@/features/albums/pages/AlbumNewPage.tsx";
 import { useCreateAlbum } from "@/features/albums/albums.ts";
 import { MemoryRouter } from "react-router-dom";
@@ -48,15 +48,17 @@ describe('AlbumNewPage', () => {
     (useCreateAlbum as Mock).mockReturnValue({ mutate: mockMutate, isPending: false, isError: false });
     render(<MemoryRouter><AlbumNewPage /></MemoryRouter>);
 
-    await userEvent.type(screen.getByTestId('name-input'), 'My Album');
-    await userEvent.type(screen.getByTestId('description-input'), 'A description');
+    fireEvent.change(screen.getByTestId('name-input'), { target: { value: 'My Album' } });
+    fireEvent.change(screen.getByTestId('description-input'), { target: { value: 'A description' } });
     await userEvent.click(screen.getByTestId('submit-button'));
 
-    expect(mockMutate).toHaveBeenCalledWith(
-      { name: 'My Album', description: 'A description' },
-      expect.objectContaining({ onSuccess: expect.any(Function) })
-    );
-    expect(mockNavigate).toHaveBeenCalledWith('/albums');
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith(
+        { name: 'My Album', description: 'A description' },
+        expect.objectContaining({ onSuccess: expect.any(Function) })
+      );
+      expect(mockNavigate).toHaveBeenCalledWith('/albums');
+    });
   });
 
   it('navigates to /albums on cancel', async () => {

@@ -1,5 +1,5 @@
 import { describe, type Mock, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { AlbumEditPage } from "@/features/albums/pages/AlbumEditPage.tsx";
 import { useGetAlbum, useUpdateAlbum } from "@/features/albums/albums.ts";
 import { MemoryRouter } from "react-router-dom";
@@ -89,15 +89,25 @@ describe('AlbumEditPage', () => {
     (useUpdateAlbum as Mock).mockReturnValue({ mutate: mockMutate, isPending: false, isError: false });
     render(<MemoryRouter><AlbumEditPage /></MemoryRouter>);
 
-    await userEvent.clear(screen.getByTestId('name-input'));
-    await userEvent.type(screen.getByTestId('name-input'), 'Updated Album');
+    fireEvent.change(screen.getByTestId('name-input'), { target: { value: 'Updated Album' } });
     await userEvent.click(screen.getByTestId('submit-button'));
 
-    expect(mockMutate).toHaveBeenCalledWith(
-      { id: 42, body: { name: 'Updated Album', description: 'A description' } },
-      expect.objectContaining({ onSuccess: expect.any(Function) })
-    );
-    expect(mockNavigate).toHaveBeenCalledWith('/albums');
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith(
+        { id: 42, body: { name: 'Updated Album', description: 'A description' } },
+        expect.objectContaining({ onSuccess: expect.any(Function) })
+      );
+      expect(mockNavigate).toHaveBeenCalledWith('/albums');
+    });
+  });
+
+  it('falls back to empty string when description is null', () => {
+    const nullDescAlbum = { ...album, description: null };
+    (useGetAlbum as Mock).mockReturnValue({ data: nullDescAlbum, isPending: false, isError: false });
+    (useUpdateAlbum as Mock).mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false });
+    render(<MemoryRouter><AlbumEditPage /></MemoryRouter>);
+
+    expect(screen.getByTestId('description-input')).toHaveValue('');
   });
 
   it('navigates to /albums on cancel', async () => {
