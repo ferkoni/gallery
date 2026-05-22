@@ -1,10 +1,15 @@
-import { useContext } from 'react';
+import { useContext, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '@/features/auth/context/AuthContext';
+import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 
 export function NavBar() {
   const ctx = useContext(AuthContext);
   const navigate = useNavigate();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  useOnClickOutside(settingsRef, () => setSettingsOpen(false));
 
   if (!ctx) return null;
   const { token, logout } = ctx;
@@ -22,7 +27,32 @@ export function NavBar() {
         {token ? (
           <>
             <Link to="/albums" className="text-gray-600 hover:text-gray-900">Albums</Link>
-            <Link to="/settings/s3_credential" className="text-gray-600 hover:text-gray-900">Credential</Link>
+
+            <div ref={settingsRef} className="relative">
+              <button
+                data-testid="settings-menu-button"
+                onClick={() => setSettingsOpen(prev => !prev)}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                Settings
+              </button>
+
+              {settingsOpen && (
+                <div
+                  data-testid="settings-dropdown"
+                  className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10"
+                >
+                  <Link
+                    to="/settings/s3_credential"
+                    onClick={() => setSettingsOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    S3 Credentials
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
