@@ -22,6 +22,7 @@ export function NavBar() {
         {token ? (
           <>
             <Link to="/albums" className="text-gray-600 hover:text-gray-900">Albums</Link>
+            <Link to="/settings/s3_credential" className="text-gray-600 hover:text-gray-900">Credential</Link>
             <button
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
