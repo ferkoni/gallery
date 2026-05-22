@@ -1,4 +1,4 @@
-import { describe, vi, type Mock } from "vitest";
+import { describe, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -16,7 +16,7 @@ const mockLogout = vi.fn();
 function renderNavBar(token: string | null) {
   return render(
     <MemoryRouter>
-      <AuthContext.Provider value={{ token, login: vi.fn(), logout: mockLogout }}>
+      <AuthContext.Provider value={{ token, login: vi.fn(), logout: mockLogout, s3CredentialConfigured: false, setS3CredentialConfigured: vi.fn() }}>
         <NavBar />
       </AuthContext.Provider>
     </MemoryRouter>

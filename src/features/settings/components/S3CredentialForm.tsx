@@ -13,6 +13,7 @@ const s3CredentialSchema = z.object({
 type S3CredentialFormData = z.infer<typeof s3CredentialSchema>;
 
 type S3CredentialFormProps = {
+  configured: boolean;
   onSubmit: (data: S3Credential) => void;
   onDelete: () => void;
   isPending: boolean;
@@ -22,6 +23,7 @@ type S3CredentialFormProps = {
 };
 
 export function S3CredentialForm({
+  configured,
   onSubmit,
   onDelete,
   isPending,
@@ -35,7 +37,15 @@ export function S3CredentialForm({
 
   return (
     <main className="max-w-lg mx-auto px-6 py-10">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Add S3 Credentials</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-4">
+        {configured ? "Update S3 Credentials" : "Add S3 Credentials"}
+      </h1>
+
+      {configured && (
+        <p data-testid="configured-banner" className="text-sm text-green-600 font-medium mb-6">
+          ✓ S3 credentials are configured
+        </p>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
@@ -99,22 +109,24 @@ export function S3CredentialForm({
         )}
 
         <div className="flex gap-3 mt-2">
-          <button
-            type="button"
-            disabled={isDeleting}
-            onClick={onDelete}
-            data-testid="delete-button"
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg"
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </button>
+          {configured && (
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={onDelete}
+              data-testid="delete-button"
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </button>
+          )}
           <button
             type="submit"
             disabled={isPending}
             data-testid="submit-button"
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition-colors"
           >
-            {isPending ? "Adding..." : "Add"}
+            {isPending ? (configured ? "Updating..." : "Adding...") : (configured ? "Update" : "Add")}
           </button>
         </div>
       </form>
