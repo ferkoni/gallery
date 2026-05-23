@@ -79,12 +79,18 @@ jobs:
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: SXfQ7DCcBD8Sqsav4DPVlxb3Rr7bvCrD
+          ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: nzMgfs3mYOtaITTmgLzwviWaMd9kPYbn
+          ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: AGLY8rjLJeBM7hiKIFYT3MZqTuILAhge
         run: bin/rails db:test:prepare
 
       - name: Run tests
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: SXfQ7DCcBD8Sqsav4DPVlxb3Rr7bvCrD
+          ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: nzMgfs3mYOtaITTmgLzwviWaMd9kPYbn
+          ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: AGLY8rjLJeBM7hiKIFYT3MZqTuILAhge
         run: bundle exec rspec
 
       - name: Upload coverage report

@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     resources :albums, only: [ :index, :show, :create, :update, :destroy ]
+    resource :s3_credentials, only: [ :update, :destroy ]
 
     resources :users, only: [ :create ] do
       collection do
