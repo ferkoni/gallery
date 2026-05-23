@@ -6,12 +6,18 @@ import { useContext } from "react";
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
-  const { login } = ctx;
+  const { login, setS3CredentialConfigured } = ctx;
 
   const loginMutation = useMutation({
-    mutationFn: ({email, password}: {email: string, password: string}) => loginRequest(email, password),
-    onSuccess: ({data}) => login(data.token)
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      loginRequest(email, password),
+    onSuccess: ({ data }) => {
+      login(data.token);
+      setS3CredentialConfigured(
+        data.user?.data?.attributes?.s3_credential_configured ?? false
+      );
+    }
   });
 
-  return {loginMutation};
+  return { loginMutation };
 }
