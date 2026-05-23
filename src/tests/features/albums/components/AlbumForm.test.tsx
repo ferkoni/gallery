@@ -79,7 +79,7 @@ describe('AlbumForm', () => {
 
     await userEvent.click(screen.getByTestId('submit-button'));
 
-    expect(await screen.findByText('Name is required')).toBeInTheDocument();
+    expect(await screen.findByText('Required')).toBeInTheDocument();
     await waitFor(() => expect(defaultProps.onSubmit).not.toHaveBeenCalled());
   });
 
@@ -89,7 +89,7 @@ describe('AlbumForm', () => {
     fireEvent.change(screen.getByTestId('name-input'), { target: { value: 'A'.repeat(51) } });
     await userEvent.click(screen.getByTestId('submit-button'));
 
-    expect(await screen.findByText('Name is too long')).toBeInTheDocument();
+    expect(await screen.findByTestId('name-error-label')).toHaveTextContent(/50/);
     await waitFor(() => expect(defaultProps.onSubmit).not.toHaveBeenCalled());
   });
 
@@ -100,7 +100,7 @@ describe('AlbumForm', () => {
     fireEvent.change(screen.getByTestId('description-input'), { target: { value: 'A'.repeat(501) } });
     await userEvent.click(screen.getByTestId('submit-button'));
 
-    expect(await screen.findByText('Description is too long')).toBeInTheDocument();
+    expect(await screen.findByTestId('description-error-label')).toHaveTextContent(/500/);
     await waitFor(() => expect(defaultProps.onSubmit).not.toHaveBeenCalled());
   });
 });

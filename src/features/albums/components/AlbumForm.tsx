@@ -3,8 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 const albumSchema = z.object({
-  name: z.string().min(1, "Name is required").max(50, "Name is too long"),
-  description: z.string().max(500, 'Description is too long').optional()
+  name: z.string().min(1, "Required").max(50),
+  description: z.string().max(500).optional()
 });
 
 type AlbumFormData = z.infer<typeof albumSchema>;
@@ -51,7 +51,7 @@ export function AlbumForm({
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {errors.name && (
-            <p className="text-xs text-red-500">{errors.name.message}</p>
+            <p className="text-xs text-red-500" data-testid="name-error-label">{errors.name.message}</p>
           )}
         </div>
 
@@ -64,7 +64,7 @@ export function AlbumForm({
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
           {errors.description && (
-            <p className="text-xs text-red-500">{errors.description.message}</p>
+            <p className="text-xs text-red-500" data-testid="description-error-label">{errors.description.message}</p>
           )}
         </div>
 
