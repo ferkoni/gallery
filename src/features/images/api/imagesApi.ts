@@ -30,8 +30,3 @@ export async function uploadImage(
   return res.data.data.attributes;
 }
 
-// GET /api/images/:id/url
-export async function fetchImageUrl(imageId: number): Promise<string> {
-  const res = await apiClient.get(`/api/images/${imageId}/url`);
-  return res.data.url;
-}
