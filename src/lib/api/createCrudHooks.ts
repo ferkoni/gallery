@@ -9,6 +9,13 @@ export function createCrudHooks<T extends { id: number }>(
     return useQuery({ queryKey: [queryKey], queryFn: api.fetchAll });
   }
 
+  function usePagedList(page: number) {
+    return useQuery({
+      queryKey: [queryKey, { page }],
+      queryFn: () => api.fetchPaginated(page),
+    });
+  }
+
   function useGet(id: number) {
     return useQuery({ queryKey: [queryKey, id], queryFn: () => api.fetchOne(id) });
   }
@@ -37,5 +44,5 @@ export function createCrudHooks<T extends { id: number }>(
     });
   }
 
-  return { useList, useGet, useCreate, useUpdate, useDestroy };
+  return { useList, usePagedList, useGet, useCreate, useUpdate, useDestroy };
 }

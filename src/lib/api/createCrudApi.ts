@@ -1,10 +1,29 @@
 import apiClient from '@/lib/api/client';
 
+export type PaginationMeta = {
+  current_page: number;
+  total_pages: number;
+  total_count: number;
+  per_page: number;
+};
+
+export type PaginatedResponse<T> = {
+  data: T[];
+  meta: PaginationMeta;
+};
+
 export function createCrudApi<T>(path: string) {
   return {
     fetchAll: async (): Promise<T[]> => {
       const res = await apiClient.get(path);
       return res.data.data.map((item: { attributes: T }) => item.attributes);
+    },
+    fetchPaginated: async (page = 1): Promise<PaginatedResponse<T>> => {
+      const res = await apiClient.get(path, { params: { page } });
+      return {
+        data: res.data.data.map((item: { attributes: T }) => item.attributes),
+        meta: res.data.meta as PaginationMeta,
+      };
     },
     fetchOne: async (id: number): Promise<T> => {
       const res = await apiClient.get(`${path}/${id}`);

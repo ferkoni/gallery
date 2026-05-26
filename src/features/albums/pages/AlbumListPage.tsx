@@ -1,12 +1,18 @@
-import { useListAlbum } from '@/features/albums/albums';
+import { usePagedListAlbum } from '@/features/albums/albums';
+import { usePagination } from '@/hooks/usePagination';
+import { Pagination } from '@/components/Pagination';
 import { Link, useNavigate } from "react-router-dom";
 
 export function AlbumListPage() {
-  const { data: albums, isPending, isError } = useListAlbum();
+  const { page, goNext, goPrev } = usePagination();
+  const { data, isPending, isError } = usePagedListAlbum(page);
   const navigate = useNavigate();
 
   if (isPending) return <p className="p-6 text-gray-500" data-testid="loading-label">Loading...</p>;
   if (isError) return <p className="p-6 text-red-500" data-testid="failed-label">Failed to load albums.</p>;
+
+  const albums = data.data;
+  const meta = data.meta;
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-10">
@@ -35,6 +41,13 @@ export function AlbumListPage() {
           ))}
         </ul>
       )}
+
+      <Pagination
+        currentPage={meta.current_page}
+        totalPages={meta.total_pages}
+        onNext={goNext}
+        onPrev={goPrev}
+      />
     </main>
   );
 }
