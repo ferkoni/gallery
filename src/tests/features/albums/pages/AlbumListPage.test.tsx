@@ -41,7 +41,7 @@ describe("AlbumListPage", () => {
     expect(screen.getByTestId("no-album-label")).toBeInTheDocument();
   });
 
-  it('navigates to edit page when album card is clicked', async () => {
+  it('navigates to detail page when album card is clicked', async () => {
     (useListAlbum as Mock).mockReturnValue({
       isPending: false,
       isError: false,
@@ -51,7 +51,7 @@ describe("AlbumListPage", () => {
 
     await userEvent.click(screen.getByTestId('album-card-10'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('/albums/10/edit');
+    expect(mockNavigate).toHaveBeenCalledWith('/albums/10');
   });
 
   it('renders album cards with items and button', () => {
