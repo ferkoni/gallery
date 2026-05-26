@@ -4,13 +4,13 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AlbumDetailPage } from '@/features/images/pages/AlbumDetailPage';
 import { useGetAlbum } from '@/features/albums/albums';
-import { useImages } from '@/features/images/hooks/useImages';
+import { useAlbumImages } from '@/features/images/hooks/useImages';
 
 vi.mock('@/features/albums/albums', () => ({ useGetAlbum: vi.fn() }));
-vi.mock('@/features/images/hooks/useImages', () => ({ useImages: vi.fn() }));
+vi.mock('@/features/images/hooks/useImages', () => ({ useAlbumImages: vi.fn() }));
 
 const mockUseGetAlbum = useGetAlbum as Mock;
-const mockUseImages = useImages as Mock;
+const mockUseAlbumImages = useAlbumImages as Mock;
 
 const album = { id: 1, name: 'Summer 2026', description: 'A great summer', created_at: '2026-01-01' };
 
@@ -30,7 +30,11 @@ function renderPage() {
 describe('AlbumDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseImages.mockReturnValue({ isPending: false, isError: false, data: [] });
+    mockUseAlbumImages.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: { data: [], meta: { current_page: 1, total_pages: 1, total_count: 0, per_page: 25 } },
+    });
   });
 
   it('renders loading state while album is fetching', () => {

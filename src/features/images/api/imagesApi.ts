@@ -1,5 +1,15 @@
 import apiClient from '@/lib/api/client';
+import type { PaginatedResponse } from '@/lib/api/createCrudApi';
 import type { Image } from '../types/image';
+
+// GET /api/albums/:albumId/images?page=
+export async function fetchAlbumImages(albumId: number, page = 1): Promise<PaginatedResponse<Image>> {
+  const res = await apiClient.get(`/api/albums/${albumId}/images`, { params: { page } });
+  return {
+    data: res.data.data.map((item: { attributes: Image }) => item.attributes),
+    meta: res.data.meta,
+  };
+}
 
 // GET /api/images?album_id=
 export async function fetchImages(albumId?: number): Promise<Image[]> {
