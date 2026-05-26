@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { ImageCard } from '@/features/images/components/ImageCard';
 import type { Image } from '@/features/images/types/image';
@@ -23,5 +23,12 @@ describe('ImageCard', () => {
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('src', image.url);
     expect(img).toHaveAttribute('alt', 'Beach');
+  });
+
+  it('shows the broken-image fallback when the img fails to load', () => {
+    render(<ImageCard image={image} />);
+    fireEvent.error(screen.getByRole('img'));
+    expect(screen.getByTestId('image-broken')).toBeInTheDocument();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 });

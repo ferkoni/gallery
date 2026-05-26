@@ -16,7 +16,8 @@ export function useUpload(albumId: number) {
       setStatus(id, 'done');
       qc.invalidateQueries({ queryKey: ['images', albumId] });
     } catch (err) {
-      setStatus(id, 'error', (err as Error).message);
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      setStatus(id, 'error', message);
     }
   }
 

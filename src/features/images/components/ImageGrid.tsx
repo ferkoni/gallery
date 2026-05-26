@@ -8,6 +8,7 @@ export function ImageGrid({ albumId }: Props) {
 
   if (isPending) return <p className="text-gray-500" data-testid="images-loading">Loading images...</p>;
   if (isError) return <p className="text-red-500" data-testid="images-error">Failed to load images.</p>;
+  if (!images) return null;
 
   if (images.length === 0) {
     return (

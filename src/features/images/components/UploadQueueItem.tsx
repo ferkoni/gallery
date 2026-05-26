@@ -1,13 +1,13 @@
-import type { UploadItem } from '../store/uploadStore';
+import type { UploadItem, UploadStatus } from '../store/uploadStore';
 
-const statusLabel: Record<string, string> = {
+const statusLabel: Record<UploadStatus, string> = {
   pending: 'Pending',
   uploading: 'Uploading',
   done: 'Done',
   error: 'Error',
 };
 
-const statusColor: Record<string, string> = {
+const statusColor: Record<UploadStatus, string> = {
   pending: 'text-gray-500',
   uploading: 'text-blue-500',
   done: 'text-green-500',

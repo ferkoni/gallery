@@ -25,6 +25,12 @@ describe('ImageGrid', () => {
     expect(screen.getByTestId('images-error')).toBeInTheDocument();
   });
 
+  it('renders nothing when data is undefined after guards', () => {
+    mockUseImages.mockReturnValue({ isPending: false, isError: false, data: undefined });
+    const { container } = render(<ImageGrid albumId={1} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('shows empty state when album has no images', () => {
     mockUseImages.mockReturnValue({ isPending: false, isError: false, data: [] });
     render(<ImageGrid albumId={1} />);

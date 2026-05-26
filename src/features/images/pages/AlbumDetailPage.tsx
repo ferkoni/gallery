@@ -8,6 +8,7 @@ export function AlbumDetailPage() {
   const albumId = Number(id);
   const { data: album, isPending, isError } = useGetAlbum(albumId);
 
+  if (!id) return <p className="p-6 text-red-500">Invalid album.</p>;
   if (isPending) return <p className="p-6 text-gray-500">Loading...</p>;
   if (isError || !album) return <p className="p-6 text-red-500">Failed to load album.</p>;
 
