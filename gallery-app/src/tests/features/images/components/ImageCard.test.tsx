@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { userEvent } from '@testing-library/user-event';
 import { ImageCard } from '@/features/images/components/ImageCard';
 import type { Image } from '@/features/images/types/image';
 
@@ -25,10 +26,27 @@ describe('ImageCard', () => {
     expect(img).toHaveAttribute('alt', 'Beach');
   });
 
+  it('shows the formatted upload date', () => {
+    render(<ImageCard image={image} />);
+    expect(screen.getByTestId('image-date-1')).toHaveTextContent('Jan 1, 2026');
+  });
+
   it('shows the broken-image fallback when the img fails to load', () => {
     render(<ImageCard image={image} />);
     fireEvent.error(screen.getByRole('img'));
     expect(screen.getByTestId('image-broken')).toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('calls onClick when the card is clicked', async () => {
+    const onClick = vi.fn();
+    render(<ImageCard image={image} onClick={onClick} />);
+    await userEvent.click(screen.getByTestId('image-card-1'));
+    expect(onClick).toHaveBeenCalledOnce();
+  });
+
+  it('renders without onClick without errors', () => {
+    render(<ImageCard image={image} />);
+    expect(screen.getByTestId('image-card-1')).toBeInTheDocument();
   });
 });
