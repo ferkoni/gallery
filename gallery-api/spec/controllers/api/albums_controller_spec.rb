@@ -137,15 +137,31 @@ RSpec.describe Api::AlbumsController, type: :controller do
     before { sign_in user }
 
     let!(:album) { create(:album, user: user) }
+    let(:success_result) { Images::Result.new(success?: true, record: nil, error: nil) }
+    let(:failure_result) { Images::Result.new(success?: false, record: nil, error: "Could not delete images from S3: access denied") }
 
-    it "returns http no content" do
-      delete :destroy, params: { id: album.id }, as: :json
-      expect(response).to have_http_status(:no_content)
+    context "when the service succeeds" do
+      before { allow(Images::AlbumDestroy).to receive(:call).and_return(success_result) }
+
+      it "returns http no content" do
+        delete :destroy, params: { id: album.id }, as: :json
+        expect(response).to have_http_status(:no_content)
+      end
     end
 
-    it "destroys the album" do
-      expect { delete :destroy, params: { id: album.id }, as: :json }
-        .to change { Album.with_user(user).count }.by(-1)
+    context "when the service fails" do
+      before { allow(Images::AlbumDestroy).to receive(:call).and_return(failure_result) }
+
+      it "returns http unprocessable content" do
+        delete :destroy, params: { id: album.id }, as: :json
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+
+      it "renders the error message" do
+        delete :destroy, params: { id: album.id }, as: :json
+        json = JSON.parse(response.body)
+        expect(json["errors"]).to include("Could not delete images from S3")
+      end
     end
 
     it "returns 404 for another user's album" do

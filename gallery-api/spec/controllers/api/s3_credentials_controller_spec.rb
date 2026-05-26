@@ -1,6 +1,9 @@
 require "rails_helper"
 
 RSpec.describe Api::S3CredentialsController, type: :controller do
+  # Stub reachability so saves don't make real AWS calls.
+  before { allow_any_instance_of(S3Credential).to receive(:reachable?).and_return(true) }
+
   let(:user)       { create(:user) }
   let(:other_user) { create(:user) }
 

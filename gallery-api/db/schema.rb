@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_21_233913) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_25_233503) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -21,6 +21,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_233913) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_albums_on_user_id"
+  end
+
+  create_table "images", force: :cascade do |t|
+    t.bigint "album_id", null: false
+    t.datetime "created_at", null: false
+    t.string "s3_key", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["album_id"], name: "index_images_on_album_id"
+    t.index ["s3_key"], name: "index_images_on_s3_key", unique: true
+    t.index ["user_id"], name: "index_images_on_user_id"
   end
 
   create_table "s3_credentials", force: :cascade do |t|
@@ -49,5 +61,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_21_233913) do
   end
 
   add_foreign_key "albums", "users"
+  add_foreign_key "images", "albums"
+  add_foreign_key "images", "users"
   add_foreign_key "s3_credentials", "users"
 end
