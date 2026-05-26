@@ -10,7 +10,9 @@ Rails.application.routes.draw do
   get "health" => "health#show"
 
   namespace :api do
-    resources :albums, only: [ :index, :show, :create, :update, :destroy ]
+    resources :albums, only: [ :index, :show, :create, :update, :destroy ] do
+      resources :images, only: [ :index ]
+    end
     resource :s3_credentials, only: [ :update, :destroy ]
     resources :images, only: [ :index, :show, :create, :destroy ]
 

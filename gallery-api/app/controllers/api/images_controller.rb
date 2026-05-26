@@ -3,21 +3,6 @@ class Api::ImagesController < ApplicationController
 
   before_action :authorize_resource!, only: %i[show destroy]
 
-  # GET /api/images?album_id=
-  # Overrides BaseApi#index to pass the credential so the serializer can embed
-  # a presigned URL in each record. Presigning is a local crypto operation —
-  # no S3 network call is made per image.
-  def index
-    render json: serializer.new(resources, params: { credential: current_user.s3_credential })
-                           .serializable_hash.to_json
-  end
-
-  # GET /api/images/:id
-  def show
-    render json: serializer.new(resource, params: { credential: current_user.s3_credential })
-                           .serializable_hash.to_json
-  end
-
   # POST /api/images
   # Expects multipart/form-data with:
   #   image[file]      — the file itself
@@ -33,7 +18,7 @@ class Api::ImagesController < ApplicationController
     )
 
     if result.success?
-      render json: serializer.new(result.record, params: { credential: current_user.s3_credential })
+      render json: serializer.new(result.record, params: serializer_params)
                              .serializable_hash.to_json, status: :created
     else
       render json: { errors: result.error }, status: :unprocessable_content
@@ -60,11 +45,26 @@ class Api::ImagesController < ApplicationController
 
   protected
 
-  # Scoped to the current user; optionally filtered by album.
+  # GET /api/images?album_id=&page=
+  # GET /api/albums/:album_id/images?page=
+  # Scoped to the current user; album-filtered when :album_id is present.
+  # album raises RecordNotFound (→ 404) if the album doesn't exist or belongs
+  # to another user, so no images from other users can ever leak.
   def resources
     scope = Image.with_user(current_user).order(created_at: :desc)
-    scope = scope.where(album_id: params[:album_id]) if params[:album_id]
-    scope
+    scope = scope.where(album_id: album.id) if album
+    scope.page(params[:page])
+  end
+
+  def album
+    return nil unless params[:album_id]
+    @album ||= Album.with_user(current_user).find(params[:album_id])
+  end
+
+  # Passes the presigned-URL credential to the serializer.
+  # Presigning is a local crypto operation — no S3 network call is made per image.
+  def serializer_params
+    { credential: current_user.s3_credential }
   end
 
   def model_name = Image

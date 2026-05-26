@@ -23,7 +23,7 @@ class Api::AlbumsController < ApplicationController
   protected
 
   def resources
-    Album.with_user(current_user)
+    Album.with_user(current_user).page(params[:page])
   end
 
   def resource

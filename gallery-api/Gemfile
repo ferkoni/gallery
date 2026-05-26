@@ -73,5 +73,6 @@ group :test do
   gem "simplecov", require: false
 end
 
+gem "kaminari"
 gem "pundit", "~> 2.5"
 gem "aws-sdk-s3", "~> 1.0"

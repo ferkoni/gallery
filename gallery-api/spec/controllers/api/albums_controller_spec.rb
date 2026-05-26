@@ -22,6 +22,23 @@ RSpec.describe Api::AlbumsController, type: :controller do
       expect(ids).to match_array(own.map(&:id))
     end
 
+    it "includes pagination meta" do
+      get :index, as: :json
+
+      meta = JSON.parse(response.body)["meta"]
+      expect(meta.keys).to match_array(%w[current_page total_pages total_count per_page])
+    end
+
+    it "returns page 2 when requested" do
+      allow(Kaminari.config).to receive(:default_per_page).and_return(2)
+      create_list(:album, 3, user: user)
+
+      get :index, params: { page: 2 }, as: :json
+
+      meta = JSON.parse(response.body)["meta"]
+      expect(meta["current_page"]).to eq(2)
+    end
+
     context "without a token" do
       before { sign_out user }
 

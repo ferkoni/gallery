@@ -10,21 +10,24 @@ module BaseApi
   end
 
   def index
-    render json: serializer.new(resources).serializable_hash.to_json
+    collection = resources
+    hash = serializer.new(collection, params: serializer_params).serializable_hash
+    hash[:meta] = pagination_meta(collection) if collection.respond_to?(:current_page)
+    render json: hash.to_json
   end
 
   def show
-    render json: serializer.new(resource).serializable_hash.to_json
+    render json: serializer.new(resource, params: serializer_params).serializable_hash.to_json
   end
 
   def create
     resource.save!
-    render json: serializer.new(resource).serializable_hash.to_json
+    render json: serializer.new(resource, params: serializer_params).serializable_hash.to_json
   end
 
   def update
     resource.update!(resource_params)
-    render json: serializer.new(resource).serializable_hash.to_json
+    render json: serializer.new(resource, params: serializer_params).serializable_hash.to_json
   end
 
   def destroy
@@ -33,16 +36,32 @@ module BaseApi
   end
 
   protected
+
   def authorize_resource!
     authorize(resource)
   end
 
+  # Returns a paginated scope by default. Override without .page to opt out.
   def resources
-    model_name.all
+    model_name.all.page(params[:page])
   end
 
   def resource
     @_resource ||= params[:id] ? model_name.find(params[:id]) : model_name.new(new_resource_params)
+  end
+
+  # Override in controllers that need extra serializer options (e.g. credentials).
+  def serializer_params
+    {}
+  end
+
+  def pagination_meta(paged)
+    {
+      current_page: paged.current_page,
+      total_pages: paged.total_pages,
+      total_count: paged.total_count,
+      per_page: paged.limit_value
+    }
   end
 
   def render_unprocessable_entity_response

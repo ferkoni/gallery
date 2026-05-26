@@ -48,11 +48,75 @@ RSpec.describe Api::ImagesController, type: :controller do
       expect(url).to eq(presigned_url)
     end
 
+    it "includes pagination meta" do
+      get :index, as: :json
+
+      meta = JSON.parse(response.body)["meta"]
+      expect(meta.keys).to match_array(%w[current_page total_pages total_count per_page])
+    end
+
     context "without a token" do
       before { sign_out user }
 
       it "returns http unauthorized" do
         get :index, as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
+  describe "GET #index (nested: /albums/:album_id/images)" do
+    before { sign_in user }
+
+    it "returns http ok" do
+      get :index, params: { album_id: album.id }, as: :json
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "returns only images from the requested album" do
+      other_album = create(:album, user: user)
+      image_in = create(:image, user: user, album: album)
+      create(:image, user: user, album: other_album)
+
+      get :index, params: { album_id: album.id }, as: :json
+
+      ids = JSON.parse(response.body).dig("data").map { |i| i["id"].to_i }
+      expect(ids).to eq([ image_in.id ])
+    end
+
+    it "includes pagination meta" do
+      get :index, params: { album_id: album.id }, as: :json
+
+      meta = JSON.parse(response.body)["meta"]
+      expect(meta.keys).to match_array(%w[current_page total_pages total_count per_page])
+    end
+
+    it "returns page 2 when requested" do
+      allow(Kaminari.config).to receive(:default_per_page).and_return(2)
+      create_list(:image, 3, user: user, album: album)
+
+      get :index, params: { album_id: album.id, page: 2 }, as: :json
+
+      meta = JSON.parse(response.body)["meta"]
+      expect(meta["current_page"]).to eq(2)
+    end
+
+    it "returns 404 when the album does not exist" do
+      get :index, params: { album_id: 0 }, as: :json
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 when the album belongs to another user" do
+      other_album = create(:album, user: other_user)
+      get :index, params: { album_id: other_album.id }, as: :json
+      expect(response).to have_http_status(:not_found)
+    end
+
+    context "without a token" do
+      before { sign_out user }
+
+      it "returns http unauthorized" do
+        get :index, params: { album_id: album.id }, as: :json
         expect(response).to have_http_status(:unauthorized)
       end
     end
