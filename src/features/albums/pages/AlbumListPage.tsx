@@ -26,7 +26,7 @@ export function AlbumListPage() {
       ) : (
         <ul className="grid grid-cols-2 gap-4">
           {albums.map(album => (
-            <li key={album.id} className="bg-white rounded-xl shadow p-4" data-testid={`album-card-${album.id}`} onClick={() => { navigate(`/albums/${album.id}/edit`); }}>
+            <li key={album.id} className="bg-white rounded-xl shadow p-4" data-testid={`album-card-${album.id}`} onClick={() => { navigate(`/albums/${album.id}`); }}>
               <h2 className="font-semibold text-gray-800" data-testid={`album-name-${album.id}`}>{album.name}</h2>
               {album.description && (
                 <p className="text-sm text-gray-500 mt-1" data-testid={`album-description-${album.id}`}>{album.description}</p>
