@@ -2,7 +2,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { afterAll, beforeEach, describe, it, expect, vi } from 'vitest';
 import type { AxiosRequestConfig, AxiosProgressEvent } from 'axios';
 import apiClient from '@/lib/api/client';
-import { fetchImages, uploadImage } from '@/features/images/api/imagesApi';
+import { fetchImages, uploadImage, updateImage } from '@/features/images/api/imagesApi';
 import type { Image } from '@/features/images/types/image';
 
 const mock = new MockAdapter(apiClient);
@@ -10,6 +10,8 @@ const mock = new MockAdapter(apiClient);
 const image: Image = {
   id: 1,
   title: 'Beach',
+  description: null,
+  tags: [],
   s3_key: 'albums/1/uuid/photo.jpg',
   album_id: 1,
   created_at: '2026-01-01T00:00:00.000Z',
@@ -79,5 +81,40 @@ describe('uploadImage', () => {
     config.onUploadProgress?.({ loaded: 50, bytes: 50 } as AxiosProgressEvent);
 
     expect(onProgress).not.toHaveBeenCalled();
+  });
+});
+
+describe('updateImage', () => {
+  beforeEach(() => mock.reset());
+
+  it('patches /api/images/:id and returns the updated image', async () => {
+    const updated: Image = { ...image, title: 'New Beach' };
+    mock.onPatch('/api/images/1').reply(200, { data: { attributes: updated } });
+
+    const result = await updateImage(1, { title: 'New Beach' });
+
+    expect(result).toEqual(updated);
+    expect(mock.history.patch[0].url).toBe('/api/images/1');
+    expect(JSON.parse(mock.history.patch[0].data as string)).toEqual({ image: { title: 'New Beach' } });
+  });
+
+  it('sends tags as an array inside the image wrapper', async () => {
+    mock.onPatch('/api/images/1').reply(200, { data: { attributes: image } });
+
+    await updateImage(1, { tags: ['sea', 'sun'] });
+
+    expect(JSON.parse(mock.history.patch[0].data as string)).toEqual({ image: { tags: ['sea', 'sun'] } });
+  });
+
+  it('sends description and album_id when provided', async () => {
+    const updated: Image = { ...image, description: 'Sunny day', album_id: 2 };
+    mock.onPatch('/api/images/1').reply(200, { data: { attributes: updated } });
+
+    const result = await updateImage(1, { description: 'Sunny day', album_id: 2 });
+
+    expect(result).toEqual(updated);
+    expect(JSON.parse(mock.history.patch[0].data as string)).toEqual({
+      image: { description: 'Sunny day', album_id: 2 },
+    });
   });
 });

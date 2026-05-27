@@ -1,6 +1,6 @@
 import apiClient from '@/lib/api/client';
 import type { PaginatedResponse } from '@/lib/api/createCrudApi';
-import type { Image } from '../types/image';
+import type { Image, UpdateImagePayload } from '../types/image';
 
 // GET /api/albums/:albumId/images?page=
 export async function fetchAlbumImages(albumId: number, page = 1): Promise<PaginatedResponse<Image>> {
@@ -40,3 +40,8 @@ export async function uploadImage(
   return res.data.data.attributes;
 }
 
+// PATCH /api/images/:id
+export async function updateImage(id: number, data: UpdateImagePayload): Promise<Image> {
+  const res = await apiClient.patch(`/api/images/${id}`, { image: data });
+  return res.data.data.attributes;
+}
