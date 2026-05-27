@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CardEditButton } from '@/components/CardEditButton';
 import type { Image } from '../types/image';
 
 type Props = {
@@ -43,14 +44,11 @@ export function ImageCard({ image, onClick, onEdit }: Props) {
         <p className="text-xs text-gray-400 mt-0.5" data-testid={`image-date-${image.id}`}>{uploadDate}</p>
       </div>
       {onEdit && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white text-gray-600 hover:text-gray-900 rounded-full p-1.5 shadow transition-all"
+        <CardEditButton
+          onClick={onEdit}
           aria-label="Edit image"
           data-testid={`edit-image-button-${image.id}`}
-        >
-          ✏
-        </button>
+        />
       )}
     </div>
   );

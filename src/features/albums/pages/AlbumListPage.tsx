@@ -4,6 +4,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from '@/components/Pagination';
 import { Link, useNavigate } from "react-router-dom";
 import { AlbumEditModal } from '@/features/albums/components/AlbumEditModal';
+import { CardEditButton } from '@/components/CardEditButton';
 import type { Album } from '@/features/albums/types/album';
 
 export function AlbumListPage() {
@@ -47,14 +48,11 @@ export function AlbumListPage() {
                 {album.description && (
                   <p className="text-sm text-gray-500 mt-1" data-testid={`album-description-${album.id}`}>{album.description}</p>
                 )}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setEditingAlbum(album); }}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white text-gray-600 hover:text-gray-900 rounded-full p-1.5 shadow transition-all"
+                <CardEditButton
+                  onClick={() => setEditingAlbum(album)}
                   aria-label="Edit album"
                   data-testid={`edit-album-button-${album.id}`}
-                >
-                  ✏
-                </button>
+                />
               </li>
             ))}
           </ul>
