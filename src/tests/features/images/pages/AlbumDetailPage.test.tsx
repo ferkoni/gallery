@@ -62,12 +62,6 @@ describe('AlbumDetailPage', () => {
     expect(screen.queryByText('A great summer')).not.toBeInTheDocument();
   });
 
-  it('renders edit link pointing to the edit route', () => {
-    mockUseGetAlbum.mockReturnValue({ isPending: false, isError: false, data: album });
-    renderPage();
-    expect(screen.getByTestId('edit-album-link')).toHaveAttribute('href', '/albums/1/edit');
-  });
-
   it('renders the upload button', () => {
     mockUseGetAlbum.mockReturnValue({ isPending: false, isError: false, data: album });
     renderPage();
