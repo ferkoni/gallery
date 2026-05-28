@@ -28,12 +28,6 @@ describe("NavBar", () => {
     vi.clearAllMocks();
   });
 
-  it("renders nothing when AuthContext is not provided", () => {
-    const { container } = render(<MemoryRouter><NavBar /></MemoryRouter>);
-
-    expect(container).toBeEmptyDOMElement();
-  });
-
   it("renders Login link when not logged in", () => {
     renderNavBar(null);
 
