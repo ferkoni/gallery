@@ -3,7 +3,7 @@ class Api::UsersController < ApplicationController
   skip_before_action :authenticate_user!, only: [ :create, :login ]
 
   def login
-    user = User.find_by(email: params[:user][:email])
+    user = User.includes(:s3_credential).find_by(email: params[:user][:email])
     if user&.valid_password?(params[:user][:password])
       user.update!(jti: SecureRandom.uuid)
       token, _payload = Warden::JWTAuth::UserEncoder.new.call(user, :user, nil)
@@ -15,7 +15,7 @@ class Api::UsersController < ApplicationController
 
   def logout
     current_user.update!(jti: SecureRandom.uuid)
-    render json: {}, status: :no_content
+    head :no_content
   end
 
   protected
@@ -24,7 +24,7 @@ class Api::UsersController < ApplicationController
     params.require(:user).permit(:email, :password, :password_confirmation)
   end
 
-  def model_name = User
+  def resource_class = User
 
   def serializer = UserSerializer
 end

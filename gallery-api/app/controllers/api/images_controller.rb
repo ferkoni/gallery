@@ -80,7 +80,7 @@ class Api::ImagesController < ApplicationController
     { credential: current_user.s3_credential }
   end
 
-  def model_name = Image
+  def resource_class = Image
   def serializer = ImageSerializer
   def resource_params = params.require(:image).permit(:title, :description, :album_id, tags: [])
   def new_resource_params = resource_params.merge(user: current_user)

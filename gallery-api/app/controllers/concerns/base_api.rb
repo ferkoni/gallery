@@ -32,7 +32,7 @@ module BaseApi
 
   def destroy
     resource.destroy!
-    render json: {}, status: :no_content
+    head :no_content
   end
 
   protected
@@ -41,13 +41,12 @@ module BaseApi
     authorize(resource)
   end
 
-  # Returns a paginated scope by default. Override without .page to opt out.
   def resources
-    model_name.all.page(params[:page])
+    raise NotImplementedError, "#{self.class} must implement #resources"
   end
 
   def resource
-    @_resource ||= params[:id] ? model_name.find(params[:id]) : model_name.new(new_resource_params)
+    @_resource ||= params[:id] ? resource_class.find(params[:id]) : resource_class.new(new_resource_params)
   end
 
   # Override in controllers that need extra serializer options (e.g. credentials).
@@ -76,8 +75,8 @@ module BaseApi
     render json: { errors: "Forbidden" }, status: :forbidden
   end
 
-  def model_name
-    raise NotImplementedError
+  def resource_class
+    raise NotImplementedError, "#{self.class} must implement #resource_class"
   end
 
   def serializer

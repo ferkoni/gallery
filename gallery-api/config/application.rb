@@ -15,6 +15,7 @@ module GalleryApi
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
+    config.middleware.use Rack::Attack
 
     # ActiveRecord Encryption — keys loaded from env vars (see .env)
     config.active_record.encryption.primary_key        = ENV["ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY"]

@@ -4,8 +4,12 @@ RSpec.describe BaseApi, type: :controller do
   controller(ApplicationController) do
     include BaseApi
 
-    def model_name
+    def resource_class
       User
+    end
+
+    def resources
+      resource_class.all.page(params[:page])
     end
 
     def serializer

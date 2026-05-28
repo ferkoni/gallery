@@ -14,7 +14,7 @@ class Api::S3CredentialsController < ApplicationController
   def destroy
     raise ActiveRecord::RecordNotFound unless resource.persisted?
     resource.destroy!
-    render json: {}, status: :no_content
+    head :no_content
   end
 
   protected
@@ -24,8 +24,8 @@ class Api::S3CredentialsController < ApplicationController
     @_resource ||= current_user.s3_credential || current_user.build_s3_credential
   end
 
-  def model_name = S3Credential
-  def serializer = nil  # never called: update returns 204, destroy returns {}
+  def resource_class = S3Credential
+  def serializer = nil  # never called: update returns 204, destroy returns 204
   def resource_params
     params.require(:s3_credential).permit(:access_key_id, :secret_access_key, :region, :bucket)
   end
