@@ -212,6 +212,101 @@ RSpec.describe Api::ImagesController, type: :controller do
     end
   end
 
+  describe "PATCH #update" do
+    before { sign_in user }
+
+    let!(:image) { create(:image, user: user, album: album) }
+
+    context "when the owner updates title only" do
+      it "returns http ok" do
+        patch :update, params: { id: image.id, image: { title: "New Title" } }, as: :json
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "reflects the new title in the response" do
+        patch :update, params: { id: image.id, image: { title: "New Title" } }, as: :json
+        expect(JSON.parse(response.body).dig("data", "attributes", "title")).to eq("New Title")
+      end
+    end
+
+    context "when the owner updates description" do
+      it "returns http ok" do
+        patch :update, params: { id: image.id, image: { description: "A sunny day" } }, as: :json
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "reflects the new description in the response" do
+        patch :update, params: { id: image.id, image: { description: "A sunny day" } }, as: :json
+        expect(JSON.parse(response.body).dig("data", "attributes", "description")).to eq("A sunny day")
+      end
+    end
+
+    context "when the owner updates tags" do
+      it "returns http ok" do
+        patch :update, params: { id: image.id, image: { tags: [ "landscape", "nature" ] } }, as: :json
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "returns the correct tags array in the response" do
+        patch :update, params: { id: image.id, image: { tags: [ "landscape", "nature" ] } }, as: :json
+        expect(JSON.parse(response.body).dig("data", "attributes", "tags")).to eq([ "landscape", "nature" ])
+      end
+    end
+
+    context "when the owner moves the image to another of their own albums" do
+      let(:other_album) { create(:album, user: user) }
+
+      it "returns http ok" do
+        patch :update, params: { id: image.id, image: { album_id: other_album.id } }, as: :json
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "reflects the new album_id in the response" do
+        patch :update, params: { id: image.id, image: { album_id: other_album.id } }, as: :json
+        expect(JSON.parse(response.body).dig("data", "attributes", "album_id")).to eq(other_album.id)
+      end
+    end
+
+    context "when the owner attempts to move to another user's album" do
+      let(:other_album) { create(:album, user: other_user) }
+
+      it "returns http not found" do
+        patch :update, params: { id: image.id, image: { album_id: other_album.id } }, as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context "when the owner submits a tag longer than 25 characters" do
+      it "returns http unprocessable content" do
+        patch :update, params: { id: image.id, image: { tags: [ "a" * 26 ] } }, as: :json
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+
+      it "identifies the tags field in the error response" do
+        patch :update, params: { id: image.id, image: { tags: [ "a" * 26 ] } }, as: :json
+        expect(JSON.parse(response.body)["errors"]).to be_present
+      end
+    end
+
+    context "when a non-owner attempts update" do
+      before { sign_in other_user }
+
+      it "returns http forbidden" do
+        patch :update, params: { id: image.id, image: { title: "Hacked" } }, as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context "without a token" do
+      before { sign_out user }
+
+      it "returns http unauthorized" do
+        patch :update, params: { id: image.id, image: { title: "No auth" } }, as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
   describe "DELETE #destroy" do
     before { sign_in user }
 

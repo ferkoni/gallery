@@ -173,7 +173,7 @@ GEM
     json (2.19.5)
     jsonapi-serializer (2.2.0)
       activesupport (>= 4.2)
-    jwt (3.1.2)
+    jwt (3.2.0)
       base64
     kamal (2.11.0)
       activesupport (>= 7.0)
@@ -439,6 +439,7 @@ DEPENDENCIES
   image_processing (~> 2.0)
   importmap-rails
   jsonapi-serializer (= 2.2.0)
+  jwt (>= 3.2.0)
   kamal
   kaminari
   pg (~> 1.1)

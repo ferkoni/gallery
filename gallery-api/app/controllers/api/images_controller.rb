@@ -1,7 +1,7 @@
 class Api::ImagesController < ApplicationController
   include BaseApi
 
-  before_action :authorize_resource!, only: %i[show destroy]
+  before_action :authorize_resource!, only: %i[show update destroy]
 
   # POST /api/images
   # Expects multipart/form-data with:
@@ -23,6 +23,19 @@ class Api::ImagesController < ApplicationController
     else
       render json: { errors: result.error }, status: :unprocessable_content
     end
+  end
+
+  # PATCH /api/images/:id
+  # Updates metadata (title, description, tags, album_id). The S3 object is never
+  # touched. If album_id is supplied it must belong to the current user; otherwise
+  # Album.with_user raises RecordNotFound → 404 via BaseApi rescue.
+  def update
+    if (new_album_id = resource_params[:album_id])
+      Album.with_user(current_user).find(new_album_id)
+    end
+    resource.update!(resource_params)
+    render json: serializer.new(resource, params: serializer_params)
+                           .serializable_hash.to_json
   end
 
   # DELETE /api/images/:id
@@ -69,6 +82,6 @@ class Api::ImagesController < ApplicationController
 
   def model_name = Image
   def serializer = ImageSerializer
-  def resource_params = params.require(:image).permit(:title, :album_id)
+  def resource_params = params.require(:image).permit(:title, :description, :album_id, tags: [])
   def new_resource_params = resource_params.merge(user: current_user)
 end
