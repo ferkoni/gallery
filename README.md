@@ -1,75 +1,47 @@
-# React + TypeScript + Vite
+# gallery-app
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React frontend for the Gallery application — a photo management app with album organisation, image uploads, and S3 storage integration.
 
-Currently, two official plugins are available:
+## Tech stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 19** with React Compiler enabled
+- **Vite 8** + TypeScript
+- **TanStack Query** — server state management
+- **Zustand** — client state (upload queue)
+- **React Hook Form** + **Zod** — forms and validation
+- **React Router v7** — routing
+- **Tailwind CSS v4** — styling
+- **Axios** — HTTP client
+- **Vitest** + Testing Library — unit/integration tests
 
-## React Compiler
+## Project structure
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+  features/
+    auth/          # Login form, AuthProvider, JWT token hooks
+    albums/        # Album list, create, edit
+    images/        # Image grid, upload, lightbox, edit
+    settings/      # S3 credentials management
+    pages/         # Top-level pages (LoginPage, WelcomePage)
+  components/      # Shared UI (NavBar, Pagination, ErrorBoundary, ProtectedRoute)
+  hooks/           # Shared hooks (usePagination, useOnClickOutside)
+  lib/
+    api/           # Axios client, CRUD factory, token store
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Authentication
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Login via `POST /api/users/login`. The JWT token is stored in memory (`tokenStore`) and sent as `Authorization: Bearer <token>` on every request. Protected routes redirect to `/login` when no token is present.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting started
+
+```bash
+npm install
+npm run dev        # start dev server
+npm run build      # production build
+npm run test       # run tests with coverage
+npm run lint       # lint
 ```
+
+The dev server runs on `http://localhost:5173` by default and proxies API requests to the Rails backend at `http://localhost:3000`.
