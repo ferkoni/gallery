@@ -12,6 +12,8 @@ const mockUploadImage = vi.mocked(uploadImage);
 const image: Image = {
   id: 1,
   title: 'Beach',
+  description: null,
+  tags: [],
   s3_key: 'albums/1/uuid/photo.jpg',
   album_id: 1,
   created_at: '2026-01-01T00:00:00.000Z',

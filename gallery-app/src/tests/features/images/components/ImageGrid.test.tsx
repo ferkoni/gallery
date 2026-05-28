@@ -6,14 +6,22 @@ import { useAlbumImages } from '@/features/images/hooks/useImages';
 import type { Image } from '@/features/images/types/image';
 import type { PaginatedResponse } from '@/lib/api/createCrudApi';
 
-vi.mock('@/features/images/hooks/useImages');
+vi.mock('@/features/images/hooks/useImages', () => ({
+  useAlbumImages: vi.fn(),
+  useUpdateImage: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false, error: null })),
+}));
+
+vi.mock('@/features/albums/albums', () => ({
+  useListAlbum: vi.fn(() => ({ data: [] })),
+}));
+
 const mockUseAlbumImages = useAlbumImages as Mock;
 
 const meta = { current_page: 1, total_pages: 1, total_count: 2, per_page: 25 };
 
 const images: Image[] = [
-  { id: 1, title: 'Beach', s3_key: 'k1', album_id: 1, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1' },
-  { id: 2, title: 'Mountain', s3_key: 'k2', album_id: 1, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url2' },
+  { id: 1, title: 'Beach', description: null, tags: [], s3_key: 'k1', album_id: 1, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1' },
+  { id: 2, title: 'Mountain', description: null, tags: [], s3_key: 'k2', album_id: 1, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url2' },
 ];
 
 const pagedData: PaginatedResponse<Image> = { data: images, meta };
@@ -79,5 +87,28 @@ describe('ImageGrid', () => {
     await userEvent.click(screen.getByTestId('image-card-1'));
     await userEvent.click(screen.getByTestId('lightbox-overlay'));
     expect(screen.queryByTestId('lightbox')).not.toBeInTheDocument();
+  });
+
+  it('opens the edit modal when the edit button is clicked', async () => {
+    mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
+    render(<ImageGrid albumId={1} />);
+    await userEvent.click(screen.getByTestId('edit-image-button-1'));
+    expect(screen.getByTestId('image-edit-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('edit-title-input')).toHaveValue('Beach');
+  });
+
+  it('does not open the lightbox when the edit button is clicked', async () => {
+    mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
+    render(<ImageGrid albumId={1} />);
+    await userEvent.click(screen.getByTestId('edit-image-button-1'));
+    expect(screen.queryByTestId('lightbox')).not.toBeInTheDocument();
+  });
+
+  it('closes the edit modal when the cancel button is clicked', async () => {
+    mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
+    render(<ImageGrid albumId={1} />);
+    await userEvent.click(screen.getByTestId('edit-image-button-1'));
+    await userEvent.click(screen.getByTestId('edit-cancel-button'));
+    expect(screen.queryByTestId('image-edit-modal')).not.toBeInTheDocument();
   });
 });
