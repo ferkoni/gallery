@@ -41,6 +41,11 @@ function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps
   const hasPrev = currentIndex > 0;
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowRight' && hasNext) setCurrentIndex((i) => i + 1);

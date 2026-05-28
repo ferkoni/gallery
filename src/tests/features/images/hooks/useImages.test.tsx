@@ -61,7 +61,7 @@ describe('useUpdateImage', () => {
     const updated: Image = { ...images[0], title: 'New Beach' };
     mock.onPatch('/api/images/1').reply(200, { data: { attributes: updated } });
 
-    const { result } = renderHook(() => useUpdateImage(), { wrapper: makeWrapper() });
+    const { result } = renderHook(() => useUpdateImage(1), { wrapper: makeWrapper() });
 
     act(() => { result.current.mutate({ id: 1, data: { title: 'New Beach' } }); });
 
@@ -72,7 +72,7 @@ describe('useUpdateImage', () => {
   it('enters error state when the server responds with an error', async () => {
     mock.onPatch('/api/images/1').reply(500);
 
-    const { result } = renderHook(() => useUpdateImage(), { wrapper: makeWrapper() });
+    const { result } = renderHook(() => useUpdateImage(1), { wrapper: makeWrapper() });
 
     act(() => { result.current.mutate({ id: 1, data: { title: 'X' } }); });
 

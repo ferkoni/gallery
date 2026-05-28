@@ -20,7 +20,7 @@ type Props = {
 };
 
 export function ImageEditModal({ image, onClose }: Props) {
-  const { mutate, isPending, isError } = useUpdateImage();
+  const { mutate, isPending, isError } = useUpdateImage(image.album_id);
   const { data: albums = [] } = useListAlbum();
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
@@ -34,11 +34,9 @@ export function ImageEditModal({ image, onClose }: Props) {
   });
 
   const onSubmit = (values: FormData) => {
-    const tags = values.tags
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0)
-      .filter((t, i, arr) => arr.indexOf(t) === i);
+    const tags = [...new Set(
+      values.tags.split(',').map((t) => t.trim()).filter((t) => t.length > 0)
+    )];
 
     mutate(
       {

@@ -1,26 +1,25 @@
 import { useMutation } from "@tanstack/react-query";
 import type { S3Credential } from "@/features/settings/types/s3Credential.ts";
 import apiClient from "@/lib/api/client.ts";
-import { AuthContext } from "@/features/auth/context/AuthContext.tsx";
-import { useContext } from "react";
+import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 
 const PATH = '/api/s3_credentials';
 
 export function useSaveS3Credential() {
-  const ctx = useContext(AuthContext);
+  const { setS3CredentialConfigured } = useAuthContext();
 
   return useMutation({
     mutationFn: (payload: S3Credential) =>
       apiClient.put(PATH, { s3_credential: payload }),
-    onSuccess: () => ctx?.setS3CredentialConfigured(true)
+    onSuccess: () => setS3CredentialConfigured(true)
   });
 }
 
 export function useDeleteS3Credential() {
-  const ctx = useContext(AuthContext);
+  const { setS3CredentialConfigured } = useAuthContext();
 
   return useMutation({
     mutationFn: () => apiClient.delete(PATH),
-    onSuccess: () => ctx?.setS3CredentialConfigured(false)
+    onSuccess: () => setS3CredentialConfigured(false)
   });
 }

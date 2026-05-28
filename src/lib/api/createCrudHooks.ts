@@ -16,8 +16,12 @@ export function createCrudHooks<T extends { id: number }>(
     });
   }
 
-  function useGet(id: number) {
-    return useQuery({ queryKey: [queryKey, id], queryFn: () => api.fetchOne(id) });
+  function useGet(id: number, options?: { enabled?: boolean }) {
+    return useQuery({
+      queryKey: [queryKey, id],
+      queryFn: () => api.fetchOne(id),
+      enabled: options?.enabled,
+    });
   }
 
   function useCreate() {

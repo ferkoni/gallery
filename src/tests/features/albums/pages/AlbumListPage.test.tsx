@@ -12,12 +12,6 @@ vi.mock('@/features/albums/albums', () => ({
   useUpdateAlbum: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false })),
 }));
 
-const mockNavigate = vi.fn();
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return { ...actual, useNavigate: () => mockNavigate };
-});
-
 const meta = { current_page: 1, total_pages: 1, total_count: 2, per_page: 25 };
 
 function pagedData(albums: Album[], overrideMeta = {}): PaginatedResponse<Album> {
@@ -51,15 +45,14 @@ describe("AlbumListPage", () => {
     expect(screen.getByTestId("no-album-label")).toBeInTheDocument();
   });
 
-  it('navigates to detail page when album card is clicked', async () => {
+  it('has a link to the detail page for each album card', () => {
     (usePagedListAlbum as Mock).mockReturnValue({
       isPending: false,
       isError: false,
       data: pagedData([{ id: 10, name: 'AlbumTest', description: null, created_at: '' }]),
     });
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
-    await userEvent.click(screen.getByTestId('album-card-10'));
-    expect(mockNavigate).toHaveBeenCalledWith('/albums/10');
+    expect(screen.getByRole('link', { name: 'AlbumTest' })).toHaveAttribute('href', '/albums/10');
   });
 
   it('renders album cards with items and button', () => {
@@ -103,17 +96,6 @@ describe("AlbumListPage", () => {
     await userEvent.click(screen.getByTestId('edit-album-button-10'));
     expect(screen.getByTestId('album-edit-modal')).toBeInTheDocument();
     expect(screen.getByTestId('edit-name-input')).toHaveValue('AlbumTest');
-  });
-
-  it('does not navigate to detail page when the edit button is clicked', async () => {
-    (usePagedListAlbum as Mock).mockReturnValue({
-      isPending: false,
-      isError: false,
-      data: pagedData([{ id: 10, name: 'AlbumTest', description: null, created_at: '' }]),
-    });
-    render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
-    await userEvent.click(screen.getByTestId('edit-album-button-10'));
-    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('closes the edit modal when the cancel button is clicked', async () => {

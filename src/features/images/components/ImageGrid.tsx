@@ -14,7 +14,7 @@ export function ImageGrid({ albumId }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [editingImage, setEditingImage] = useState<Image | null>(null);
 
-  useEffect(() => { reset(); }, [albumId]);
+  useEffect(() => { reset(); }, [albumId, reset]);
 
   const { data, isPending, isError } = useAlbumImages(albumId, page);
 

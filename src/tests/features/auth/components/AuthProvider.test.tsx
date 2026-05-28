@@ -1,10 +1,10 @@
 import { render, screen, act } from '@testing-library/react';
 import { useContext } from 'react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AuthProvider } from "@/features/auth/components/AuthProvider.tsx";
 import { AuthContext } from '@/features/auth/context/AuthContext';
+import { getToken, setToken } from '@/lib/api/tokenStore';
 
-// Helper: a component that exposes context values for assertions
 function TestConsumer() {
   const { token, login, logout } = useContext(AuthContext)!;
   return (
@@ -19,33 +19,37 @@ function TestConsumer() {
 describe('AuthProvider', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
+    setToken(null);
     vi.restoreAllMocks();
   });
 
-  it('provides null token when localStorage is empty', () => {
+  afterEach(() => setToken(null));
+
+  it('provides null token on initial render', () => {
     render(<AuthProvider><TestConsumer /></AuthProvider>);
     expect(screen.getByTestId('token').textContent).toBe('null');
   });
 
-  it('rehydrates token from localStorage on mount', () => {
-    localStorage.setItem('token', 'stored-token');
-    render(<AuthProvider><TestConsumer /></AuthProvider>);
-    expect(screen.getByTestId('token').textContent).toBe('stored-token');
-  });
-
-  it('login sets token in state and localStorage', () => {
+  it('login sets token in state and tokenStore', () => {
     render(<AuthProvider><TestConsumer /></AuthProvider>);
     act(() => screen.getByText('login').click());
     expect(screen.getByTestId('token').textContent).toBe('abc123');
-    expect(localStorage.getItem('token')).toBe('abc123');
+    expect(getToken()).toBe('abc123');
   });
 
-  it('logout clears token from state and localStorage', () => {
-    localStorage.setItem('token', 'abc123');
+  it('logout clears token from state and tokenStore', () => {
     render(<AuthProvider><TestConsumer /></AuthProvider>);
+    act(() => screen.getByText('login').click());
     act(() => screen.getByText('logout').click());
     expect(screen.getByTestId('token').textContent).toBe('null');
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(getToken()).toBeNull();
+  });
+
+  it('restores token from sessionStorage on mount', () => {
+    setToken('persisted');
+    render(<AuthProvider><TestConsumer /></AuthProvider>);
+    expect(screen.getByTestId('token').textContent).toBe('persisted');
   });
 
   it('renders children', () => {
