@@ -5,9 +5,36 @@ import { Lightbox } from '@/features/images/components/Lightbox';
 import type { Image } from '@/features/images/types/image';
 
 const images: Image[] = [
-  { id: 1, title: 'Beach', s3_key: 'k1', album_id: 1, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1' },
-  { id: 2, title: 'Mountain', s3_key: 'k2', album_id: 1, created_at: '2026-06-15T00:00:00.000Z', url: 'https://url2' },
-  { id: 3, title: 'Forest', s3_key: 'k3', album_id: 1, created_at: '2026-03-20T00:00:00.000Z', url: 'https://url3' },
+  {
+    id: 1,
+    title: 'Beach',
+    description: 'A sunny beach',
+    tags: ['sea', 'sun'],
+    s3_key: 'k1',
+    album_id: 1,
+    created_at: '2026-01-01T00:00:00.000Z',
+    url: 'https://url1',
+  },
+  {
+    id: 2,
+    title: 'Mountain',
+    description: null,
+    tags: [],
+    s3_key: 'k2',
+    album_id: 1,
+    created_at: '2026-06-15T00:00:00.000Z',
+    url: 'https://url2',
+  },
+  {
+    id: 3,
+    title: 'Forest',
+    description: null,
+    tags: [],
+    s3_key: 'k3',
+    album_id: 1,
+    created_at: '2026-03-20T00:00:00.000Z',
+    url: 'https://url3',
+  },
 ];
 
 function renderLightbox(initialIndex = 0, onClose = vi.fn()) {
@@ -33,6 +60,23 @@ describe('Lightbox', () => {
     const meta = screen.getByTestId('lightbox-meta');
     expect(meta).toHaveTextContent('Beach');
     expect(meta).toHaveTextContent('Jan 1, 2026');
+  });
+
+  it('shows description when present', () => {
+    renderLightbox(0);
+    expect(screen.getByTestId('lightbox-meta')).toHaveTextContent('A sunny beach');
+  });
+
+  it('shows tags when present', () => {
+    renderLightbox(0);
+    expect(screen.getByTestId('lightbox-meta')).toHaveTextContent('sea, sun');
+  });
+
+  it('does not show description or tags for images without them', () => {
+    renderLightbox(1);
+    const meta = screen.getByTestId('lightbox-meta');
+    expect(meta).toHaveTextContent('Mountain');
+    expect(meta).not.toHaveTextContent('A sunny beach');
   });
 
   it('calls onClose when the overlay is clicked', async () => {

@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { Image } from '../types/image';
 
+// ---------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------
+
 type LightboxContextValue = {
   image: Image;
   hasNext: boolean;
@@ -17,6 +21,10 @@ function useLightboxContext() {
   if (!ctx) throw new Error('Lightbox sub-components must be used inside <Lightbox>');
   return ctx;
 }
+
+// ---------------------------------------------------------------------------
+// Root
+// ---------------------------------------------------------------------------
 
 type LightboxProps = {
   images: Image[];
@@ -65,6 +73,10 @@ function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps
   );
 }
 
+// ---------------------------------------------------------------------------
+// Overlay
+// ---------------------------------------------------------------------------
+
 function LightboxOverlay() {
   const { close } = useLightboxContext();
   return (
@@ -75,6 +87,10 @@ function LightboxOverlay() {
     />
   );
 }
+
+// ---------------------------------------------------------------------------
+// Image
+// ---------------------------------------------------------------------------
 
 function LightboxImage() {
   const { image } = useLightboxContext();
@@ -88,24 +104,40 @@ function LightboxImage() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Meta
+// ---------------------------------------------------------------------------
+
 function LightboxMeta() {
   const { image } = useLightboxContext();
+
   const uploadDate = new Date(image.created_at).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
     timeZone: 'UTC',
   });
+
   return (
     <div
       className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-center text-white"
       data-testid="lightbox-meta"
     >
       <p className="text-sm font-semibold">{image.title}</p>
+      {image.description && (
+        <p className="text-xs text-gray-300 mt-0.5">{image.description}</p>
+      )}
+      {image.tags.length > 0 && (
+        <p className="text-xs text-gray-400 mt-0.5">{image.tags.join(', ')}</p>
+      )}
       <p className="text-xs text-gray-300 mt-0.5">{uploadDate}</p>
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Nav
+// ---------------------------------------------------------------------------
 
 function LightboxNav() {
   const { goNext, goPrev, hasNext, hasPrev } = useLightboxContext();
@@ -133,6 +165,10 @@ function LightboxNav() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Close
+// ---------------------------------------------------------------------------
+
 function LightboxClose() {
   const { close } = useLightboxContext();
   return (
@@ -146,6 +182,10 @@ function LightboxClose() {
     </button>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Export
+// ---------------------------------------------------------------------------
 
 export const Lightbox = Object.assign(LightboxRoot, {
   Overlay: LightboxOverlay,

@@ -3,13 +3,16 @@ import { useAlbumImages } from '../hooks/useImages';
 import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from '@/components/Pagination';
 import { ImageCard } from './ImageCard';
+import { ImageEditModal } from './ImageEditModal';
 import { Lightbox } from './Lightbox';
+import type { Image } from '../types/image';
 
 type Props = { albumId: number };
 
 export function ImageGrid({ albumId }: Props) {
   const { page, goNext, goPrev, reset } = usePagination();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [editingImage, setEditingImage] = useState<Image | null>(null);
 
   useEffect(() => { reset(); }, [albumId]);
 
@@ -43,7 +46,11 @@ export function ImageGrid({ albumId }: Props) {
       <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6" data-testid="image-grid">
         {images.map((image, index) => (
           <li key={image.id}>
-            <ImageCard image={image} onClick={() => setSelectedIndex(index)} />
+            <ImageCard
+              image={image}
+              onClick={() => setSelectedIndex(index)}
+              onEdit={() => setEditingImage(image)}
+            />
           </li>
         ))}
       </ul>
@@ -67,6 +74,13 @@ export function ImageGrid({ albumId }: Props) {
           <Lightbox.Nav />
           <Lightbox.Close />
         </Lightbox>
+      )}
+
+      {editingImage && (
+        <ImageEditModal
+          image={editingImage}
+          onClose={() => setEditingImage(null)}
+        />
       )}
     </>
   );

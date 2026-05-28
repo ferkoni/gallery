@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import { CardEditButton } from '@/components/CardEditButton';
 import type { Image } from '../types/image';
 
 type Props = {
   image: Image;
   onClick?: () => void;
+  onEdit?: () => void;
 };
 
-export function ImageCard({ image, onClick }: Props) {
+export function ImageCard({ image, onClick, onEdit }: Props) {
   const [broken, setBroken] = useState(false);
 
   const uploadDate = new Date(image.created_at).toLocaleDateString('en-US', {
@@ -18,7 +20,7 @@ export function ImageCard({ image, onClick }: Props) {
 
   return (
     <div
-      className="bg-white rounded-xl shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      className="relative group bg-white rounded-xl shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
       data-testid={`image-card-${image.id}`}
       onClick={onClick}
     >
@@ -41,6 +43,13 @@ export function ImageCard({ image, onClick }: Props) {
         <p className="text-sm font-medium text-gray-700 truncate">{image.title}</p>
         <p className="text-xs text-gray-400 mt-0.5" data-testid={`image-date-${image.id}`}>{uploadDate}</p>
       </div>
+      {onEdit && (
+        <CardEditButton
+          onClick={onEdit}
+          aria-label="Edit image"
+          data-testid={`edit-image-button-${image.id}`}
+        />
+      )}
     </div>
   );
 }
