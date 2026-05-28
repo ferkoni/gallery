@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePagedListAlbum } from '@/features/albums/albums';
 import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from '@/components/Pagination';
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { AlbumEditModal } from '@/features/albums/components/AlbumEditModal';
 import { CardEditButton } from '@/components/CardEditButton';
 import type { Album } from '@/features/albums/types/album';
@@ -10,7 +10,6 @@ import type { Album } from '@/features/albums/types/album';
 export function AlbumListPage() {
   const { page, goNext, goPrev } = usePagination();
   const { data, isPending, isError } = usePagedListAlbum(page);
-  const navigate = useNavigate();
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
 
   if (isPending) return <p className="p-6 text-gray-500" data-testid="loading-label">Loading...</p>;
@@ -40,10 +39,14 @@ export function AlbumListPage() {
             {albums.map(album => (
               <li
                 key={album.id}
-                className="relative group bg-white rounded-xl shadow p-4 cursor-pointer"
+                className="relative group bg-white rounded-xl shadow p-4"
                 data-testid={`album-card-${album.id}`}
-                onClick={() => { navigate(`/albums/${album.id}`); }}
               >
+                <Link
+                  to={`/albums/${album.id}`}
+                  className="absolute inset-0 rounded-xl"
+                  aria-label={album.name}
+                />
                 <h2 className="font-semibold text-gray-800" data-testid={`album-name-${album.id}`}>{album.name}</h2>
                 {album.description && (
                   <p className="text-sm text-gray-500 mt-1" data-testid={`album-description-${album.id}`}>{album.description}</p>

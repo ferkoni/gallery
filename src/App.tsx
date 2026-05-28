@@ -5,15 +5,14 @@ import { WelcomePage } from "@/features/pages/WelcomePage.tsx";
 import { AlbumListPage } from "@/features/albums/pages/AlbumListPage.tsx";
 import { AlbumNewPage } from "@/features/albums/pages/AlbumNewPage.tsx";
 import { NavBar } from "@/components/NavBar.tsx";
-import { AuthContext } from "@/features/auth/context/AuthContext.tsx";
 import { ProtectedRoute } from "@/components/ProtectedRoute.tsx";
-import { useContext } from "react";
 import { S3CredentialsPage } from "@/features/settings/pages/S3CredentialsPage.tsx";
 import { AlbumDetailPage } from "@/features/images/pages/AlbumDetailPage.tsx";
 import { UploadQueue } from "@/features/images/components/UploadQueue.tsx";
+import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 
 function App() {
-  const { token } = useContext(AuthContext)!;
+  const { token } = useAuthContext();
   return (
     <>
       <NavBar />

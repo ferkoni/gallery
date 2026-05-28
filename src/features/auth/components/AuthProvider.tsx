@@ -1,25 +1,24 @@
 import { useState } from 'react';
 import { AuthContext } from "@/features/auth/context/AuthContext.tsx";
+import { getToken, setToken } from "@/lib/api/tokenStore";
 
 const S3_CREDENTIAL_KEY = 's3CredentialConfigured';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem('token')
-  );
+  const [token, setTokenState] = useState<string | null>(getToken);
   const [s3CredentialConfigured, setS3CredentialConfiguredState] = useState<boolean>(
     localStorage.getItem(S3_CREDENTIAL_KEY) === 'true'
   );
 
   const login = (newToken: string) => {
-    localStorage.setItem('token', newToken);
     setToken(newToken);
+    setTokenState(newToken);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem(S3_CREDENTIAL_KEY);
     setToken(null);
+    localStorage.removeItem(S3_CREDENTIAL_KEY);
+    setTokenState(null);
     setS3CredentialConfiguredState(false);
   };
 

@@ -1,18 +1,15 @@
-import { useContext, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '@/features/auth/context/AuthContext';
+import { useAuthContext } from '@/features/auth/hooks/useAuthContext';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 
 export function NavBar() {
-  const ctx = useContext(AuthContext);
+  const { token, logout } = useAuthContext();
   const navigate = useNavigate();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
 
   useOnClickOutside(settingsRef, () => setSettingsOpen(false));
-
-  if (!ctx) return null;
-  const { token, logout } = ctx;
 
   const handleLogout = () => {
     logout();

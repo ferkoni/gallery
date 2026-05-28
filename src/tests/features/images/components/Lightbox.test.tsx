@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
 import { Lightbox } from '@/features/images/components/Lightbox';
 import type { Image } from '@/features/images/types/image';
@@ -48,6 +48,10 @@ function renderLightbox(initialIndex = 0, onClose = vi.fn()) {
     </Lightbox>
   );
 }
+
+afterEach(() => {
+  document.body.style.overflow = '';
+});
 
 describe('Lightbox', () => {
   it('renders the initial image', () => {
@@ -128,5 +132,16 @@ describe('Lightbox', () => {
     expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url2');
     await userEvent.keyboard('{ArrowLeft}');
     expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url1');
+  });
+
+  it('sets body overflow to hidden while open', () => {
+    renderLightbox(0);
+    expect(document.body.style.overflow).toBe('hidden');
+  });
+
+  it('restores body overflow when unmounted', () => {
+    const { unmount } = renderLightbox(0);
+    unmount();
+    expect(document.body.style.overflow).toBe('');
   });
 });
