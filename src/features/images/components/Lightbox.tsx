@@ -30,10 +30,6 @@ type LightboxProps = {
 function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
-  useEffect(() => {
-    if (images.length === 0) onClose();
-  }, [images.length, onClose]);
-
   const safeIndex = Math.min(currentIndex, Math.max(0, images.length - 1));
   const image = images[safeIndex];
   const hasNext = safeIndex < images.length - 1;

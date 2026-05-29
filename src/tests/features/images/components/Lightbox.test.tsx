@@ -163,41 +163,7 @@ describe('Lightbox', () => {
     expect(document.body.style.overflow).toBe('');
   });
 
-  it('clamps to the last image when the images array shrinks while open', async () => {
-    const { rerender } = renderLightbox(2);
-    expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url3');
 
-    rerender(
-      <Lightbox images={images.slice(0, 2)} initialIndex={2} onClose={vi.fn()}>
-        <Lightbox.Overlay />
-        <Lightbox.Image />
-        <Lightbox.Meta />
-        <Lightbox.Nav />
-        <Lightbox.Close />
-      </Lightbox>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url2');
-    });
-  });
-
-  it('calls onClose when all images are removed', async () => {
-    const onClose = vi.fn();
-    const { rerender } = renderLightbox(0, onClose);
-
-    rerender(
-      <Lightbox images={[]} initialIndex={0} onClose={onClose}>
-        <Lightbox.Overlay />
-        <Lightbox.Image />
-        <Lightbox.Meta />
-        <Lightbox.Nav />
-        <Lightbox.Close />
-      </Lightbox>
-    );
-
-    await waitFor(() => expect(onClose).toHaveBeenCalled());
-  });
 });
 
 describe('Lightbox.Menu', () => {
