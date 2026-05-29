@@ -14,7 +14,7 @@ export function useUpload(albumId: number) {
     try {
       await uploadImage(file, title, albumId, (pct) => setProgress(id, pct));
       setStatus(id, 'done');
-      qc.invalidateQueries({ queryKey: ['images', albumId] });
+      qc.invalidateQueries({ queryKey: ['albums', albumId, 'images'] });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';
       setStatus(id, 'error', message);
