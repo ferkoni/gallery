@@ -27,7 +27,7 @@ export function ImageUploadButton({ albumId }: Props) {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+        className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer"
         data-testid="upload-button"
       >
         + Upload Images

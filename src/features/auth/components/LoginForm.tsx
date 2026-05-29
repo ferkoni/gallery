@@ -42,7 +42,7 @@ export function LoginForm() {
           <button
             type="submit"
             data-testid="submit-button"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer"
           >
             Login
             {/* v8 ignore next */}

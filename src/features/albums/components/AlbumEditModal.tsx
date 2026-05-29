@@ -91,7 +91,7 @@ export function AlbumEditModal({ album, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
               data-testid="edit-cancel-button"
             >
               Cancel
@@ -99,7 +99,7 @@ export function AlbumEditModal({ album, onClose }: Props) {
             <button
               type="submit"
               disabled={isPending}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition-colors"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer"
               data-testid="edit-save-button"
             >
               {isPending ? 'Saving…' : 'Save'}

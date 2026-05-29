@@ -132,4 +132,77 @@ describe('ImageEditModal', () => {
       expect(screen.getByRole('option', { name: 'Family' })).toBeInTheDocument();
     });
   });
+
+  it('starts in delete-confirmation view when initialMode is delete', () => {
+    mock.onGet('/api/albums').reply(200, { data: [] });
+    render(<ImageEditModal image={image} onClose={vi.fn()} initialMode="delete" />, {
+      wrapper: makeWrapper(),
+    });
+    expect(screen.getByTestId('delete-confirm-button')).toBeInTheDocument();
+    expect(screen.queryByTestId('edit-save-button')).not.toBeInTheDocument();
+  });
+
+  describe('delete flow', () => {
+    it('renders a delete button', () => {
+      mock.onGet('/api/albums').reply(200, { data: [] });
+      renderModal();
+      expect(screen.getByTestId('delete-image-button')).toBeInTheDocument();
+    });
+
+    it('shows the confirmation view when the delete button is clicked', async () => {
+      mock.onGet('/api/albums').reply(200, { data: [] });
+      renderModal();
+      await userEvent.click(screen.getByTestId('delete-image-button'));
+      expect(screen.getByTestId('delete-confirm-button')).toBeInTheDocument();
+      expect(screen.getByTestId('delete-cancel-button')).toBeInTheDocument();
+      expect(screen.queryByTestId('edit-save-button')).not.toBeInTheDocument();
+    });
+
+    it('returns to the edit view when cancel is clicked after opening delete from edit form', async () => {
+      mock.onGet('/api/albums').reply(200, { data: [] });
+      renderModal();
+      await userEvent.click(screen.getByTestId('delete-image-button'));
+      await userEvent.click(screen.getByTestId('delete-cancel-button'));
+      expect(screen.getByTestId('edit-save-button')).toBeInTheDocument();
+      expect(screen.queryByTestId('delete-confirm-button')).not.toBeInTheDocument();
+    });
+
+    it('calls onClose when cancel is clicked in confirmation opened via initialMode=delete', async () => {
+      mock.onGet('/api/albums').reply(200, { data: [] });
+      const onClose = vi.fn();
+      render(<ImageEditModal image={image} onClose={onClose} initialMode="delete" />, {
+        wrapper: makeWrapper(),
+      });
+      await userEvent.click(screen.getByTestId('delete-cancel-button'));
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(screen.queryByTestId('edit-save-button')).not.toBeInTheDocument();
+    });
+
+    it('calls DELETE and then onClose on confirmation', async () => {
+      mock.onGet('/api/albums').reply(200, { data: [] });
+      mock.onDelete('/api/images/1').reply(204);
+
+      const onClose = vi.fn();
+      renderModal(onClose);
+
+      await userEvent.click(screen.getByTestId('delete-image-button'));
+      await userEvent.click(screen.getByTestId('delete-confirm-button'));
+
+      await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+      expect(mock.history.delete[0].url).toBe('/api/images/1');
+    });
+
+    it('shows an error message when delete fails', async () => {
+      mock.onGet('/api/albums').reply(200, { data: [] });
+      mock.onDelete('/api/images/1').reply(500);
+
+      renderModal();
+      await userEvent.click(screen.getByTestId('delete-image-button'));
+      await userEvent.click(screen.getByTestId('delete-confirm-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('delete-image-error')).toBeInTheDocument();
+      });
+    });
+  });
 });
