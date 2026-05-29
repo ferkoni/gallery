@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import type { Image } from '../types/image';
 
 type Props = {
@@ -6,7 +6,7 @@ type Props = {
   onClick?: () => void;
 };
 
-export function ImageCard({ image, onClick }: Props) {
+export const ImageCard = memo(function ImageCard({ image, onClick }: Props) {
   const [broken, setBroken] = useState(false);
 
   const uploadDate = new Date(image.created_at).toLocaleDateString('en-US', {
@@ -34,6 +34,7 @@ export function ImageCard({ image, onClick }: Props) {
           src={image.url}
           alt={image.title}
           className="w-full h-48 object-cover"
+          loading="lazy"
           onError={() => setBroken(true)}
         />
       )}
@@ -43,4 +44,4 @@ export function ImageCard({ image, onClick }: Props) {
       </div>
     </div>
   );
-}
+});
