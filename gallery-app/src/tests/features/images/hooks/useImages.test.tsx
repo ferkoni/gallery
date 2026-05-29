@@ -1,9 +1,9 @@
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import MockAdapter from 'axios-mock-adapter';
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import apiClient from '@/lib/api/client';
-import { useImages, useUpdateImage } from '@/features/images/hooks/useImages';
+import { useImages, useUpdateImage, useDeleteImage } from '@/features/images/hooks/useImages';
 import type { Image } from '@/features/images/types/image';
 
 const mock = new MockAdapter(apiClient);
@@ -75,6 +75,70 @@ describe('useUpdateImage', () => {
     const { result } = renderHook(() => useUpdateImage(1), { wrapper: makeWrapper() });
 
     act(() => { result.current.mutate({ id: 1, data: { title: 'X' } }); });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+});
+
+describe('useDeleteImage', () => {
+  beforeEach(() => mock.reset());
+
+  it('sends DELETE to /api/images/:id and enters success state', async () => {
+    mock.onDelete('/api/images/1').reply(204);
+
+    const { result } = renderHook(() => useDeleteImage(), { wrapper: makeWrapper() });
+
+    act(() => { result.current.mutate({ id: 1, albumId: 1 }); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mock.history.delete[0].url).toBe('/api/images/1');
+  });
+
+  it('removes the image and updates meta in the cache optimistically', async () => {
+    mock.onDelete('/api/images/1').reply(204);
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    queryClient.setQueryData(['albums', 1, 'images', 1], {
+      data: [images[0]],
+      meta: { current_page: 1, total_pages: 1, total_count: 1, per_page: 25 },
+    });
+
+    const { result } = renderHook(() => useDeleteImage(), { wrapper });
+
+    act(() => { result.current.mutate({ id: 1, albumId: 1 }); });
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<{ data: typeof images; meta: { total_count: number } }>(
+        ['albums', 1, 'images', 1]
+      );
+      expect(cached?.data).toHaveLength(0);
+      expect(cached?.meta.total_count).toBe(0);
+    });
+  });
+
+  it('calls onSuccess callback after successful delete', async () => {
+    mock.onDelete('/api/images/1').reply(204);
+
+    const { result } = renderHook(() => useDeleteImage(), { wrapper: makeWrapper() });
+    const onSuccess = vi.fn();
+
+    act(() => { result.current.mutate({ id: 1, albumId: 1 }, { onSuccess }); });
+
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce());
+  });
+
+  it('enters error state when the server responds with an error', async () => {
+    mock.onDelete('/api/images/1').reply(500);
+
+    const { result } = renderHook(() => useDeleteImage(), { wrapper: makeWrapper() });
+
+    act(() => { result.current.mutate({ id: 1, albumId: 1 }); });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
   });

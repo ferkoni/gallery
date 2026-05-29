@@ -12,7 +12,7 @@ type Props = { albumId: number };
 export function ImageGrid({ albumId }: Props) {
   const { page, goNext, goPrev, reset } = usePagination();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [editingImage, setEditingImage] = useState<Image | null>(null);
+  const [modal, setModal] = useState<{ image: Image; mode: 'edit' | 'delete' } | null>(null);
 
   useEffect(() => { reset(); }, [albumId, reset]);
 
@@ -49,7 +49,6 @@ export function ImageGrid({ albumId }: Props) {
             <ImageCard
               image={image}
               onClick={() => setSelectedIndex(index)}
-              onEdit={() => setEditingImage(image)}
             />
           </li>
         ))}
@@ -73,13 +72,18 @@ export function ImageGrid({ albumId }: Props) {
           <Lightbox.Meta />
           <Lightbox.Nav />
           <Lightbox.Close />
+          <Lightbox.Menu
+            onEdit={(image) => { setSelectedIndex(null); setModal({ image, mode: 'edit' }); }}
+            onDelete={(image) => { setSelectedIndex(null); setModal({ image, mode: 'delete' }); }}
+          />
         </Lightbox>
       )}
 
-      {editingImage && (
+      {modal && (
         <ImageEditModal
-          image={editingImage}
-          onClose={() => setEditingImage(null)}
+          image={modal.image}
+          initialMode={modal.mode}
+          onClose={() => setModal(null)}
         />
       )}
     </>

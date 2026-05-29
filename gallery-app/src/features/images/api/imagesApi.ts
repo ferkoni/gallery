@@ -45,3 +45,8 @@ export async function updateImage(id: number, data: UpdateImagePayload): Promise
   const res = await apiClient.patch(`/api/images/${id}`, { image: data });
   return res.data.data.attributes;
 }
+
+// DELETE /api/images/:id
+export async function deleteImage(id: number): Promise<void> {
+  await apiClient.delete(`/api/images/${id}`);
+}
