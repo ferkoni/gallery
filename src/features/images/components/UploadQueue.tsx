@@ -19,7 +19,7 @@ export function UploadQueue() {
           <button
             type="button"
             onClick={clearCompleted}
-            className="text-xs text-blue-500 hover:text-blue-700 font-medium"
+            className="text-xs text-blue-500 hover:text-blue-700 font-medium cursor-pointer"
             data-testid="clear-done-button"
           >
             Clear done

@@ -1,9 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import type { Image } from '../types/image';
-
-// ---------------------------------------------------------------------------
-// Context
-// ---------------------------------------------------------------------------
 
 type LightboxContextValue = {
   image: Image;
@@ -22,10 +20,6 @@ function useLightboxContext() {
   return ctx;
 }
 
-// ---------------------------------------------------------------------------
-// Root
-// ---------------------------------------------------------------------------
-
 type LightboxProps = {
   images: Image[];
   initialIndex: number;
@@ -36,9 +30,10 @@ type LightboxProps = {
 function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
-  const image = images[currentIndex];
-  const hasNext = currentIndex < images.length - 1;
-  const hasPrev = currentIndex > 0;
+  const safeIndex = Math.min(currentIndex, Math.max(0, images.length - 1));
+  const image = images[safeIndex];
+  const hasNext = safeIndex < images.length - 1;
+  const hasPrev = safeIndex > 0;
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -61,8 +56,8 @@ function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps
         image,
         hasNext,
         hasPrev,
-        goNext: () => setCurrentIndex((i) => i + 1),
-        goPrev: () => setCurrentIndex((i) => i - 1),
+        goNext: () => setCurrentIndex(safeIndex + 1),
+        goPrev: () => setCurrentIndex(safeIndex - 1),
         close: onClose,
       }}
     >
@@ -78,10 +73,6 @@ function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps
   );
 }
 
-// ---------------------------------------------------------------------------
-// Overlay
-// ---------------------------------------------------------------------------
-
 function LightboxOverlay() {
   const { close } = useLightboxContext();
   return (
@@ -92,10 +83,6 @@ function LightboxOverlay() {
     />
   );
 }
-
-// ---------------------------------------------------------------------------
-// Image
-// ---------------------------------------------------------------------------
 
 function LightboxImage() {
   const { image } = useLightboxContext();
@@ -108,10 +95,6 @@ function LightboxImage() {
     />
   );
 }
-
-// ---------------------------------------------------------------------------
-// Meta
-// ---------------------------------------------------------------------------
 
 function LightboxMeta() {
   const { image } = useLightboxContext();
@@ -140,10 +123,6 @@ function LightboxMeta() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Nav
-// ---------------------------------------------------------------------------
-
 function LightboxNav() {
   const { goNext, goPrev, hasNext, hasPrev } = useLightboxContext();
   return (
@@ -151,7 +130,7 @@ function LightboxNav() {
       <button
         onClick={goPrev}
         disabled={!hasPrev}
-        className="absolute left-4 z-10 top-1/2 -translate-y-1/2 text-white text-3xl px-3 py-1 rounded-full bg-black/40 hover:bg-black/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="absolute left-4 z-10 top-1/2 -translate-y-1/2 text-white text-3xl px-3 py-1 rounded-full bg-black/40 hover:bg-black/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer"
         aria-label="Previous image"
         data-testid="lightbox-prev"
       >
@@ -160,7 +139,7 @@ function LightboxNav() {
       <button
         onClick={goNext}
         disabled={!hasNext}
-        className="absolute right-4 z-10 top-1/2 -translate-y-1/2 text-white text-3xl px-3 py-1 rounded-full bg-black/40 hover:bg-black/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        className="absolute right-4 z-10 top-1/2 -translate-y-1/2 text-white text-3xl px-3 py-1 rounded-full bg-black/40 hover:bg-black/60 disabled:opacity-20 disabled:cursor-not-allowed transition-colors cursor-pointer"
         aria-label="Next image"
         data-testid="lightbox-next"
       >
@@ -170,16 +149,12 @@ function LightboxNav() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Close
-// ---------------------------------------------------------------------------
-
 function LightboxClose() {
   const { close } = useLightboxContext();
   return (
     <button
       onClick={close}
-      className="absolute top-4 right-4 z-10 text-white text-2xl leading-none px-2 py-1 rounded-full bg-black/40 hover:bg-black/60 transition-colors"
+      className="absolute top-4 right-4 z-10 text-white text-2xl leading-none px-2 py-1 rounded-full bg-black/40 hover:bg-black/60 transition-colors cursor-pointer"
       aria-label="Close lightbox"
       data-testid="lightbox-close"
     >
@@ -188,9 +163,51 @@ function LightboxClose() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Export
-// ---------------------------------------------------------------------------
+type LightboxMenuProps = {
+  onEdit: (image: Image) => void;
+  onDelete: (image: Image) => void;
+};
+
+function LightboxMenu({ onEdit, onDelete }: LightboxMenuProps) {
+  const { image } = useLightboxContext();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useOnClickOutside(ref, () => setOpen(false));
+
+  return (
+    <div ref={ref} className="absolute top-4 right-16 z-10" data-testid="lightbox-menu">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="text-white text-xl leading-none px-2 py-1 rounded-full bg-black/40 hover:bg-black/60 transition-colors cursor-pointer"
+        aria-label="Image options"
+        data-testid="lightbox-menu-button"
+      >
+        ⋮
+      </button>
+      {open && (
+        <div
+          className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg overflow-hidden min-w-[120px]"
+          data-testid="lightbox-menu-dropdown"
+        >
+          <button
+            onClick={() => { setOpen(false); onEdit(image); }}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+            data-testid="lightbox-menu-edit"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => { setOpen(false); onDelete(image); }}
+            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+            data-testid="lightbox-menu-delete"
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const Lightbox = Object.assign(LightboxRoot, {
   Overlay: LightboxOverlay,
@@ -198,4 +215,5 @@ export const Lightbox = Object.assign(LightboxRoot, {
   Meta: LightboxMeta,
   Nav: LightboxNav,
   Close: LightboxClose,
+  Menu: LightboxMenu,
 });

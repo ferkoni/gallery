@@ -77,7 +77,7 @@ export function AlbumForm({
             type="button"
             onClick={onCancel}
             data-testid="cancel-button"
-            className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -85,7 +85,7 @@ export function AlbumForm({
             type="submit"
             disabled={isPending}
             data-testid="submit-button"
-            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition-colors"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer"
           >
             {isPending ? pendingLabel : submitLabel}
           </button>

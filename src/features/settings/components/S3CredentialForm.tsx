@@ -115,7 +115,7 @@ export function S3CredentialForm({
               disabled={isDeleting}
               onClick={onDelete}
               data-testid="delete-button"
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg"
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg cursor-pointer"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </button>
@@ -124,7 +124,7 @@ export function S3CredentialForm({
             type="submit"
             disabled={isPending}
             data-testid="submit-button"
-            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition-colors"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer"
           >
             {isPending ? (configured ? "Updating..." : "Adding...") : (configured ? "Update" : "Add")}
           </button>

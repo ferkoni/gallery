@@ -8,8 +8,11 @@ import type { PaginatedResponse } from '@/lib/api/createCrudApi';
 
 vi.mock('@/features/images/hooks/useImages', () => ({
   useAlbumImages: vi.fn(),
-  useUpdateImage: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false, error: null })),
+  useUpdateImage: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false, isSuccess: false })),
+  useDeleteImage: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false })),
 }));
+
+vi.mock('@/hooks/useOnClickOutside', () => ({ useOnClickOutside: vi.fn() }));
 
 vi.mock('@/features/albums/albums', () => ({
   useListAlbum: vi.fn(() => ({ data: [] })),
@@ -89,25 +92,33 @@ describe('ImageGrid', () => {
     expect(screen.queryByTestId('lightbox')).not.toBeInTheDocument();
   });
 
-  it('opens the edit modal when the edit button is clicked', async () => {
+  it('opens the edit modal from the lightbox menu', async () => {
     mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
     render(<ImageGrid albumId={1} />);
-    await userEvent.click(screen.getByTestId('edit-image-button-1'));
+    await userEvent.click(screen.getByTestId('image-card-1'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-edit'));
+    expect(screen.queryByTestId('lightbox')).not.toBeInTheDocument();
     expect(screen.getByTestId('image-edit-modal')).toBeInTheDocument();
     expect(screen.getByTestId('edit-title-input')).toHaveValue('Beach');
   });
 
-  it('does not open the lightbox when the edit button is clicked', async () => {
+  it('opens the delete confirmation from the lightbox menu', async () => {
     mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
     render(<ImageGrid albumId={1} />);
-    await userEvent.click(screen.getByTestId('edit-image-button-1'));
+    await userEvent.click(screen.getByTestId('image-card-1'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-delete'));
     expect(screen.queryByTestId('lightbox')).not.toBeInTheDocument();
+    expect(screen.getByTestId('delete-confirm-button')).toBeInTheDocument();
   });
 
   it('closes the edit modal when the cancel button is clicked', async () => {
     mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
     render(<ImageGrid albumId={1} />);
-    await userEvent.click(screen.getByTestId('edit-image-button-1'));
+    await userEvent.click(screen.getByTestId('image-card-1'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-edit'));
     await userEvent.click(screen.getByTestId('edit-cancel-button'));
     expect(screen.queryByTestId('image-edit-modal')).not.toBeInTheDocument();
   });
