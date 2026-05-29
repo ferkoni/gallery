@@ -18,6 +18,9 @@ export function ImageGrid({ albumId }: Props) {
 
   const { data, isPending, isError } = useAlbumImages(albumId, page);
 
+  const images = useMemo(() => data?.data ?? [], [data?.data]);
+  const clickHandlers = useMemo(() => images.map((_, i) => () => setSelectedIndex(i)), [images]);
+
   if (isPending) {
     return (
       <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6" data-testid="image-grid-skeleton">
@@ -30,9 +33,7 @@ export function ImageGrid({ albumId }: Props) {
 
   if (isError) return <p className="text-red-500" data-testid="images-error">Failed to load images.</p>;
 
-  const images = data.data;
   const meta = data.meta;
-  const clickHandlers = useMemo(() => images.map((_, i) => () => setSelectedIndex(i)), [images]);
 
   if (images.length === 0) {
     return (
