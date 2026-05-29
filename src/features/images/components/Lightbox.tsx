@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import type { Image } from '../types/image';
@@ -38,9 +39,8 @@ function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   useEffect(() => {
-    if (images.length === 0) { onClose(); return; }
-    if (currentIndex >= images.length) setCurrentIndex(images.length - 1);
-  }, [images.length, currentIndex, onClose]);
+    if (images.length === 0) onClose();
+  }, [images.length, onClose]);
 
   const safeIndex = Math.min(currentIndex, Math.max(0, images.length - 1));
   const image = images[safeIndex];
