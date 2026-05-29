@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAlbumImages } from '../hooks/useImages';
 import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from '@/components/Pagination';
@@ -32,6 +32,7 @@ export function ImageGrid({ albumId }: Props) {
 
   const images = data.data;
   const meta = data.meta;
+  const clickHandlers = useMemo(() => images.map((_, i) => () => setSelectedIndex(i)), [images]);
 
   if (images.length === 0) {
     return (
@@ -48,7 +49,7 @@ export function ImageGrid({ albumId }: Props) {
           <li key={image.id}>
             <ImageCard
               image={image}
-              onClick={() => setSelectedIndex(index)}
+              onClick={clickHandlers[index]}
             />
           </li>
         ))}
