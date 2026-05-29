@@ -24,9 +24,10 @@ const file = new File(['pixels'], 'photo.jpg', { type: 'image/jpeg' });
 
 function makeWrapper() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return ({ children }: { children: React.ReactNode }) => (
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+  return { queryClient, wrapper };
 }
 
 describe('useUpload', () => {
@@ -41,7 +42,8 @@ describe('useUpload', () => {
       return image;
     });
 
-    const { result } = renderHook(() => useUpload(1), { wrapper: makeWrapper() });
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useUpload(1), { wrapper });
     await act(() => result.current.upload(file, 'Beach'));
 
     const item = useUploadStore.getState().queue[0];
@@ -50,10 +52,35 @@ describe('useUpload', () => {
     expect(item.albumId).toBe(1);
   });
 
+  it('invalidates the correct query key on success', async () => {
+    mockUploadImage.mockResolvedValue(image);
+
+    const { queryClient, wrapper } = makeWrapper();
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useUpload(1), { wrapper });
+    await act(() => result.current.upload(file, 'Beach'));
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['albums', 1, 'images'] });
+  });
+
+  it('does not invalidate queries when upload fails', async () => {
+    mockUploadImage.mockRejectedValue(new Error('Network error'));
+
+    const { queryClient, wrapper } = makeWrapper();
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useUpload(1), { wrapper });
+    await act(() => result.current.upload(file, 'Beach'));
+
+    expect(invalidate).not.toHaveBeenCalled();
+  });
+
   it('sets status to error with message when uploadImage rejects', async () => {
     mockUploadImage.mockRejectedValue(new Error('Network error'));
 
-    const { result } = renderHook(() => useUpload(1), { wrapper: makeWrapper() });
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useUpload(1), { wrapper });
     await act(() => result.current.upload(file, 'Beach'));
 
     const item = useUploadStore.getState().queue[0];
