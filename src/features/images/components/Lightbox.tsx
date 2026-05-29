@@ -3,10 +3,6 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import type { Image } from '../types/image';
 
-// ---------------------------------------------------------------------------
-// Context
-// ---------------------------------------------------------------------------
-
 type LightboxContextValue = {
   image: Image;
   hasNext: boolean;
@@ -23,10 +19,6 @@ function useLightboxContext() {
   if (!ctx) throw new Error('Lightbox sub-components must be used inside <Lightbox>');
   return ctx;
 }
-
-// ---------------------------------------------------------------------------
-// Root
-// ---------------------------------------------------------------------------
 
 type LightboxProps = {
   images: Image[];
@@ -85,10 +77,6 @@ function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps
   );
 }
 
-// ---------------------------------------------------------------------------
-// Overlay
-// ---------------------------------------------------------------------------
-
 function LightboxOverlay() {
   const { close } = useLightboxContext();
   return (
@@ -99,10 +87,6 @@ function LightboxOverlay() {
     />
   );
 }
-
-// ---------------------------------------------------------------------------
-// Image
-// ---------------------------------------------------------------------------
 
 function LightboxImage() {
   const { image } = useLightboxContext();
@@ -115,10 +99,6 @@ function LightboxImage() {
     />
   );
 }
-
-// ---------------------------------------------------------------------------
-// Meta
-// ---------------------------------------------------------------------------
 
 function LightboxMeta() {
   const { image } = useLightboxContext();
@@ -147,10 +127,6 @@ function LightboxMeta() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Nav
-// ---------------------------------------------------------------------------
-
 function LightboxNav() {
   const { goNext, goPrev, hasNext, hasPrev } = useLightboxContext();
   return (
@@ -177,10 +153,6 @@ function LightboxNav() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Close
-// ---------------------------------------------------------------------------
-
 function LightboxClose() {
   const { close } = useLightboxContext();
   return (
@@ -194,10 +166,6 @@ function LightboxClose() {
     </button>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Menu
-// ---------------------------------------------------------------------------
 
 type LightboxMenuProps = {
   onEdit: (image: Image) => void;
@@ -244,10 +212,6 @@ function LightboxMenu({ onEdit, onDelete }: LightboxMenuProps) {
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Export
-// ---------------------------------------------------------------------------
 
 export const Lightbox = Object.assign(LightboxRoot, {
   Overlay: LightboxOverlay,
