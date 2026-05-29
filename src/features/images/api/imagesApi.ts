@@ -19,6 +19,12 @@ export async function fetchImages(albumId?: number): Promise<Image[]> {
   return res.data.data.map((item: { attributes: Image }) => item.attributes);
 }
 
+// GET /api/images?favorited=true
+export async function fetchFavoriteImages(): Promise<Image[]> {
+  const res = await apiClient.get('/api/images', { params: { favorited: true } });
+  return res.data.data.map((item: { attributes: Image }) => item.attributes);
+}
+
 // POST /api/images  (multipart/form-data)
 export async function uploadImage(
   file: File,

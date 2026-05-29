@@ -4,6 +4,10 @@ import { userEvent } from '@testing-library/user-event';
 import { ImageCard } from '@/features/images/components/ImageCard';
 import type { Image } from '@/features/images/types/image';
 
+vi.mock('@/features/images/hooks/useImages', () => ({
+  useFavoriteImage: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+}));
+
 const image: Image = {
   id: 1,
   title: 'Beach',
@@ -11,6 +15,7 @@ const image: Image = {
   tags: [],
   s3_key: 'albums/1/uuid/photo.jpg',
   album_id: 1,
+  favorited: false,
   created_at: '2026-01-01T00:00:00.000Z',
   url: 'https://my-bucket.s3.amazonaws.com/albums/1/uuid/photo.jpg?sig=abc',
 };
@@ -52,4 +57,20 @@ describe('ImageCard', () => {
     expect(screen.getByTestId('image-card-1')).toBeInTheDocument();
   });
 
+  it('renders heart button with add-to-favorites label when not favorited', () => {
+    render(<ImageCard image={image} />);
+    expect(screen.getByRole('button', { name: /add to favorites/i })).toBeInTheDocument();
+  });
+
+  it('renders heart button with remove-from-favorites label when favorited', () => {
+    render(<ImageCard image={{ ...image, favorited: true }} />);
+    expect(screen.getByRole('button', { name: /remove from favorites/i })).toBeInTheDocument();
+  });
+
+  it('clicking the heart button does not trigger the card onClick', async () => {
+    const onClick = vi.fn();
+    render(<ImageCard image={image} onClick={onClick} />);
+    await userEvent.click(screen.getByTestId('favorite-button'));
+    expect(onClick).not.toHaveBeenCalled();
+  });
 });

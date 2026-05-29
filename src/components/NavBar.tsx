@@ -24,6 +24,7 @@ export function NavBar() {
         {token ? (
           <>
             <Link to="/albums" className="text-gray-600 hover:text-gray-900">Albums</Link>
+            <Link to="/favorites" className="text-gray-600 hover:text-gray-900">Favorites</Link>
 
             <div ref={settingsRef} className="relative">
               <button

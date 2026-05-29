@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import MockAdapter from 'axios-mock-adapter';
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import apiClient from '@/lib/api/client';
-import { useImages, useUpdateImage, useDeleteImage } from '@/features/images/hooks/useImages';
+import { useImages, useUpdateImage, useDeleteImage, useFavoriteImage } from '@/features/images/hooks/useImages';
 import type { Image } from '@/features/images/types/image';
 
 const mock = new MockAdapter(apiClient);
@@ -18,6 +18,7 @@ const images: Image[] = [
     tags: [],
     s3_key: 'albums/1/uuid/photo.jpg',
     album_id: 1,
+    favorited: false,
     created_at: '2026-01-01T00:00:00.000Z',
     url: 'https://signed-url',
   },
@@ -141,5 +142,77 @@ describe('useDeleteImage', () => {
     act(() => { result.current.mutate({ id: 1, albumId: 1 }); });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+});
+
+describe('useFavoriteImage', () => {
+  beforeEach(() => mock.reset());
+
+  it('patches the image with the given favorited value', async () => {
+    const updated: Image = { ...images[0], favorited: true };
+    mock.onPatch('/api/images/1').reply(200, { data: { attributes: updated } });
+
+    const { result } = renderHook(() => useFavoriteImage(), { wrapper: makeWrapper() });
+
+    act(() => { result.current.mutate({ id: 1, favorited: true }); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+
+  it('enters error state when the server responds with an error', async () => {
+    mock.onPatch('/api/images/1').reply(500);
+
+    const { result } = renderHook(() => useFavoriteImage(), { wrapper: makeWrapper() });
+
+    act(() => { result.current.mutate({ id: 1, favorited: true }); });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+
+  it('optimistically flips favorited in album image pages', async () => {
+    mock.onPatch('/api/images/1').reply(200, { data: { attributes: { ...images[0], favorited: true } } });
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    queryClient.setQueryData(['albums', 1, 'images', 1], {
+      data: [images[0]],
+      meta: { current_page: 1, total_pages: 1, total_count: 1, per_page: 25 },
+    });
+
+    const { result } = renderHook(() => useFavoriteImage(), { wrapper });
+
+    act(() => { result.current.mutate({ id: 1, favorited: true }); });
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<{ data: Image[] }>(['albums', 1, 'images', 1]);
+      expect(cached?.data[0].favorited).toBe(true);
+    });
+  });
+
+  it('optimistically removes image from favorites cache when unfavoriting', async () => {
+    mock.onPatch('/api/images/1').reply(200, { data: { attributes: { ...images[0], favorited: false } } });
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    queryClient.setQueryData(['images', 'favorites'], images);
+
+    const { result } = renderHook(() => useFavoriteImage(), { wrapper });
+
+    act(() => { result.current.mutate({ id: 1, favorited: false }); });
+
+    await waitFor(() => {
+      const cached = queryClient.getQueryData<Image[]>(['images', 'favorites']);
+      expect(cached).toHaveLength(0);
+    });
   });
 });
