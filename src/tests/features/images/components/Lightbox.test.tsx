@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
 import { Lightbox } from '@/features/images/components/Lightbox';
@@ -45,6 +45,24 @@ function renderLightbox(initialIndex = 0, onClose = vi.fn()) {
       <Lightbox.Meta />
       <Lightbox.Nav />
       <Lightbox.Close />
+    </Lightbox>
+  );
+}
+
+function renderLightboxWithMenu(
+  initialIndex = 0,
+  onClose = vi.fn(),
+  onEdit = vi.fn(),
+  onDelete = vi.fn()
+) {
+  return render(
+    <Lightbox images={images} initialIndex={initialIndex} onClose={onClose}>
+      <Lightbox.Overlay />
+      <Lightbox.Image />
+      <Lightbox.Meta />
+      <Lightbox.Nav />
+      <Lightbox.Close />
+      <Lightbox.Menu onEdit={onEdit} onDelete={onDelete} />
     </Lightbox>
   );
 }
@@ -143,5 +161,95 @@ describe('Lightbox', () => {
     const { unmount } = renderLightbox(0);
     unmount();
     expect(document.body.style.overflow).toBe('');
+  });
+
+  it('clamps to the last image when the images array shrinks while open', async () => {
+    const { rerender } = renderLightbox(2);
+    expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url3');
+
+    rerender(
+      <Lightbox images={images.slice(0, 2)} initialIndex={2} onClose={vi.fn()}>
+        <Lightbox.Overlay />
+        <Lightbox.Image />
+        <Lightbox.Meta />
+        <Lightbox.Nav />
+        <Lightbox.Close />
+      </Lightbox>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url2');
+    });
+  });
+
+  it('calls onClose when all images are removed', async () => {
+    const onClose = vi.fn();
+    const { rerender } = renderLightbox(0, onClose);
+
+    rerender(
+      <Lightbox images={[]} initialIndex={0} onClose={onClose}>
+        <Lightbox.Overlay />
+        <Lightbox.Image />
+        <Lightbox.Meta />
+        <Lightbox.Nav />
+        <Lightbox.Close />
+      </Lightbox>
+    );
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+});
+
+describe('Lightbox.Menu', () => {
+  it('renders the three-dots menu button', () => {
+    renderLightboxWithMenu();
+    expect(screen.getByTestId('lightbox-menu-button')).toBeInTheDocument();
+  });
+
+  it('opens the dropdown when the menu button is clicked', async () => {
+    renderLightboxWithMenu();
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    expect(screen.getByTestId('lightbox-menu-dropdown')).toBeInTheDocument();
+  });
+
+  it('closes the dropdown when the menu button is clicked again', async () => {
+    renderLightboxWithMenu();
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    expect(screen.queryByTestId('lightbox-menu-dropdown')).not.toBeInTheDocument();
+  });
+
+  it('closes the dropdown when clicking outside', async () => {
+    renderLightboxWithMenu();
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByTestId('lightbox-menu-dropdown')).not.toBeInTheDocument();
+  });
+
+  it('calls onEdit with the current image and closes the dropdown', async () => {
+    const onEdit = vi.fn();
+    renderLightboxWithMenu(0, vi.fn(), onEdit);
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-edit'));
+    expect(onEdit).toHaveBeenCalledWith(images[0]);
+    expect(screen.queryByTestId('lightbox-menu-dropdown')).not.toBeInTheDocument();
+  });
+
+  it('calls onDelete with the current image and closes the dropdown', async () => {
+    const onDelete = vi.fn();
+    renderLightboxWithMenu(0, vi.fn(), vi.fn(), onDelete);
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-delete'));
+    expect(onDelete).toHaveBeenCalledWith(images[0]);
+    expect(screen.queryByTestId('lightbox-menu-dropdown')).not.toBeInTheDocument();
+  });
+
+  it('passes the current image after navigation', async () => {
+    const onEdit = vi.fn();
+    renderLightboxWithMenu(0, vi.fn(), onEdit);
+    await userEvent.click(screen.getByTestId('lightbox-next'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-button'));
+    await userEvent.click(screen.getByTestId('lightbox-menu-edit'));
+    expect(onEdit).toHaveBeenCalledWith(images[1]);
   });
 });

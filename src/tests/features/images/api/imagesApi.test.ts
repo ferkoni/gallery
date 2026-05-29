@@ -2,7 +2,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { afterAll, beforeEach, describe, it, expect, vi } from 'vitest';
 import type { AxiosRequestConfig, AxiosProgressEvent } from 'axios';
 import apiClient from '@/lib/api/client';
-import { fetchImages, uploadImage, updateImage } from '@/features/images/api/imagesApi';
+import { fetchImages, uploadImage, updateImage, deleteImage } from '@/features/images/api/imagesApi';
 import type { Image } from '@/features/images/types/image';
 
 const mock = new MockAdapter(apiClient);
@@ -116,5 +116,23 @@ describe('updateImage', () => {
     expect(JSON.parse(mock.history.patch[0].data as string)).toEqual({
       image: { description: 'Sunny day', album_id: 2 },
     });
+  });
+});
+
+describe('deleteImage', () => {
+  beforeEach(() => mock.reset());
+
+  it('sends DELETE to /api/images/:id', async () => {
+    mock.onDelete('/api/images/1').reply(204);
+
+    await deleteImage(1);
+
+    expect(mock.history.delete[0].url).toBe('/api/images/1');
+  });
+
+  it('throws when the server responds with an error', async () => {
+    mock.onDelete('/api/images/1').reply(500);
+
+    await expect(deleteImage(1)).rejects.toThrow();
   });
 });

@@ -29,7 +29,7 @@ export function NavBar() {
               <button
                 data-testid="settings-menu-button"
                 onClick={() => setSettingsOpen(prev => !prev)}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-gray-900 cursor-pointer"
               >
                 Settings
               </button>
@@ -52,7 +52,7 @@ export function NavBar() {
 
             <button
               onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+              className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer"
             >
               Logout
             </button>
