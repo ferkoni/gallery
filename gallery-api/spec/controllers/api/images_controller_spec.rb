@@ -5,7 +5,8 @@ RSpec.describe Api::ImagesController, type: :controller do
   let(:other_user) { create(:user) }
   let(:album) { create(:album, user: user) }
   let(:presigned_url) { "https://my-bucket.s3.us-east-1.amazonaws.com/albums/1/uuid/photo.jpg?sig=abc" }
-  let(:credential) { instance_double(S3Credential, persisted?: true, presigned_get_url: presigned_url) }
+  let(:presigner) { instance_double(Aws::S3::Presigner, presigned_url: presigned_url) }
+  let(:credential) { instance_double(S3Credential, persisted?: true, presigner: presigner, bucket: "my-bucket") }
 
   before { allow_any_instance_of(User).to receive(:s3_credential).and_return(credential) }
 

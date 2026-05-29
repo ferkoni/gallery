@@ -64,7 +64,7 @@ class Api::ImagesController < ApplicationController
   # album raises RecordNotFound (→ 404) if the album doesn't exist or belongs
   # to another user, so no images from other users can ever leak.
   def resources
-    scope = Image.with_user(current_user).order(created_at: :desc)
+    scope = Image.with_user(current_user).includes(:album).order(created_at: :desc)
     scope = scope.where(album_id: album.id) if album
     scope.page(params[:page])
   end
@@ -77,7 +77,8 @@ class Api::ImagesController < ApplicationController
   # Passes the presigned-URL credential to the serializer.
   # Presigning is a local crypto operation — no S3 network call is made per image.
   def serializer_params
-    { credential: current_user.s3_credential }
+    credential = current_user.s3_credential
+    { presigner: credential.presigner, bucket: credential.bucket }
   end
 
   def resource_class = Image

@@ -195,6 +195,22 @@ RSpec.describe S3Credential, type: :model do
     end
   end
 
+  describe "#presigner" do
+    let(:credential) { build(:s3_credential) }
+    let(:client) { instance_double(Aws::S3::Client) }
+
+    before { allow(credential).to receive(:s3_client).and_return(client) }
+
+    it "returns an Aws::S3::Presigner" do
+      expect(Aws::S3::Presigner).to receive(:new).with(client: client).and_call_original
+      expect(credential.presigner).to be_a(Aws::S3::Presigner)
+    end
+
+    it "returns a new instance on each call" do
+      expect(credential.presigner).not_to equal(credential.presigner)
+    end
+  end
+
   describe "#presigned_get_url" do
     let(:credential) { build(:s3_credential) }
     let(:client) { instance_double(Aws::S3::Client) }

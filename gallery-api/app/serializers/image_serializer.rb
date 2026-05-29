@@ -3,6 +3,6 @@ class ImageSerializer
   attributes :id, :title, :description, :tags, :album_id, :created_at
 
   attribute :url do |object, params|
-    params[:credential]&.presigned_get_url(object.s3_key)
+    params[:presigner]&.presigned_url(:get_object, bucket: params[:bucket], key: object.s3_key, expires_in: 3600)
   end
 end

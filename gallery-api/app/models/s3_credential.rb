@@ -36,8 +36,15 @@ class S3Credential < ApplicationRecord
   # Used to serve images from private buckets — the URL is short-lived and
   # scoped to a single object, so no bucket-wide access is granted.
   def presigned_get_url(key, expires_in: 3600)
-    signer = Aws::S3::Presigner.new(client: s3_client)
-    signer.presigned_url(:get_object, bucket: bucket, key: key, expires_in: expires_in)
+    presigner.presigned_url(:get_object, bucket: bucket, key: key, expires_in: expires_in)
+  end
+
+  # Returns a presigner bound to this credential's S3 client.
+  # Callers that need to sign many URLs (e.g. a serializer over a page of
+  # images) should call this once and reuse the instance rather than going
+  # through presigned_get_url, which builds a new client on every call.
+  def presigner
+    Aws::S3::Presigner.new(client: s3_client)
   end
 
   # Deletes an object from S3, swallowing errors.

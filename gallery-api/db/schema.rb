@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_26_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_29_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -34,6 +34,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_26_000000) do
     t.bigint "user_id", null: false
     t.index ["album_id"], name: "index_images_on_album_id"
     t.index ["s3_key"], name: "index_images_on_s3_key", unique: true
+    t.index ["user_id", "album_id"], name: "index_images_on_user_id_and_album_id"
     t.index ["user_id"], name: "index_images_on_user_id"
   end
 
