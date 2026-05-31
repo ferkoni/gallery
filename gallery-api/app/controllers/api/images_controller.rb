@@ -66,6 +66,7 @@ class Api::ImagesController < ApplicationController
   def resources
     scope = Image.with_user(current_user).includes(:album).order(created_at: :desc)
     scope = scope.where(album_id: album.id) if album
+    scope = scope.where(favorited: true) if params[:favorited] == "true"
     scope.page(params[:page])
   end
 
@@ -83,6 +84,6 @@ class Api::ImagesController < ApplicationController
 
   def resource_class = Image
   def serializer = ImageSerializer
-  def resource_params = params.require(:image).permit(:title, :description, :album_id, tags: [])
+  def resource_params = params.require(:image).permit(:title, :description, :album_id, :favorited, tags: [])
   def new_resource_params = resource_params.merge(user: current_user)
 end
