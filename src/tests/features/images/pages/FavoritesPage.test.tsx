@@ -2,7 +2,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
 import { FavoritesPage } from '@/features/images/pages/FavoritesPage';
-import { useFavoriteImages, useFavoriteImage } from '@/features/images/hooks/useImages';
+import { useFavoriteImages } from '@/features/images/hooks/useImages';
 import type { Image } from '@/features/images/types/image';
 
 const { mockToggleFavorite } = vi.hoisted(() => ({
