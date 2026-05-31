@@ -5,6 +5,7 @@ export type Image = {
   tags: string[];
   s3_key: string;
   album_id: number;
+  favorited: boolean;
   created_at: string;
   url: string; // 1-hour presigned GET URL, embedded by the serializer
 };
@@ -14,4 +15,5 @@ export type UpdateImagePayload = {
   description?: string;
   tags?: string[];
   album_id?: number;
+  favorited?: boolean;
 };

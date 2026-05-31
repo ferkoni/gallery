@@ -2,7 +2,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { afterAll, beforeEach, describe, it, expect, vi } from 'vitest';
 import type { AxiosRequestConfig, AxiosProgressEvent } from 'axios';
 import apiClient from '@/lib/api/client';
-import { fetchImages, uploadImage, updateImage, deleteImage } from '@/features/images/api/imagesApi';
+import { fetchImages, fetchFavoriteImages, uploadImage, updateImage, deleteImage } from '@/features/images/api/imagesApi';
 import type { Image } from '@/features/images/types/image';
 
 const mock = new MockAdapter(apiClient);
@@ -14,6 +14,7 @@ const image: Image = {
   tags: [],
   s3_key: 'albums/1/uuid/photo.jpg',
   album_id: 1,
+  favorited: false,
   created_at: '2026-01-01T00:00:00.000Z',
   url: 'https://my-bucket.s3.us-east-1.amazonaws.com/albums/1/uuid/photo.jpg?sig=abc',
 };
@@ -39,6 +40,19 @@ describe('fetchImages', () => {
 
     expect(result).toEqual([image]);
     expect(mock.history.get[0].params).toEqual({});
+  });
+});
+
+describe('fetchFavoriteImages', () => {
+  beforeEach(() => mock.reset());
+
+  it('fetches images with favorited=true param', async () => {
+    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }] });
+
+    const result = await fetchFavoriteImages();
+
+    expect(result).toEqual([image]);
+    expect(mock.history.get[0].params).toEqual({ favorited: true });
   });
 });
 

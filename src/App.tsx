@@ -8,6 +8,7 @@ import { NavBar } from "@/components/NavBar.tsx";
 import { ProtectedRoute } from "@/components/ProtectedRoute.tsx";
 import { S3CredentialsPage } from "@/features/settings/pages/S3CredentialsPage.tsx";
 import { AlbumDetailPage } from "@/features/images/pages/AlbumDetailPage.tsx";
+import { FavoritesPage } from "@/features/images/pages/FavoritesPage.tsx";
 import { UploadQueue } from "@/features/images/components/UploadQueue.tsx";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 
@@ -25,6 +26,7 @@ function App() {
           <Route path="/albums" element={<AlbumListPage />} />
           <Route path="/albums/new" element={<AlbumNewPage />} />
           <Route path="/albums/:id" element={<AlbumDetailPage />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/settings/s3_credential" element={<S3CredentialsPage />} />
         </Route>
       </Routes>
