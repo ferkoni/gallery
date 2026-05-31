@@ -17,6 +17,7 @@ const image: Image = {
   tags: ['sea', 'sun'],
   s3_key: 'k1',
   album_id: 1,
+  favorited: false,
   created_at: '2026-01-01T00:00:00.000Z',
   url: 'https://url1',
 };
