@@ -73,4 +73,18 @@ describe('ImageCard', () => {
     await userEvent.click(screen.getByTestId('favorite-button'));
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  it('calls onUnfavorite with the image when un-favoriting a favorited image', async () => {
+    const onUnfavorite = vi.fn();
+    render(<ImageCard image={{ ...image, favorited: true }} onUnfavorite={onUnfavorite} />);
+    await userEvent.click(screen.getByTestId('favorite-button'));
+    expect(onUnfavorite).toHaveBeenCalledWith(expect.objectContaining({ id: image.id }));
+  });
+
+  it('does not call onUnfavorite when favoriting an un-favorited image', async () => {
+    const onUnfavorite = vi.fn();
+    render(<ImageCard image={image} onUnfavorite={onUnfavorite} />);
+    await userEvent.click(screen.getByTestId('favorite-button'));
+    expect(onUnfavorite).not.toHaveBeenCalled();
+  });
 });

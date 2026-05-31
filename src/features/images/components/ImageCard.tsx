@@ -5,9 +5,10 @@ import { useFavoriteImage } from '../hooks/useImages';
 type Props = {
   image: Image;
   onClick?: () => void;
+  onUnfavorite?: (image: Image) => void;
 };
 
-export const ImageCard = memo(function ImageCard({ image, onClick }: Props) {
+export const ImageCard = memo(function ImageCard({ image, onClick, onUnfavorite }: Props) {
   const [broken, setBroken] = useState(false);
   const { mutate: toggleFavorite, isPending } = useFavoriteImage();
 
@@ -27,8 +28,13 @@ export const ImageCard = memo(function ImageCard({ image, onClick }: Props) {
       <button
         data-testid="favorite-button"
         disabled={isPending}
-        onClick={(e) => { e.stopPropagation(); toggleFavorite({ id: image.id, favorited: !image.favorited }); }}
-        className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 hover:bg-white transition-colors disabled:opacity-50"
+        onClick={(e) => {
+          e.stopPropagation();
+          const next = !image.favorited;
+          toggleFavorite({ id: image.id, favorited: next });
+          if (!next) onUnfavorite?.(image);
+        }}
+        className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 hover:bg-white transition-colors disabled:opacity-50 cursor-pointer"
         aria-label={image.favorited ? 'Remove from favorites' : 'Add to favorites'}
       >
         <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden>
