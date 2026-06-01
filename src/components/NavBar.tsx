@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuthContext } from '@/features/auth/hooks/useAuthContext';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
@@ -9,14 +9,12 @@ export function NavBar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
 
   useOnClickOutside(settingsRef, () => setSettingsOpen(false));
 
-  useEffect(() => {
-    setSearchValue(location.pathname === '/search' ? (searchParams.get('q') ?? '') : '');
-  }, [location.pathname, searchParams]);
+  const searchDefaultValue = location.pathname === '/search' ? (searchParams.get('q') ?? '') : '';
 
   const handleLogout = () => {
     logout();
@@ -24,8 +22,9 @@ export function NavBar() {
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && searchValue.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+    if (e.key === 'Enter') {
+      const value = searchInputRef.current?.value.trim() ?? '';
+      if (value) navigate(`/search?q=${encodeURIComponent(value)}`);
     }
   };
 
@@ -37,10 +36,11 @@ export function NavBar() {
         {token ? (
           <>
             <input
+              key={`${location.pathname}|${searchDefaultValue}`}
+              ref={searchInputRef}
               type="text"
               placeholder="Search images…"
-              value={searchValue}
-              onChange={e => setSearchValue(e.target.value)}
+              defaultValue={searchDefaultValue}
               onKeyDown={handleSearchKeyDown}
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-300"
             />

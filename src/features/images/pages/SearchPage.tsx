@@ -43,11 +43,11 @@ export function SearchPage() {
     skipNextSyncRef.current = true;
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
-      debouncedQ ? next.set('q', debouncedQ) : next.delete('q');
-      debouncedTitle ? next.set('title', debouncedTitle) : next.delete('title');
-      debouncedTag ? next.set('tag', debouncedTag) : next.delete('tag');
-      debouncedFrom ? next.set('from', debouncedFrom) : next.delete('from');
-      debouncedAlbumId !== undefined ? next.set('album_id', String(debouncedAlbumId)) : next.delete('album_id');
+      if (debouncedQ) { next.set('q', debouncedQ); } else { next.delete('q'); }
+      if (debouncedTitle) { next.set('title', debouncedTitle); } else { next.delete('title'); }
+      if (debouncedTag) { next.set('tag', debouncedTag); } else { next.delete('tag'); }
+      if (debouncedFrom) { next.set('from', debouncedFrom); } else { next.delete('from'); }
+      if (debouncedAlbumId !== undefined) { next.set('album_id', String(debouncedAlbumId)); } else { next.delete('album_id'); }
       return next;
     }, { replace: true });
   }, [debouncedQ, debouncedTitle, debouncedTag, debouncedFrom, debouncedAlbumId, setSearchParams]);
