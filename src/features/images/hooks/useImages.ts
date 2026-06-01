@@ -89,12 +89,22 @@ export function useFavoriteImage() {
           ['images', 'favorites'],
           prevFavorites.filter((img) => img.id !== id),
         );
+      } else if (favorited && prevFavorites) {
+        const image = prevAlbumPages
+          .flatMap(([, page]) => page?.data ?? [])
+          .find((img) => img.id === id);
+        if (image) {
+          queryClient.setQueryData<Image[]>(['images', 'favorites'], [
+            ...prevFavorites.filter((img) => img.id !== id),
+            { ...image, favorited: true },
+          ]);
+        }
       }
 
       return { prevAlbumPages, prevFavorites };
     },
     onError: (_err, _vars, ctx) => {
-      ctx?.prevAlbumPages.forEach(([key, data]) => queryClient.setQueryData(key, data));
+      ctx?.prevAlbumPages?.forEach(([key, data]) => queryClient.setQueryData(key, data));
       if (ctx?.prevFavorites !== undefined) {
         queryClient.setQueryData(['images', 'favorites'], ctx.prevFavorites);
       }
@@ -104,6 +114,7 @@ export function useFavoriteImage() {
         predicate: (q) => q.queryKey[0] === 'albums' && q.queryKey[2] === 'images',
       });
       queryClient.invalidateQueries({ queryKey: ['images', 'favorites'] });
+      queryClient.invalidateQueries({ queryKey: ['images', 'search'] });
     },
   });
 }

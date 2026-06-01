@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useSearchImages } from '../hooks/useImages';
@@ -16,6 +16,23 @@ export function SearchPage() {
     searchParams.get('album_id') ? Number(searchParams.get('album_id')) : undefined
   );
 
+  const skipNextSyncRef = useRef(false);
+
+  // Sync local state when searchParams change externally (e.g., browser back/forward).
+  // skipNextSyncRef prevents overwriting live input when the change was triggered by the
+  // debounce write-back effect below.
+  useEffect(() => {
+    if (skipNextSyncRef.current) {
+      skipNextSyncRef.current = false;
+      return;
+    }
+    setQ(searchParams.get('q') ?? '');
+    setTitle(searchParams.get('title') ?? '');
+    setTag(searchParams.get('tag') ?? '');
+    setFrom(searchParams.get('from') ?? '');
+    setAlbumId(searchParams.get('album_id') ? Number(searchParams.get('album_id')) : undefined);
+  }, [searchParams]);
+
   const debouncedQ = useDebounce(q, 300);
   const debouncedTitle = useDebounce(title, 300);
   const debouncedTag = useDebounce(tag, 300);
@@ -23,6 +40,7 @@ export function SearchPage() {
   const debouncedAlbumId = useDebounce(albumId, 300);
 
   useEffect(() => {
+    skipNextSyncRef.current = true;
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       debouncedQ ? next.set('q', debouncedQ) : next.delete('q');
@@ -45,15 +63,15 @@ export function SearchPage() {
 
   const filtered = useMemo(() => {
     return images.filter(img => {
-      const lq = q.toLowerCase();
-      const lt = title.toLowerCase();
-      const ltag = tag.toLowerCase();
-      if (q && !img.title.toLowerCase().includes(lq) && !img.tags.some(t => t.toLowerCase().includes(lq))) return false;
-      if (title && !img.title.toLowerCase().includes(lt)) return false;
-      if (tag && !img.tags.some(t => t.toLowerCase().includes(ltag))) return false;
+      const lq = debouncedQ.toLowerCase();
+      const lt = debouncedTitle.toLowerCase();
+      const ltag = debouncedTag.toLowerCase();
+      if (debouncedQ && !img.title.toLowerCase().includes(lq) && !img.tags.some(t => t.toLowerCase().includes(lq))) return false;
+      if (debouncedTitle && !img.title.toLowerCase().includes(lt)) return false;
+      if (debouncedTag && !img.tags.some(t => t.toLowerCase().includes(ltag))) return false;
       return true;
     });
-  }, [images, q, title, tag]);
+  }, [images, debouncedQ, debouncedTitle, debouncedTag]);
 
   const hasAnyFilter = q || title || tag || from || albumId !== undefined;
 
