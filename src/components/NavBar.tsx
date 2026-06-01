@@ -1,19 +1,32 @@
-import { useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useRef, useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuthContext } from '@/features/auth/hooks/useAuthContext';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 
 export function NavBar() {
   const { token, logout } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
   const settingsRef = useRef<HTMLDivElement>(null);
 
   useOnClickOutside(settingsRef, () => setSettingsOpen(false));
 
+  useEffect(() => {
+    setSearchValue(location.pathname === '/search' ? (searchParams.get('q') ?? '') : '');
+  }, [location.pathname, searchParams]);
+
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchValue.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+    }
   };
 
   return (
@@ -23,6 +36,14 @@ export function NavBar() {
       <div className="flex items-center gap-4">
         {token ? (
           <>
+            <input
+              type="text"
+              placeholder="Search images…"
+              value={searchValue}
+              onChange={e => setSearchValue(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            />
             <Link to="/albums" className="text-gray-600 hover:text-gray-900">Albums</Link>
             <Link to="/favorites" className="text-gray-600 hover:text-gray-900">Favorites</Link>
 

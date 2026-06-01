@@ -1,5 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchImages, fetchAlbumImages, fetchFavoriteImages, updateImage, deleteImage } from '../api/imagesApi';
+import {
+  fetchImages,
+  fetchAlbumImages,
+  fetchFavoriteImages,
+  fetchSearchImages,
+  updateImage,
+  deleteImage,
+} from '../api/imagesApi';
+import type { SearchParams, AlbumImageFilters } from '../api/imagesApi';
 import type { Image, UpdateImagePayload } from '../types/image';
 import type { PaginatedResponse } from '@/lib/api/createCrudApi';
 
@@ -13,11 +21,22 @@ export function useImages(albumId?: number) {
   });
 }
 
-export function useAlbumImages(albumId: number, page: number) {
+export function useAlbumImages(albumId: number, page: number, filters?: AlbumImageFilters) {
   return useQuery({
-    queryKey: ['albums', albumId, 'images', page],
-    queryFn: () => fetchAlbumImages(albumId, page),
+    queryKey: ['albums', albumId, 'images', page, filters],
+    queryFn: () => fetchAlbumImages(albumId, page, filters),
     staleTime: PRESIGNED_URL_STALE_MS,
+  });
+}
+
+export function useSearchImages(params: SearchParams) {
+  const isEmpty = (v: unknown) => v === undefined || v === '';
+  const enabled = !Object.values(params).every(isEmpty);
+  return useQuery({
+    queryKey: ['images', 'search', params],
+    queryFn: () => fetchSearchImages(params),
+    staleTime: PRESIGNED_URL_STALE_MS,
+    enabled,
   });
 }
 
