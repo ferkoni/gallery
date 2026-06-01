@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi, type Mock } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
 import { ImageGrid } from '@/features/images/components/ImageGrid';
 import { useAlbumImages } from '@/features/images/hooks/useImages';
@@ -122,5 +122,65 @@ describe('ImageGrid', () => {
     await userEvent.click(screen.getByTestId('lightbox-menu-edit'));
     await userEvent.click(screen.getByTestId('edit-cancel-button'));
     expect(screen.queryByTestId('image-edit-modal')).not.toBeInTheDocument();
+  });
+
+  describe('filter controls', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('renders title, tag and date filter inputs', () => {
+      mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
+      render(<ImageGrid albumId={1} />);
+      expect(screen.getByPlaceholderText('Filter by title…')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Filter by tag…')).toBeInTheDocument();
+      expect(document.querySelector('input[type="date"]')).toBeInTheDocument();
+    });
+
+    it('passes title filter to useAlbumImages after debounce', () => {
+      mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
+      render(<ImageGrid albumId={1} />);
+
+      fireEvent.change(screen.getByPlaceholderText('Filter by title…'), { target: { value: 'beach' } });
+      act(() => { vi.advanceTimersByTime(300); });
+
+      expect(mockUseAlbumImages).toHaveBeenLastCalledWith(1, 1, { title: 'beach', tag: undefined, from: undefined });
+    });
+
+    it('passes tag filter to useAlbumImages after debounce', () => {
+      mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
+      render(<ImageGrid albumId={1} />);
+
+      fireEvent.change(screen.getByPlaceholderText('Filter by tag…'), { target: { value: 'sunset' } });
+      act(() => { vi.advanceTimersByTime(300); });
+
+      expect(mockUseAlbumImages).toHaveBeenLastCalledWith(1, 1, { title: undefined, tag: 'sunset', from: undefined });
+    });
+
+    it('passes from filter to useAlbumImages after debounce', () => {
+      mockUseAlbumImages.mockReturnValue({ isPending: false, isError: false, data: pagedData });
+      render(<ImageGrid albumId={1} />);
+
+      fireEvent.change(document.querySelector('input[type="date"]')!, { target: { value: '2026-01-01' } });
+      act(() => { vi.advanceTimersByTime(300); });
+
+      expect(mockUseAlbumImages).toHaveBeenLastCalledWith(1, 1, { title: undefined, tag: undefined, from: '2026-01-01' });
+    });
+
+    it('resets to page 1 when a filter changes', () => {
+      mockUseAlbumImages.mockReturnValue({
+        isPending: false,
+        isError: false,
+        data: { data: images, meta: { ...meta, total_pages: 3 } },
+      });
+      render(<ImageGrid albumId={1} />);
+
+      fireEvent.click(screen.getByTestId('pagination-next'));
+      expect(mockUseAlbumImages).toHaveBeenLastCalledWith(1, 2, expect.anything());
+
+      fireEvent.change(screen.getByPlaceholderText('Filter by title…'), { target: { value: 'beach' } });
+      act(() => { vi.advanceTimersByTime(300); });
+
+      expect(mockUseAlbumImages).toHaveBeenLastCalledWith(1, 1, { title: 'beach', tag: undefined, from: undefined });
+    });
   });
 });

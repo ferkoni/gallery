@@ -2,9 +2,23 @@ import apiClient from '@/lib/api/client';
 import type { PaginatedResponse } from '@/lib/api/createCrudApi';
 import type { Image, UpdateImagePayload } from '../types/image';
 
-// GET /api/albums/:albumId/images?page=
-export async function fetchAlbumImages(albumId: number, page = 1): Promise<PaginatedResponse<Image>> {
-  const res = await apiClient.get(`/api/albums/${albumId}/images`, { params: { page } });
+export type SearchParams = {
+  q?: string;
+  title?: string;
+  tag?: string;
+  from?: string;
+  albumId?: number;
+};
+
+export type AlbumImageFilters = {
+  title?: string;
+  tag?: string;
+  from?: string;
+};
+
+// GET /api/albums/:albumId/images?page=&title=&tag=&from=
+export async function fetchAlbumImages(albumId: number, page = 1, filters?: AlbumImageFilters): Promise<PaginatedResponse<Image>> {
+  const res = await apiClient.get(`/api/albums/${albumId}/images`, { params: { page, ...filters } });
   return {
     data: res.data.data.map((item: { attributes: Image }) => item.attributes),
     meta: res.data.meta,
@@ -22,6 +36,15 @@ export async function fetchImages(albumId?: number): Promise<Image[]> {
 // GET /api/images?favorited=true
 export async function fetchFavoriteImages(): Promise<Image[]> {
   const res = await apiClient.get('/api/images', { params: { favorited: true } });
+  return res.data.data.map((item: { attributes: Image }) => item.attributes);
+}
+
+// GET /api/images?q=…&title=…&tag=…&from=…&album_id=…
+export async function fetchSearchImages(params: SearchParams): Promise<Image[]> {
+  const { albumId, ...rest } = params;
+  const res = await apiClient.get('/api/images', {
+    params: { ...rest, ...(albumId !== undefined && { album_id: albumId }) },
+  });
   return res.data.data.map((item: { attributes: Image }) => item.attributes);
 }
 
