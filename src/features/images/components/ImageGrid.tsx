@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAlbumImages } from '../hooks/useImages';
 import { usePagination } from '@/hooks/usePagination';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Pagination } from '@/components/Pagination';
 import { ImageCard } from './ImageCard';
 import { ImageEditModal } from './ImageEditModal';
@@ -14,9 +15,23 @@ export function ImageGrid({ albumId }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [modal, setModal] = useState<{ image: Image; mode: 'edit' | 'delete' } | null>(null);
 
-  useEffect(() => { reset(); }, [albumId, reset]);
+  const [title, setTitle] = useState('');
+  const [tag, setTag] = useState('');
+  const [from, setFrom] = useState('');
 
-  const { data, isPending, isError } = useAlbumImages(albumId, page);
+  const debouncedTitle = useDebounce(title, 300);
+  const debouncedTag = useDebounce(tag, 300);
+  const debouncedFrom = useDebounce(from, 300);
+
+  useEffect(() => { reset(); }, [albumId, debouncedTitle, debouncedTag, debouncedFrom, reset]);
+
+  const filters = useMemo(() => ({
+    title: debouncedTitle || undefined,
+    tag: debouncedTag || undefined,
+    from: debouncedFrom || undefined,
+  }), [debouncedTitle, debouncedTag, debouncedFrom]);
+
+  const { data, isPending, isError } = useAlbumImages(albumId, page, filters);
 
   const images = useMemo(() => data?.data ?? [], [data?.data]);
   const clickHandlers = useMemo(() => images.map((_, i) => () => setSelectedIndex(i)), [images]);
@@ -35,33 +50,56 @@ export function ImageGrid({ albumId }: Props) {
 
   const meta = data.meta;
 
-  if (images.length === 0) {
-    return (
-      <p className="text-gray-400 text-sm mt-4" data-testid="images-empty">
-        No images yet. Upload one above.
-      </p>
-    );
-  }
-
   return (
     <>
-      <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6" data-testid="image-grid">
-        {images.map((image, index) => (
-          <li key={image.id}>
-            <ImageCard
-              image={image}
-              onClick={clickHandlers[index]}
-            />
-          </li>
-        ))}
-      </ul>
+      <div className="flex gap-3 mt-4 flex-wrap">
+        <input
+          type="text"
+          placeholder="Filter by title…"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-32 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        />
+        <input
+          type="text"
+          placeholder="Filter by tag…"
+          value={tag}
+          onChange={e => setTag(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-32 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        />
+        <input
+          type="date"
+          value={from}
+          onChange={e => setFrom(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+        />
+      </div>
 
-      <Pagination
-        currentPage={meta.current_page}
-        totalPages={meta.total_pages}
-        onNext={goNext}
-        onPrev={goPrev}
-      />
+      {images.length === 0 ? (
+        <p className="text-gray-400 text-sm mt-4" data-testid="images-empty">
+          No images yet. Upload one above.
+        </p>
+      ) : (
+        <>
+          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6" data-testid="image-grid">
+            {images.map((image, index) => (
+              <li key={image.id}>
+                <ImageCard
+                  image={image}
+                  onClick={clickHandlers[index]}
+                />
+              </li>
+            ))}
+          </ul>
+
+          <Pagination
+            currentPage={meta.current_page}
+            totalPages={meta.total_pages}
+            onNext={goNext}
+            onPrev={goPrev}
+          />
+        </>
+      )}
 
       {selectedIndex !== null && (
         <Lightbox

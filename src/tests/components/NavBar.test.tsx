@@ -23,6 +23,16 @@ function renderNavBar(token: string | null) {
   );
 }
 
+function renderNavBarAtPath(token: string | null, path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <AuthContext.Provider value={{ token, login: vi.fn(), logout: mockLogout, s3CredentialConfigured: false, setS3CredentialConfigured: vi.fn() }}>
+        <NavBar />
+      </AuthContext.Provider>
+    </MemoryRouter>
+  );
+}
+
 describe("NavBar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -104,5 +114,41 @@ describe("NavBar", () => {
 
     await userEvent.click(screen.getByTestId("settings-menu-button"));
     expect(screen.queryByTestId("settings-dropdown")).not.toBeInTheDocument();
+  });
+
+  describe("search input", () => {
+    it("renders the search input when logged in", () => {
+      renderNavBar("token");
+      expect(screen.getByPlaceholderText("Search images…")).toBeInTheDocument();
+    });
+
+    it("does not render the search input when logged out", () => {
+      renderNavBar(null);
+      expect(screen.queryByPlaceholderText("Search images…")).not.toBeInTheDocument();
+    });
+
+    it("navigates to /search?q=value when Enter is pressed", async () => {
+      renderNavBar("token");
+      const input = screen.getByPlaceholderText("Search images…");
+      await userEvent.type(input, "sunset{Enter}");
+      expect(mockNavigate).toHaveBeenCalledWith("/search?q=sunset");
+    });
+
+    it("does not navigate when Enter is pressed with an empty input", async () => {
+      renderNavBar("token");
+      const input = screen.getByPlaceholderText("Search images…");
+      await userEvent.type(input, "{Enter}");
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it("reflects the q URL param when on the /search route", () => {
+      renderNavBarAtPath("token", "/search?q=sunset");
+      expect(screen.getByPlaceholderText("Search images…")).toHaveValue("sunset");
+    });
+
+    it("shows an empty input on non-search routes", () => {
+      renderNavBarAtPath("token", "/albums");
+      expect(screen.getByPlaceholderText("Search images…")).toHaveValue("");
+    });
   });
 });
