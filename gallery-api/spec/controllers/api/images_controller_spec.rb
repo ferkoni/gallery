@@ -56,6 +56,82 @@ RSpec.describe Api::ImagesController, type: :controller do
       expect(meta.keys).to match_array(%w[current_page total_pages total_count per_page])
     end
 
+    context "with q param" do
+      it "returns images matching by title" do
+        match = create(:image, user: user, album: album, title: "Sunset Beach")
+        create(:image, user: user, album: album, title: "Mountain Trail")
+
+        get :index, params: { q: "sunset" }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to match_array([ match.id ])
+      end
+
+      it "returns images matching by tag" do
+        match = create(:image, user: user, album: album, tags: [ "beach" ])
+        create(:image, user: user, album: album, tags: [ "mountain" ])
+
+        get :index, params: { q: "beach" }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to match_array([ match.id ])
+      end
+    end
+
+    context "with title param" do
+      it "returns images with a matching title" do
+        match = create(:image, user: user, album: album, title: "Sunset Beach")
+        create(:image, user: user, album: album, title: "Mountain Trail")
+
+        get :index, params: { title: "sunset" }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to match_array([ match.id ])
+      end
+
+      it "does not return images matched only by tag" do
+        create(:image, user: user, album: album, title: "Photo", tags: [ "sunset" ])
+
+        get :index, params: { title: "sunset" }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to be_empty
+      end
+    end
+
+    context "with tag param" do
+      it "returns images with a matching tag" do
+        match = create(:image, user: user, album: album, tags: [ "beach" ])
+        create(:image, user: user, album: album, tags: [ "mountain" ])
+
+        get :index, params: { tag: "beach" }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to match_array([ match.id ])
+      end
+
+      it "does not return images matched only by title" do
+        create(:image, user: user, album: album, title: "Beach Day", tags: [])
+
+        get :index, params: { tag: "beach" }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to be_empty
+      end
+    end
+
+    context "with from param" do
+      it "returns images created on or after the given date" do
+        recent = create(:image, user: user, album: album, created_at: Time.current)
+        create(:image, user: user, album: album, created_at: 3.days.ago)
+
+        get :index, params: { from: Date.yesterday.to_s }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to match_array([ recent.id ])
+      end
+    end
+
     context "without a token" do
       before { sign_out user }
 
@@ -111,6 +187,42 @@ RSpec.describe Api::ImagesController, type: :controller do
       other_album = create(:album, user: other_user)
       get :index, params: { album_id: other_album.id }, as: :json
       expect(response).to have_http_status(:not_found)
+    end
+
+    context "with title param" do
+      it "returns only images with a matching title within the album" do
+        match = create(:image, user: user, album: album, title: "Sunset Beach")
+        create(:image, user: user, album: album, title: "Mountain Trail")
+
+        get :index, params: { album_id: album.id, title: "sunset" }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to match_array([ match.id ])
+      end
+    end
+
+    context "with tag param" do
+      it "returns only images with a matching tag within the album" do
+        match = create(:image, user: user, album: album, tags: [ "beach" ])
+        create(:image, user: user, album: album, tags: [ "mountain" ])
+
+        get :index, params: { album_id: album.id, tag: "beach" }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to match_array([ match.id ])
+      end
+    end
+
+    context "with from param" do
+      it "returns only images created on or after the given date within the album" do
+        recent = create(:image, user: user, album: album, created_at: Time.current)
+        create(:image, user: user, album: album, created_at: 3.days.ago)
+
+        get :index, params: { album_id: album.id, from: Date.yesterday.to_s }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to match_array([ recent.id ])
+      end
     end
 
     context "without a token" do

@@ -67,7 +67,7 @@ class Api::ImagesController < ApplicationController
     scope = Image.with_user(current_user).includes(:album).order(created_at: :desc)
     scope = scope.where(album_id: album.id) if album
     scope = scope.where(favorited: true) if params[:favorited] == "true"
-    scope.page(params[:page])
+    apply_filters(scope).page(params[:page])
   end
 
   def album

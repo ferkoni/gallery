@@ -6,6 +6,7 @@ module BaseApi
 
     rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity_response
     rescue_from ActiveRecord::RecordNotFound, with: :render_not_found_response
+    rescue_from ActiveRecord::StatementInvalid, with: :render_bad_request_response
     rescue_from Pundit::NotAuthorizedError, with: :render_forbidden_response
   end
 
@@ -45,6 +46,14 @@ module BaseApi
     raise NotImplementedError, "#{self.class} must implement #resources"
   end
 
+  def apply_filters(scope)
+    scope = scope.global_search(params[:q]) if params[:q].present? && scope.respond_to?(:global_search)
+    scope = scope.search_by_title(params[:title]) if params[:title].present? && scope.respond_to?(:search_by_title)
+    scope = scope.search_by_tag(params[:tag]) if params[:tag].present? && scope.respond_to?(:search_by_tag)
+    scope = scope.from_date(params[:from]) if params[:from].present? && scope.respond_to?(:from_date)
+    scope
+  end
+
   def resource
     @_resource ||= params[:id] ? resource_class.find(params[:id]) : resource_class.new(new_resource_params)
   end
@@ -69,6 +78,10 @@ module BaseApi
 
   def render_not_found_response
     render json: { errors: "Not found" }, status: :not_found
+  end
+
+  def render_bad_request_response
+    render json: { errors: "Invalid query parameter" }, status: :bad_request
   end
 
   def render_forbidden_response

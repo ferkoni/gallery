@@ -32,6 +32,17 @@ RSpec.describe BaseApi, type: :controller do
     end
   end
 
+  describe '#apply_filters' do
+    before { allow(controller).to receive(:authenticate_user!).and_return(true) }
+
+    it 'is a no-op when the model does not respond to filter methods' do
+      create_list(:user, 2)
+      get :index, params: { q: "search", title: "foo", tag: "bar", from: "2024-01-01" }
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)["data"].length).to eq(2)
+    end
+  end
+
   describe 'authenticated actions' do
     let(:user) { create(:user) }
 
