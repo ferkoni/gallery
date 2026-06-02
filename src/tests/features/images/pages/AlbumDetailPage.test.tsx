@@ -5,9 +5,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AlbumDetailPage } from '@/features/images/pages/AlbumDetailPage';
 import { useGetAlbum } from '@/features/albums/albums';
 import { useAlbumImages } from '@/features/images/hooks/useImages';
-
 vi.mock('@/features/albums/albums', () => ({ useGetAlbum: vi.fn() }));
 vi.mock('@/features/images/hooks/useImages', () => ({ useAlbumImages: vi.fn() }));
+vi.mock('@/features/downloads/components/DownloadAlbumButton', () => ({
+  DownloadAlbumButton: ({ disabled }: { disabled?: boolean }) => (
+    <button data-testid="download-button" disabled={disabled}>Download Album</button>
+  ),
+}));
+vi.mock('@/features/downloads/components/DownloadQueue', () => ({ DownloadQueue: () => null }));
 
 const mockUseGetAlbum = useGetAlbum as Mock;
 const mockUseAlbumImages = useAlbumImages as Mock;
@@ -66,5 +71,23 @@ describe('AlbumDetailPage', () => {
     mockUseGetAlbum.mockReturnValue({ isPending: false, isError: false, data: album });
     renderPage();
     expect(screen.getByTestId('upload-button')).toBeInTheDocument();
+  });
+
+  it('renders the download button when album has images', () => {
+    mockUseGetAlbum.mockReturnValue({ isPending: false, isError: false, data: album });
+    mockUseAlbumImages.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: { data: [], meta: { current_page: 1, total_pages: 1, total_count: 3, per_page: 25 } },
+    });
+    renderPage();
+    expect(screen.getByTestId('download-button')).toBeInTheDocument();
+    expect(screen.getByTestId('download-button')).not.toBeDisabled();
+  });
+
+  it('renders the download button disabled when album has no images', () => {
+    mockUseGetAlbum.mockReturnValue({ isPending: false, isError: false, data: album });
+    renderPage();
+    expect(screen.getByTestId('download-button')).toBeDisabled();
   });
 });
