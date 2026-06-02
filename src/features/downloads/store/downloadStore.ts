@@ -44,7 +44,8 @@ export const useDownloadStore = create<DownloadStore>((set) => ({
 
   remove: (taskId) =>
     set((s) => {
-      const { [taskId]: _, ...rest } = s.downloads;
-      return { downloads: rest };
+      const next = { ...s.downloads };
+      delete next[taskId];
+      return { downloads: next };
     }),
 }));
