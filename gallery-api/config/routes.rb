@@ -14,6 +14,7 @@ Rails.application.routes.draw do
       resources :images, only: [ :index ]
     end
     resource :s3_credentials, only: [ :update, :destroy ]
+    resources :async_tasks, only: [ :index, :show, :create ]
     resources :images, only: [ :index, :show, :create, :update, :destroy ]
 
     resources :users, only: [ :create ] do

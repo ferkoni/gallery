@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_29_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_02_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -21,6 +21,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_100000) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_albums_on_user_id"
+  end
+
+  create_table "async_tasks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at"
+    t.jsonb "payload", default: {}, null: false
+    t.jsonb "result", default: {}, null: false
+    t.string "status", default: "pending", null: false
+    t.string "task_type", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "created_at"], name: "index_async_tasks_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_async_tasks_on_user_id"
   end
 
   create_table "images", force: :cascade do |t|
@@ -65,6 +78,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_100000) do
   end
 
   add_foreign_key "albums", "users"
+  add_foreign_key "async_tasks", "users"
   add_foreign_key "images", "albums"
   add_foreign_key "images", "users"
   add_foreign_key "s3_credentials", "users"

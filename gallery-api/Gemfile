@@ -58,4 +58,8 @@ end
 
 gem "kaminari"
 gem "pundit", "~> 2.5"
+
+# AWS
+gem "aws-sdk-rails", "~> 5"
 gem "aws-sdk-s3", "~> 1.0"
+gem "aws-activejob-sqs", "~> 1"

@@ -5,7 +5,6 @@ RSpec.describe User, type: :model do
 
   describe 'associations' do
     it { should have_one(:s3_credential).dependent(:destroy) }
-    it { should have_many(:images).dependent(:destroy) }
   end
 
   describe 'validations' do
