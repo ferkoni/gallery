@@ -25,7 +25,7 @@ export function useUserChannel() {
     // access logs or browser history (tokens in URLs are routinely logged).
     const OriginalWebSocket = adapters.WebSocket;
     class TokenWebSocket extends OriginalWebSocket {
-      constructor(url: string, protocols?: string | string[]) {
+      constructor(url: string | URL, protocols?: string | string[]) {
         const protos = Array.isArray(protocols) ? [...protocols] : protocols ? [protocols] : [];
         super(url, [...protos, `token.${token}`]);
       }
@@ -34,7 +34,8 @@ export function useUserChannel() {
 
     const consumer = createConsumer(wsUrl);
     const subscription = consumer.subscriptions.create('UserChannel', {
-      received(data: ChannelMessage) {
+      received(raw: unknown) {
+        const data = raw as ChannelMessage;
         if (data.task_type !== 'album_download') return;
         if (data.status === 'ready' && data.url) {
           useDownloadStore.getState().setReady(data.task_id, data.url);
