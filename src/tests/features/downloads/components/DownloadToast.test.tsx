@@ -6,12 +6,12 @@ import { useDownloadStore } from '@/features/downloads/store/downloadStore';
 import type { DownloadItem } from '@/features/downloads/store/downloadStore';
 
 beforeEach(() => {
-  useDownloadStore.setState({ downloads: { 1: { taskId: 1, albumName: 'Summer', status: 'pending' } } });
+  useDownloadStore.setState({ downloads: { 1: { taskId: 1, albumId: 10, albumName: 'Summer', status: 'pending' } } });
 });
 
-const pendingItem: DownloadItem = { taskId: 1, albumName: 'Summer', status: 'pending' };
-const readyItem: DownloadItem = { taskId: 1, albumName: 'Summer', status: 'ready', url: 'https://example.com/file.zip' };
-const failedItem: DownloadItem = { taskId: 1, albumName: 'Summer', status: 'failed', error: 'S3 upload failed' };
+const pendingItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'pending' };
+const readyItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'ready', url: 'https://example.com/file.zip' };
+const failedItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'failed', error: 'S3 upload failed' };
 
 describe('DownloadToast', () => {
   it('renders album name', () => {
