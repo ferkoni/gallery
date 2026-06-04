@@ -10,7 +10,7 @@ beforeEach(() => {
 });
 
 const pendingItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'pending' };
-const readyItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'ready', url: 'https://example.com/file.zip' };
+const readyItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'ready', url: 'https://example.com/file.zip', readyAt: '2026-01-15' };
 const failedItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'failed', error: 'S3 upload failed' };
 
 describe('DownloadToast', () => {
@@ -19,17 +19,17 @@ describe('DownloadToast', () => {
     expect(screen.getByText('Summer')).toBeInTheDocument();
   });
 
-  it('renders "Preparing…" status label for pending', () => {
+  it('renders "Preparing your download…" status label for pending', () => {
     render(<DownloadToast item={pendingItem} />);
-    expect(screen.getByText('Preparing…')).toBeInTheDocument();
+    expect(screen.getByText('Preparing your download…')).toBeInTheDocument();
   });
 
-  it('renders "Ready" status label and a download link for ready status', () => {
+  it('renders "Download ready" status label and a download link for ready status', () => {
     render(<DownloadToast item={readyItem} />);
-    expect(screen.getByText('Ready')).toBeInTheDocument();
+    expect(screen.getByText('Download ready')).toBeInTheDocument();
     const link = screen.getByRole('link', { name: 'Save file' });
     expect(link).toHaveAttribute('href', 'https://example.com/file.zip');
-    expect(link).toHaveAttribute('download');
+    expect(link).toHaveAttribute('download', 'Summer 2026-01-15.zip');
   });
 
   it('renders "Failed" status label and error message for failed status', () => {

@@ -3,8 +3,8 @@ import type { DownloadItem, DownloadStatus } from '../store/downloadStore';
 import { useDownloadStore } from '../store/downloadStore';
 
 const statusLabel: Record<DownloadStatus, string> = {
-  pending: 'Preparing…',
-  ready: 'Ready',
+  pending: 'Preparing your download…',
+  ready: 'Download ready',
   failed: 'Failed',
 };
 
@@ -34,7 +34,7 @@ export const DownloadToast = memo(function DownloadToast({ item, onRetry }: Prop
       {item.status === 'ready' && (
         <a
           href={item.url}
-          download
+          download={`${item.albumName} ${item.readyAt}.zip`}
           className="text-xs text-blue-500 hover:text-blue-700 font-medium mt-1 block"
         >
           Save file
