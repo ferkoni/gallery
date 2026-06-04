@@ -8,6 +8,7 @@ export type DownloadItem = {
   albumName: string;
   status: DownloadStatus;
   url?: string;
+  readyAt?: string;
   error?: string;
 };
 
@@ -28,20 +29,31 @@ export const useDownloadStore = create<DownloadStore>((set) => ({
     })),
 
   setReady: (taskId, url) =>
-    set((s) => ({
-      downloads: {
-        ...s.downloads,
-        [taskId]: { ...s.downloads[taskId], status: 'ready', url },
-      },
-    })),
+    set((s) => {
+      if (!s.downloads[taskId]) return s;
+      return {
+        downloads: {
+          ...s.downloads,
+          [taskId]: {
+            ...s.downloads[taskId],
+            status: 'ready',
+            url,
+            readyAt: new Date().toLocaleDateString('en-CA'),
+          },
+        },
+      };
+    }),
 
   setFailed: (taskId, error) =>
-    set((s) => ({
-      downloads: {
-        ...s.downloads,
-        [taskId]: { ...s.downloads[taskId], status: 'failed', error },
-      },
-    })),
+    set((s) => {
+      if (!s.downloads[taskId]) return s;
+      return {
+        downloads: {
+          ...s.downloads,
+          [taskId]: { ...s.downloads[taskId], status: 'failed', error },
+        },
+      };
+    }),
 
   remove: (taskId) =>
     set((s) => {

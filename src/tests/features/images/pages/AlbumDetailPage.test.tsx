@@ -12,7 +12,6 @@ vi.mock('@/features/downloads/components/DownloadAlbumButton', () => ({
     <button data-testid="download-button" disabled={disabled}>Download Album</button>
   ),
 }));
-vi.mock('@/features/downloads/components/DownloadQueue', () => ({ DownloadQueue: () => null }));
 
 const mockUseGetAlbum = useGetAlbum as Mock;
 const mockUseAlbumImages = useAlbumImages as Mock;

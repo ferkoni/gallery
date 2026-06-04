@@ -4,13 +4,12 @@ import { ImageGrid } from '../components/ImageGrid';
 import { ImageUploadButton } from '../components/ImageUploadButton';
 import { useAlbumImages } from '../hooks/useImages';
 import { DownloadAlbumButton } from '@/features/downloads/components/DownloadAlbumButton';
-import { DownloadQueue } from '@/features/downloads/components/DownloadQueue';
 
 export function AlbumDetailPage() {
   const { id } = useParams();
   const albumId = id ? Number(id) : 0;
   const { data: album, isPending, isError } = useGetAlbum(albumId, { enabled: !!id });
-  const { data: imagesData } = useAlbumImages(albumId, 1);
+  const { data: imagesData } = useAlbumImages(albumId, 1, undefined, { enabled: !!id });
 
   if (!id) return <p className="p-6 text-red-500">Invalid album.</p>;
   if (isPending) return <p className="p-6 text-gray-500">Loading...</p>;
@@ -31,7 +30,6 @@ export function AlbumDetailPage() {
         <p className="text-gray-500 mb-6">{album.description}</p>
       )}
       <ImageGrid albumId={albumId} />
-      <DownloadQueue />
     </main>
   );
 }
