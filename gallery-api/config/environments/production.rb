@@ -46,6 +46,9 @@ Rails.application.configure do
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
+  # Allow Action Cable WebSocket connections from the frontend origin.
+  config.action_cable.allowed_request_origins = ENV.fetch("CORS_ALLOWED_ORIGINS", "").split(",").map(&:strip)
+
   # Replace the default in-process memory cache store with a durable alternative.
   config.cache_store = :solid_cache_store
 

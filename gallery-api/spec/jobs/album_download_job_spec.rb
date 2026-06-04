@@ -26,23 +26,23 @@ RSpec.describe AlbumDownloadJob, type: :job do
 
   describe "success path" do
     it "transitions the task to ready" do
-      described_class.new.perform(task.id)
+      described_class.new.perform(album.id, task.id)
       expect(task.reload.status).to eq("ready")
     end
 
     it "stores the presigned URL in result" do
-      described_class.new.perform(task.id)
+      described_class.new.perform(album.id, task.id)
       expect(task.reload.result["url"]).to eq("https://s3.example.com/zip?sig=abc")
     end
 
     it "stores the s3_key in result" do
-      described_class.new.perform(task.id)
+      described_class.new.perform(album.id, task.id)
       expect(task.reload.result["s3_key"]).to include("downloads/#{user.id}/")
     end
 
     it "scopes the album lookup to the task owner" do
       expect(Album).to receive(:with_user).with(user).and_call_original
-      described_class.new.perform(task.id)
+      described_class.new.perform(album.id, task.id)
     end
 
     it "calls ZipDownload with the correct arguments" do
@@ -51,7 +51,16 @@ RSpec.describe AlbumDownloadJob, type: :job do
         user: user,
         credential: s3_credential
       )
-      described_class.new.perform(task.id)
+      described_class.new.perform(album.id, task.id)
+    end
+
+    it "broadcasts ready status to the user's channel" do
+      expect(ActionCable.server).to receive(:broadcast).with(
+        "user_#{user.id}",
+        hash_including(task_type: "album_download", task_id: task.id, status: "ready",
+          album_name: album.name, url: "https://s3.example.com/zip?sig=abc")
+      )
+      described_class.new.perform(album.id, task.id)
     end
   end
 
@@ -65,24 +74,39 @@ RSpec.describe AlbumDownloadJob, type: :job do
     end
 
     it "raises so ActiveJob retry_on can fire" do
-      expect { described_class.new.perform(task.id) }.to raise_error("S3 error: forbidden")
+      expect { described_class.new.perform(album.id, task.id) }.to raise_error("S3 error: forbidden")
     end
 
     it "does not update the task before raising" do
-      expect { described_class.new.perform(task.id) }.to raise_error(StandardError)
+      expect { described_class.new.perform(album.id, task.id) }.to raise_error(StandardError)
       expect(task.reload.status).to eq("pending")
     end
   end
 
   describe "#mark_task_failed" do
+    let(:error) { StandardError.new("S3 upload failed: bucket not found") }
+    let(:job) { described_class.new(album.id, task.id) }
+
     it "transitions the task to failed with the error message" do
-      job = described_class.new(task.id)
-      error = StandardError.new("S3 upload failed: bucket not found")
       job.mark_task_failed(error)
 
       task.reload
       expect(task.status).to eq("failed")
       expect(task.result["error"]).to eq("S3 upload failed: bucket not found")
+    end
+
+    it "broadcasts failed status to the user's channel" do
+      expect(ActionCable.server).to receive(:broadcast).with(
+        "user_#{user.id}",
+        hash_including(task_type: "album_download", task_id: task.id, status: "failed",
+          album_name: album.name)
+      )
+      job.mark_task_failed(error)
+    end
+
+    it "does nothing when the task no longer exists" do
+      task.destroy
+      expect { job.mark_task_failed(error) }.not_to raise_error
     end
   end
 end

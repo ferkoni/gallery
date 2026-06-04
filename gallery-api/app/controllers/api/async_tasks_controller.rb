@@ -21,7 +21,7 @@ class Api::AsyncTasksController < ApplicationController
       payload: payload_param,
       status: :pending
     )
-    AlbumDownloadJob.perform_later(task.id)
+    AlbumDownloadJob.perform_later(payload_param[:album_id], task.id)
 
     render json: { task_id: task.id }, status: :created
   end

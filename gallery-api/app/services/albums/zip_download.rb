@@ -17,7 +17,7 @@ module Albums
     def call
       return failure("No S3 credentials on file") unless @credential&.persisted?
 
-      images = Image.where(album: @album, user: @user)
+      images = Image.with_user(@user).where(album: @album)
       zip_key = stream_zip(images)
       url = @credential.presigned_get_url(
         zip_key,

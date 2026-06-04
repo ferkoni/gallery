@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount ActionCable.server => "/cable"
+
   # Registers the Devise :user mapping so authenticate_user! / current_user are
   # available on controllers. skip: :all means no Devise-generated routes are added.
   devise_for :users, skip: :all
