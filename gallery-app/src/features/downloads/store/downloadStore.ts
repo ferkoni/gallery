@@ -4,6 +4,7 @@ export type DownloadStatus = 'pending' | 'ready' | 'failed';
 
 export type DownloadItem = {
   taskId: number;
+  albumId: number;
   albumName: string;
   status: DownloadStatus;
   url?: string;
@@ -12,7 +13,7 @@ export type DownloadItem = {
 
 type DownloadStore = {
   downloads: Record<number, DownloadItem>;
-  enqueue: (taskId: number, albumName: string) => void;
+  enqueue: (taskId: number, albumId: number, albumName: string) => void;
   setReady: (taskId: number, url: string) => void;
   setFailed: (taskId: number, error: string) => void;
   remove: (taskId: number) => void;
@@ -21,9 +22,9 @@ type DownloadStore = {
 export const useDownloadStore = create<DownloadStore>((set) => ({
   downloads: {},
 
-  enqueue: (taskId, albumName) =>
+  enqueue: (taskId, albumId, albumName) =>
     set((s) => ({
-      downloads: { ...s.downloads, [taskId]: { taskId, albumName, status: 'pending' } },
+      downloads: { ...s.downloads, [taskId]: { taskId, albumId, albumName, status: 'pending' } },
     })),
 
   setReady: (taskId, url) =>

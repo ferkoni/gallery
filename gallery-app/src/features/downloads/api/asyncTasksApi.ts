@@ -9,3 +9,18 @@ export async function createDownloadTask(albumId: number): Promise<{ task_id: nu
   });
   return data;
 }
+
+export type AsyncTaskStatus = 'pending' | 'ready' | 'failed';
+
+export type AsyncTask = {
+  id: string;
+  attributes: {
+    status: AsyncTaskStatus;
+    result: { url?: string; error?: string };
+  };
+};
+
+export async function getAsyncTask(taskId: number): Promise<AsyncTask> {
+  const { data } = await apiClient.get(`/api/async_tasks/${taskId}`);
+  return data.data;
+}
