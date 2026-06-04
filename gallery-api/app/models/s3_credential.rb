@@ -1,4 +1,43 @@
 class S3Credential < ApplicationRecord
+  # Buffers zip bytes and flushes them to S3 as multipart upload parts.
+  # Each part (except the last) must be at least 5 MB — the S3 minimum.
+  class MultipartWriter
+    MIN_PART_SIZE = 5 * 1024 * 1024
+
+    attr_reader :completed_parts
+
+    def initialize(s3_client, bucket, key, upload_id)
+      @s3_client = s3_client
+      @bucket = bucket
+      @key = key
+      @upload_id = upload_id
+      @buffer = +""
+      @completed_parts = []
+      @part_number = 1
+    end
+
+    def <<(data)
+      @buffer << data
+      flush_part if @buffer.bytesize >= MIN_PART_SIZE
+      self
+    end
+
+    def flush
+      flush_part if @buffer.bytesize > 0
+    end
+
+    private
+
+    def flush_part
+      resp = @s3_client.upload_part(
+        bucket: @bucket, key: @key, upload_id: @upload_id,
+        part_number: @part_number, body: @buffer
+      )
+      @completed_parts << { part_number: @part_number, etag: resp.etag }
+      @part_number += 1
+      @buffer = +""
+    end
+  end
   include Userable
 
   encrypts :access_key_id
@@ -33,10 +72,9 @@ class S3Credential < ApplicationRecord
   end
 
   # Returns a presigned GET URL valid for the given duration (default 1 hour).
-  # Used to serve images from private buckets — the URL is short-lived and
-  # scoped to a single object, so no bucket-wide access is granted.
-  def presigned_get_url(key, expires_in: 3600)
-    presigner.presigned_url(:get_object, bucket: bucket, key: key, expires_in: expires_in)
+  # Pass response_content_disposition: to force a download filename in browsers.
+  def presigned_get_url(key, expires_in: 3600, **options)
+    presigner.presigned_url(:get_object, bucket: bucket, key: key, expires_in: expires_in, **options)
   end
 
   # Returns a presigner bound to this credential's S3 client.
@@ -62,6 +100,34 @@ class S3Credential < ApplicationRecord
   # failed so it can abort before touching the database.
   def delete_object!(key)
     s3_client.delete_object(bucket: bucket, key: key)
+  end
+
+  # Streams an S3 object in chunks, yielding each chunk to the caller.
+  # Avoids loading the entire object into memory — used by Albums::ZipDownload
+  # to feed image bytes directly into a streaming zip archive.
+  def stream_object(key)
+    s3_client.get_object(bucket: bucket, key: key) do |chunk, _headers|
+      yield chunk
+    end
+  end
+
+  # Uploads data to S3 using the multipart upload API, streaming it through
+  # a MultipartWriter sink yielded to the caller's block. Aborts the upload
+  # automatically if the block raises so no orphaned parts accumulate in S3.
+  def multipart_put(key, content_type:)
+    upload = s3_client.create_multipart_upload(bucket: bucket, key: key, content_type: content_type)
+    writer = MultipartWriter.new(s3_client, bucket, key, upload.upload_id)
+    begin
+      yield writer
+      writer.flush
+      s3_client.complete_multipart_upload(
+        bucket: bucket, key: key, upload_id: upload.upload_id,
+        multipart_upload: { parts: writer.completed_parts }
+      )
+    rescue => e
+      s3_client.abort_multipart_upload(bucket: bucket, key: key, upload_id: upload.upload_id) rescue nil
+      raise e
+    end
   end
 
   # Batch-deletes up to 1000 keys per API call (S3 limit).

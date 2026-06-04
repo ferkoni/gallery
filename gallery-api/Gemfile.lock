@@ -420,6 +420,7 @@ GEM
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
     zeitwerk (2.8.2)
+    zip_kit (6.3.4)
 
 PLATFORMS
   x86_64-linux
@@ -458,6 +459,7 @@ DEPENDENCIES
   thruster
   tzinfo-data
   web-console
+  zip_kit (~> 6.0)
 
 BUNDLED WITH
    2.4.1

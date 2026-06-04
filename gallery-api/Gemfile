@@ -63,3 +63,5 @@ gem "pundit", "~> 2.5"
 gem "aws-sdk-rails", "~> 5"
 gem "aws-sdk-s3", "~> 1.0"
 gem "aws-activejob-sqs", "~> 1"
+
+gem "zip_kit", "~> 6.0"

@@ -8,8 +8,13 @@ default: &default
   password: <%= ENV["POSTGRES_PASSWORD"] %>
 
 development:
-  <<: *default
-  database: <%= ENV.fetch("POSTGRES_DB") { "gallery_api_development" } %>
+  primary:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_DB") { "gallery_api_development" } %>
+  queue:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_DB") { "gallery_api_development" } %>
+    migrations_paths: db/queue_migrate
 
 test:
   <<: *default
