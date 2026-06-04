@@ -6,7 +6,7 @@ export function useDownloadAlbum() {
 
   async function downloadAlbum(albumId: number, albumName: string) {
     const { task_id } = await createDownloadTask(albumId);
-    enqueue(task_id, albumName);
+    enqueue(task_id, albumId, albumName);
   }
 
   return { downloadAlbum };

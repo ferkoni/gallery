@@ -31,6 +31,7 @@ describe('useDownloadAlbum', () => {
     const { downloads } = useDownloadStore.getState();
     expect(downloads[42]).toMatchObject({
       taskId: 42,
+      albumId: 5,
       albumName: 'Summer 2026',
       status: 'pending',
     });
