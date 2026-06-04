@@ -21,11 +21,12 @@ export function useImages(albumId?: number) {
   });
 }
 
-export function useAlbumImages(albumId: number, page: number, filters?: AlbumImageFilters) {
+export function useAlbumImages(albumId: number, page: number, filters?: AlbumImageFilters, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['albums', albumId, 'images', page, filters],
     queryFn: () => fetchAlbumImages(albumId, page, filters),
     staleTime: PRESIGNED_URL_STALE_MS,
+    enabled: options?.enabled ?? true,
   });
 }
 

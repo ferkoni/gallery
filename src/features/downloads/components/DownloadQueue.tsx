@@ -11,9 +11,9 @@ export function DownloadQueue() {
 
   if (items.length === 0) return null;
 
-  function handleRetry(item: DownloadItem) {
-    useDownloadStore.getState().remove(item.taskId);
-    downloadAlbum(item.albumId, item.albumName);
+  async function handleRetry(item: DownloadItem) {
+    const ok = await downloadAlbum(item.albumId, item.albumName);
+    if (ok) useDownloadStore.getState().remove(item.taskId);
   }
 
   return (

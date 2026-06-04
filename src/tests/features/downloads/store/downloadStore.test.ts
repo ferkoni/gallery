@@ -26,7 +26,7 @@ describe('downloadStore', () => {
   describe('setReady', () => {
     beforeEach(() => {
       vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-01-15'));
+      vi.setSystemTime(new Date('2026-01-15T12:00:00'));
     });
 
     afterEach(() => {
@@ -50,6 +50,11 @@ describe('downloadStore', () => {
 
       expect(useDownloadStore.getState().downloads[1].albumName).toBe('Summer 2026');
     });
+
+    it('is a no-op for an unknown taskId', () => {
+      useDownloadStore.getState().setReady(999, 'https://example.com/file.zip');
+      expect(useDownloadStore.getState().downloads[999]).toBeUndefined();
+    });
   });
 
   describe('setFailed', () => {
@@ -61,6 +66,11 @@ describe('downloadStore', () => {
         status: 'failed',
         error: 'S3 upload failed',
       });
+    });
+
+    it('is a no-op for an unknown taskId', () => {
+      useDownloadStore.getState().setFailed(999, 'some error');
+      expect(useDownloadStore.getState().downloads[999]).toBeUndefined();
     });
   });
 

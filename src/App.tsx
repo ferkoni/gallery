@@ -14,10 +14,12 @@ import { UploadQueue } from "@/features/images/components/UploadQueue.tsx";
 import { DownloadQueue } from "@/features/downloads/components/DownloadQueue.tsx";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import { useUserChannel } from "@/features/downloads/hooks/useUserChannel";
+import { useTaskPoller } from "@/features/downloads/hooks/useTaskPoller";
 
 function App() {
   const { token } = useAuthContext();
   useUserChannel();
+  useTaskPoller();
   return (
     <>
       <NavBar />

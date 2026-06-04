@@ -29,25 +29,31 @@ export const useDownloadStore = create<DownloadStore>((set) => ({
     })),
 
   setReady: (taskId, url) =>
-    set((s) => ({
-      downloads: {
-        ...s.downloads,
-        [taskId]: {
-          ...s.downloads[taskId],
-          status: 'ready',
-          url,
-          readyAt: new Date().toISOString().split('T')[0],
+    set((s) => {
+      if (!s.downloads[taskId]) return s;
+      return {
+        downloads: {
+          ...s.downloads,
+          [taskId]: {
+            ...s.downloads[taskId],
+            status: 'ready',
+            url,
+            readyAt: new Date().toLocaleDateString('en-CA'),
+          },
         },
-      },
-    })),
+      };
+    }),
 
   setFailed: (taskId, error) =>
-    set((s) => ({
-      downloads: {
-        ...s.downloads,
-        [taskId]: { ...s.downloads[taskId], status: 'failed', error },
-      },
-    })),
+    set((s) => {
+      if (!s.downloads[taskId]) return s;
+      return {
+        downloads: {
+          ...s.downloads,
+          [taskId]: { ...s.downloads[taskId], status: 'failed', error },
+        },
+      };
+    }),
 
   remove: (taskId) =>
     set((s) => {

@@ -9,7 +9,7 @@ export function AlbumDetailPage() {
   const { id } = useParams();
   const albumId = id ? Number(id) : 0;
   const { data: album, isPending, isError } = useGetAlbum(albumId, { enabled: !!id });
-  const { data: imagesData } = useAlbumImages(albumId, 1);
+  const { data: imagesData } = useAlbumImages(albumId, 1, undefined, { enabled: !!id });
 
   if (!id) return <p className="p-6 text-red-500">Invalid album.</p>;
   if (isPending) return <p className="p-6 text-gray-500">Loading...</p>;

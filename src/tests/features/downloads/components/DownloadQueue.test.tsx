@@ -13,7 +13,7 @@ const mockUseDownloadAlbum = vi.mocked(useDownloadAlbum);
 
 beforeEach(() => {
   useDownloadStore.setState({ downloads: {} });
-  mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: vi.fn() });
+  mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: vi.fn().mockResolvedValue(true), isLoading: false, error: null });
 });
 
 describe('DownloadQueue', () => {
@@ -36,9 +36,9 @@ describe('DownloadQueue', () => {
     expect(screen.getByTestId('download-item-2')).toBeInTheDocument();
   });
 
-  it('removes the failed item and re-enqueues when retry is clicked', async () => {
-    const mockDownloadAlbum = vi.fn();
-    mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: mockDownloadAlbum });
+  it('removes the failed item and re-enqueues when retry succeeds', async () => {
+    const mockDownloadAlbum = vi.fn().mockResolvedValue(true);
+    mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: mockDownloadAlbum, isLoading: false, error: null });
 
     useDownloadStore.getState().enqueue(1, 10, 'Summer');
     useDownloadStore.getState().setFailed(1, 'error');
@@ -46,7 +46,20 @@ describe('DownloadQueue', () => {
     render(<DownloadQueue />);
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
 
-    expect(useDownloadStore.getState().downloads[1]).toBeUndefined();
     expect(mockDownloadAlbum).toHaveBeenCalledWith(10, 'Summer');
+    expect(useDownloadStore.getState().downloads[1]).toBeUndefined();
+  });
+
+  it('keeps the failed item in the store when retry fails', async () => {
+    const mockDownloadAlbum = vi.fn().mockResolvedValue(false);
+    mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: mockDownloadAlbum, isLoading: false, error: null });
+
+    useDownloadStore.getState().enqueue(1, 10, 'Summer');
+    useDownloadStore.getState().setFailed(1, 'error');
+
+    render(<DownloadQueue />);
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(useDownloadStore.getState().downloads[1]).toBeDefined();
   });
 });

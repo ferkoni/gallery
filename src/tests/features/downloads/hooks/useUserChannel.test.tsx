@@ -1,15 +1,17 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockUnsubscribe, mockDisconnect, getReceived, setReceived } = vi.hoisted(() => {
+const { mockUnsubscribe, mockDisconnect, getReceived, setReceived, mockAdapters } = vi.hoisted(() => {
   const mockUnsubscribe = vi.fn();
   const mockDisconnect = vi.fn();
   let received: ((data: unknown) => void) = () => {};
+  const mockAdapters = { WebSocket: class MockWebSocket {} as unknown as typeof WebSocket };
   return {
     mockUnsubscribe,
     mockDisconnect,
     getReceived: () => received,
     setReceived: (fn: (data: unknown) => void) => { received = fn; },
+    mockAdapters,
   };
 });
 
@@ -23,6 +25,7 @@ vi.mock('@rails/actioncable', () => ({
     },
     disconnect: mockDisconnect,
   })),
+  adapters: mockAdapters,
 }));
 
 vi.mock('@/features/auth/hooks/useAuthContext', () => ({
@@ -56,9 +59,15 @@ beforeEach(() => {
 });
 
 describe('useUserChannel', () => {
-  it('creates a consumer with the JWT token in the URL', () => {
+  it('creates a consumer with /cable (token not in URL)', () => {
     renderHook(() => useUserChannel());
-    expect(mockCreateConsumer).toHaveBeenCalledWith('/cable?token=test-token');
+    expect(mockCreateConsumer).toHaveBeenCalledWith('/cable');
+  });
+
+  it('restores adapters.WebSocket to its original value after consumer creation', () => {
+    const originalClass = mockAdapters.WebSocket;
+    renderHook(() => useUserChannel());
+    expect(mockAdapters.WebSocket).toBe(originalClass);
   });
 
   it('does not create a consumer when token is null', () => {
@@ -93,7 +102,7 @@ describe('useUserChannel', () => {
     });
   });
 
-  it('sets task to failed when a failed message is received', () => {
+  it('sets task to failed with the default message when no error field is present', () => {
     useDownloadStore.getState().enqueue(1, 10, 'Summer');
     renderHook(() => useUserChannel());
 
@@ -109,6 +118,26 @@ describe('useUserChannel', () => {
     expect(useDownloadStore.getState().downloads[1]).toMatchObject({
       status: 'failed',
       error: 'Download failed',
+    });
+  });
+
+  it('passes the server error message through when present', () => {
+    useDownloadStore.getState().enqueue(1, 10, 'Summer');
+    renderHook(() => useUserChannel());
+
+    act(() => {
+      getReceived()({
+        task_type: 'album_download',
+        task_id: 1,
+        status: 'failed',
+        album_name: 'Summer',
+        error: 'S3 credentials missing',
+      });
+    });
+
+    expect(useDownloadStore.getState().downloads[1]).toMatchObject({
+      status: 'failed',
+      error: 'S3 credentials missing',
     });
   });
 
@@ -159,6 +188,6 @@ describe('useUserChannel', () => {
     mockUseAuthContext.mockReturnValue(makeAuthContext('new-token'));
     rerender();
 
-    expect(mockCreateConsumer).toHaveBeenCalledWith('/cable?token=new-token');
+    expect(mockCreateConsumer).toHaveBeenCalledWith('/cable');
   });
 });

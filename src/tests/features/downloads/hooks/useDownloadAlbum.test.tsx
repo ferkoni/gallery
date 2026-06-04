@@ -51,4 +51,62 @@ describe('useDownloadAlbum', () => {
     const { downloads } = useDownloadStore.getState();
     expect(Object.keys(downloads)).toHaveLength(2);
   });
+
+  it('returns true on success', async () => {
+    mockCreateDownloadTask.mockResolvedValue({ task_id: 42 });
+
+    const { result } = renderHook(() => useDownloadAlbum());
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.downloadAlbum(5, 'Summer 2026'); });
+
+    expect(ok).toBe(true);
+  });
+
+  it('sets isLoading to true while the request is in-flight and false after', async () => {
+    let resolve: (v: { task_id: number }) => void;
+    mockCreateDownloadTask.mockReturnValue(new Promise<{ task_id: number }>((r) => { resolve = r; }));
+
+    const { result } = renderHook(() => useDownloadAlbum());
+
+    let promise: Promise<boolean>;
+    act(() => { promise = result.current.downloadAlbum(5, 'Summer 2026'); });
+    expect(result.current.isLoading).toBe(true);
+
+    await act(async () => { resolve!({ task_id: 1 }); await promise; });
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('sets error and returns false when createDownloadTask throws', async () => {
+    mockCreateDownloadTask.mockRejectedValue(new Error('Network error'));
+
+    const { result } = renderHook(() => useDownloadAlbum());
+    let ok: boolean | undefined;
+    await act(async () => { ok = await result.current.downloadAlbum(5, 'Summer 2026'); });
+
+    expect(ok).toBe(false);
+    expect(result.current.error).toBe('Failed to start download');
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('clears error on a subsequent successful call', async () => {
+    mockCreateDownloadTask
+      .mockRejectedValueOnce(new Error('first fail'))
+      .mockResolvedValueOnce({ task_id: 99 });
+
+    const { result } = renderHook(() => useDownloadAlbum());
+    await act(() => result.current.downloadAlbum(5, 'Summer 2026'));
+    expect(result.current.error).toBe('Failed to start download');
+
+    await act(() => result.current.downloadAlbum(5, 'Summer 2026'));
+    expect(result.current.error).toBeNull();
+  });
+
+  it('does not enqueue when createDownloadTask throws', async () => {
+    mockCreateDownloadTask.mockRejectedValue(new Error('Network error'));
+
+    const { result } = renderHook(() => useDownloadAlbum());
+    await act(() => result.current.downloadAlbum(5, 'Summer 2026'));
+
+    expect(Object.keys(useDownloadStore.getState().downloads)).toHaveLength(0);
+  });
 });
