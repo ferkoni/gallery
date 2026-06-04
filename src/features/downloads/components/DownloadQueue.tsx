@@ -1,13 +1,11 @@
 import { useDownloadStore } from '../store/downloadStore';
 import { DownloadToast } from './DownloadToast';
 import { useDownloadAlbum } from '../hooks/useDownloadAlbum';
-import { useTaskPoller } from '../hooks/useTaskPoller';
 import type { DownloadItem } from '../store/downloadStore';
 
 export function DownloadQueue() {
   const { downloads } = useDownloadStore();
   const { downloadAlbum } = useDownloadAlbum();
-  useTaskPoller();
 
   const items = Object.values(downloads);
 

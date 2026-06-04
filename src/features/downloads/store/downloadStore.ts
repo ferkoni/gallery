@@ -8,6 +8,7 @@ export type DownloadItem = {
   albumName: string;
   status: DownloadStatus;
   url?: string;
+  readyAt?: string;
   error?: string;
 };
 
@@ -31,7 +32,12 @@ export const useDownloadStore = create<DownloadStore>((set) => ({
     set((s) => ({
       downloads: {
         ...s.downloads,
-        [taskId]: { ...s.downloads[taskId], status: 'ready', url },
+        [taskId]: {
+          ...s.downloads[taskId],
+          status: 'ready',
+          url,
+          readyAt: new Date().toISOString().split('T')[0],
+        },
       },
     })),
 

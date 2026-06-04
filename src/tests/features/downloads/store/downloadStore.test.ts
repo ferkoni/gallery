@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useDownloadStore } from '@/features/downloads/store/downloadStore';
 
 beforeEach(() => {
@@ -24,6 +24,15 @@ describe('downloadStore', () => {
   });
 
   describe('setReady', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-01-15'));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it('transitions status to ready and sets url', () => {
       useDownloadStore.getState().enqueue(1, 10, 'Summer 2026');
       useDownloadStore.getState().setReady(1, 'https://example.com/file.zip');
@@ -31,6 +40,7 @@ describe('downloadStore', () => {
       expect(useDownloadStore.getState().downloads[1]).toMatchObject({
         status: 'ready',
         url: 'https://example.com/file.zip',
+        readyAt: '2026-01-15',
       });
     });
 

@@ -4,7 +4,6 @@ import { ImageGrid } from '../components/ImageGrid';
 import { ImageUploadButton } from '../components/ImageUploadButton';
 import { useAlbumImages } from '../hooks/useImages';
 import { DownloadAlbumButton } from '@/features/downloads/components/DownloadAlbumButton';
-import { DownloadQueue } from '@/features/downloads/components/DownloadQueue';
 
 export function AlbumDetailPage() {
   const { id } = useParams();
@@ -31,7 +30,6 @@ export function AlbumDetailPage() {
         <p className="text-gray-500 mb-6">{album.description}</p>
       )}
       <ImageGrid albumId={albumId} />
-      <DownloadQueue />
     </main>
   );
 }

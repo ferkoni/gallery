@@ -11,10 +11,13 @@ import { AlbumDetailPage } from "@/features/images/pages/AlbumDetailPage.tsx";
 import { FavoritesPage } from "@/features/images/pages/FavoritesPage.tsx";
 import { SearchPage } from "@/features/images/pages/SearchPage.tsx";
 import { UploadQueue } from "@/features/images/components/UploadQueue.tsx";
+import { DownloadQueue } from "@/features/downloads/components/DownloadQueue.tsx";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
+import { useUserChannel } from "@/features/downloads/hooks/useUserChannel";
 
 function App() {
   const { token } = useAuthContext();
+  useUserChannel();
   return (
     <>
       <NavBar />
@@ -33,6 +36,7 @@ function App() {
         </Route>
       </Routes>
       <UploadQueue />
+      <DownloadQueue />
     </>
   );
 }
