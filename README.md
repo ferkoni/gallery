@@ -88,6 +88,37 @@ Logout
 
 ---
 
+## Testing
+
+```bash
+npm run test       # run tests with coverage
+```
+
+Tests are written with Vitest + Testing Library. Coverage is enforced at **100% per file** (statements, branches, functions, lines) — the suite fails if any file drops below. Covered areas:
+
+- Auth flow: `AuthProvider`, `LoginForm`, `useAuth` — token storage, 401 redirect, logout
+- Upload pipeline: `useUpload`, `uploadStore`, `UploadQueue` — per-file progress, error states, queue management
+- Async download: `useDownloadAlbum`, `useUserChannel`, `useTaskPoller`, `DownloadToast` — WS connection lifecycle, fallback polling, toast notifications
+- API layer: `imagesApi`, Axios client — request construction, 401 interception, mock adapter
+- Shared components: `Pagination`, `NavBar`, `Lightbox`, `ImageGrid`, `ImageCard`
+
+---
+
+## Deployment
+
+The `Dockerfile` produces a static build served by nginx:
+
+```bash
+docker build \
+  --build-arg VITE_API_URL=https://api.example.com \
+  -t gallery-app .
+docker run -p 80:80 gallery-app
+```
+
+`VITE_API_URL` defaults to `/api` (same-origin reverse proxy). For cross-origin deployments, set it to the full API URL at build time.
+
+---
+
 ## Getting started
 
 ```bash
