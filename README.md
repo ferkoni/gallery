@@ -94,7 +94,7 @@ Logout
 npm run test       # run tests with coverage
 ```
 
-Tests are written with Vitest + Testing Library. Coverage is enforced at **100% per file** (statements, branches, functions, lines) — the suite fails if any file drops below. Covered areas:
+Tests are written with Vitest + Testing Library. Covered areas:
 
 - Auth flow: `AuthProvider`, `LoginForm`, `useAuth` — token storage, 401 redirect, logout
 - Upload pipeline: `useUpload`, `uploadStore`, `UploadQueue` — per-file progress, error states, queue management
