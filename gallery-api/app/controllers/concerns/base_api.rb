@@ -1,0 +1,106 @@
+module BaseApi
+  extend ActiveSupport::Concern
+
+  included do
+    before_action :authenticate_user!
+
+    rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity_response
+    rescue_from ActiveRecord::RecordNotFound, with: :render_not_found_response
+    rescue_from ActiveRecord::StatementInvalid, with: :render_bad_request_response
+    rescue_from Pundit::NotAuthorizedError, with: :render_forbidden_response
+  end
+
+  def index
+    collection = resources
+    hash = serializer.new(collection, params: serializer_params).serializable_hash
+    hash[:meta] = pagination_meta(collection) if collection.respond_to?(:current_page)
+    render json: hash.to_json
+  end
+
+  def show
+    render json: serializer.new(resource, params: serializer_params).serializable_hash.to_json
+  end
+
+  def create
+    resource.save!
+    render json: serializer.new(resource, params: serializer_params).serializable_hash.to_json
+  end
+
+  def update
+    resource.update!(resource_params)
+    render json: serializer.new(resource, params: serializer_params).serializable_hash.to_json
+  end
+
+  def destroy
+    resource.destroy!
+    head :no_content
+  end
+
+  protected
+
+  def authorize_resource!
+    authorize(resource)
+  end
+
+  def resources
+    raise NotImplementedError, "#{self.class} must implement #resources"
+  end
+
+  def apply_filters(scope)
+    scope = scope.global_search(params[:q]) if params[:q].present? && scope.respond_to?(:global_search)
+    scope = scope.search_by_title(params[:title]) if params[:title].present? && scope.respond_to?(:search_by_title)
+    scope = scope.search_by_tag(params[:tag]) if params[:tag].present? && scope.respond_to?(:search_by_tag)
+    scope = scope.from_date(params[:from]) if params[:from].present? && scope.respond_to?(:from_date)
+    scope
+  end
+
+  def resource
+    @_resource ||= params[:id] ? resource_class.find(params[:id]) : resource_class.new(new_resource_params)
+  end
+
+  # Override in controllers that need extra serializer options (e.g. credentials).
+  def serializer_params
+    {}
+  end
+
+  def pagination_meta(paged)
+    {
+      current_page: paged.current_page,
+      total_pages: paged.total_pages,
+      total_count: paged.total_count,
+      per_page: paged.limit_value
+    }
+  end
+
+  def render_unprocessable_entity_response
+    render json: { errors: resource.errors }, status: :unprocessable_content
+  end
+
+  def render_not_found_response
+    render json: { errors: "Not found" }, status: :not_found
+  end
+
+  def render_bad_request_response
+    render json: { errors: "Invalid query parameter" }, status: :bad_request
+  end
+
+  def render_forbidden_response
+    render json: { errors: "Forbidden" }, status: :forbidden
+  end
+
+  def resource_class
+    raise NotImplementedError, "#{self.class} must implement #resource_class"
+  end
+
+  def serializer
+    raise NotImplementedError
+  end
+
+  def resource_params
+    raise NotImplementedError
+  end
+
+  def new_resource_params
+    raise NotImplementedError
+  end
+end
