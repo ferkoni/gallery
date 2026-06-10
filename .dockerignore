@@ -1,0 +1,10 @@
+gallery-api/
+.github/
+.git/
+.idea/
+*.md
+.gitignore
+.env*
+gallery-app/node_modules/
+gallery-app/dist/
+gallery-app/coverage/
