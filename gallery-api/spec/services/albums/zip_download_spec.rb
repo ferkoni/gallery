@@ -3,22 +3,22 @@ require "rails_helper"
 RSpec.describe Albums::ZipDownload, type: :service do
   let(:user) { create(:user) }
   let(:album) { create(:album, user: user) }
-  let(:credential) { instance_double(S3Credential, persisted?: true) }
+  let(:storage) { instance_double(S3::Storage) }
   let!(:images) { create_list(:image, 2, user: user, album: album) }
   let(:presigned_url) { "https://s3.example.com/downloads/zip?sig=abc" }
 
   before do
     images.each do |image|
-      allow(credential).to receive(:stream_object).with(image.s3_key).and_yield("fake bytes")
+      allow(storage).to receive(:stream_object).with(image.s3_key).and_yield("fake bytes")
     end
-    allow(credential).to receive(:multipart_put) do |_key, content_type:, &block|
+    allow(storage).to receive(:multipart_put) do |_key, content_type:, &block|
       block.call(StringIO.new)
     end
-    allow(credential).to receive(:presigned_get_url).and_return(presigned_url)
+    allow(storage).to receive(:presigned_get_url).and_return(presigned_url)
   end
 
   def call
-    described_class.call(album: album, user: user, credential: credential)
+    described_class.call(album: album, user: user, storage: storage)
   end
 
   describe "success path" do
@@ -35,7 +35,7 @@ RSpec.describe Albums::ZipDownload, type: :service do
     end
 
     it "uploads a zip with the correct content type" do
-      expect(credential).to receive(:multipart_put).with(
+      expect(storage).to receive(:multipart_put).with(
         a_string_starting_with("downloads/#{user.id}/"),
         content_type: "application/zip"
       ) { |_key, **_opts, &block| block.call(StringIO.new) }
@@ -43,7 +43,7 @@ RSpec.describe Albums::ZipDownload, type: :service do
     end
 
     it "requests a presigned URL with Content-Disposition and 15-minute expiry" do
-      expect(credential).to receive(:presigned_get_url).with(
+      expect(storage).to receive(:presigned_get_url).with(
         anything,
         expires_in: 900,
         response_content_disposition: a_string_including("attachment")
@@ -53,13 +53,13 @@ RSpec.describe Albums::ZipDownload, type: :service do
 
     it "streams each image from S3 by its s3_key" do
       images.each do |image|
-        expect(credential).to receive(:stream_object).with(image.s3_key).and_yield("bytes")
+        expect(storage).to receive(:stream_object).with(image.s3_key).and_yield("bytes")
       end
       call
     end
 
     it "includes the album name in the zip filename" do
-      expect(credential).to receive(:multipart_put).with(
+      expect(storage).to receive(:multipart_put).with(
         a_string_including(album.name),
         content_type: "application/zip"
       ) { |_key, **_opts, &block| block.call(StringIO.new) }
@@ -69,24 +69,24 @@ RSpec.describe Albums::ZipDownload, type: :service do
 
   describe "missing credential" do
     it "returns success?: false" do
-      result = described_class.call(album: album, user: user, credential: nil)
+      result = described_class.call(album: album, user: user, storage: nil)
       expect(result.success?).to be(false)
     end
 
     it "reports the missing credential" do
-      result = described_class.call(album: album, user: user, credential: nil)
+      result = described_class.call(album: album, user: user, storage: nil)
       expect(result.error).to eq("No S3 credentials on file")
     end
 
     it "does not touch S3" do
-      expect(credential).not_to receive(:stream_object)
-      described_class.call(album: album, user: user, credential: nil)
+      expect(storage).not_to receive(:stream_object)
+      described_class.call(album: album, user: user, storage: nil)
     end
   end
 
   describe "S3 fetch failure" do
     before do
-      allow(credential).to receive(:stream_object).and_raise(
+      allow(storage).to receive(:stream_object).and_raise(
         Aws::S3::Errors::ServiceError.new(nil, "forbidden")
       )
     end
@@ -102,7 +102,7 @@ RSpec.describe Albums::ZipDownload, type: :service do
 
   describe "S3 upload failure" do
     before do
-      allow(credential).to receive(:multipart_put).and_raise(
+      allow(storage).to receive(:multipart_put).and_raise(
         Aws::S3::Errors::ServiceError.new(nil, "upload denied")
       )
     end

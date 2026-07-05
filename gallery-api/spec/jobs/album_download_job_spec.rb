@@ -1,8 +1,6 @@
 require "rails_helper"
 
 RSpec.describe AlbumDownloadJob, type: :job do
-  before { allow_any_instance_of(S3Credential).to receive(:reachable?).and_return(true) }
-
   let(:user) { create(:user) }
   let(:album) { create(:album, user: user) }
   let!(:s3_credential) { create(:s3_credential, user: user) }
@@ -20,7 +18,10 @@ RSpec.describe AlbumDownloadJob, type: :job do
     )
   end
 
+  let(:storage) { instance_double(S3::Storage) }
+
   before do
+    allow(S3::Storage).to receive(:for).and_return(storage)
     allow(Albums::ZipDownload).to receive(:call).and_return(success_result)
   end
 
@@ -49,7 +50,7 @@ RSpec.describe AlbumDownloadJob, type: :job do
       expect(Albums::ZipDownload).to receive(:call).with(
         album: album,
         user: user,
-        credential: s3_credential
+        storage: storage
       )
       described_class.new.perform(album.id, task.id)
     end

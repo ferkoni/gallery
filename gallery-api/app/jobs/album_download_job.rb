@@ -7,9 +7,9 @@ class AlbumDownloadJob < ApplicationJob
     task = AsyncTask.find(task_id)
     user = task.user
     album = Album.with_user(user).find(album_id)
-    credential = S3Credential.find_by(user: user)
+    storage = S3::Storage.for(S3Credential.find_by(user: user))
 
-    result = Albums::ZipDownload.call(album: album, user: user, credential: credential)
+    result = Albums::ZipDownload.call(album: album, user: user, storage: storage)
 
     if result.success?
       task.update!(status: :ready, result: { "url" => result.url, "s3_key" => result.s3_key })
