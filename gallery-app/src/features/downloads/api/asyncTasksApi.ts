@@ -10,7 +10,7 @@ export async function createDownloadTask(albumId: number): Promise<{ task_id: nu
   return data;
 }
 
-export type AsyncTaskStatus = 'pending' | 'ready' | 'failed';
+export type AsyncTaskStatus = 'pending' | 'completed' | 'failed';
 
 export type AsyncTask = {
   id: string;

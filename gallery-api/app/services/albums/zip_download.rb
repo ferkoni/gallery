@@ -8,10 +8,11 @@ module Albums
       new(**args).call
     end
 
-    def initialize(album:, user:, storage:)
+    def initialize(album:, user:, storage:, token:)
       @album = album
       @user = user
       @storage = storage
+      @token = token
     end
 
     def call
@@ -37,7 +38,11 @@ module Albums
     end
 
     def stream_zip(images)
-      key = "downloads/#{@user.id}/#{SecureRandom.uuid}/#{zip_filename}"
+      # Key is derived from a stable per-download token (the AsyncTask id) rather
+      # than a random UUID, so a retry overwrites the same object instead of
+      # orphaning a new zip in the bucket. The user-facing, date-stamped filename
+      # lives in the Content-Disposition (see #call), not in the key.
+      key = "downloads/#{@user.id}/#{@token}/album.zip"
       @storage.multipart_put(key, content_type: "application/zip") do |sink|
         ZipKit::Streamer.open(sink) do |zip|
           seen = Hash.new(0)

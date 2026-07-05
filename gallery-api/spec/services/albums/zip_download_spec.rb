@@ -17,8 +17,10 @@ RSpec.describe Albums::ZipDownload, type: :service do
     allow(storage).to receive(:presigned_get_url).and_return(presigned_url)
   end
 
+  let(:token) { "task-token-123" }
+
   def call
-    described_class.call(album: album, user: user, storage: storage)
+    described_class.call(album: album, user: user, storage: storage, token: token)
   end
 
   describe "success path" do
@@ -58,29 +60,34 @@ RSpec.describe Albums::ZipDownload, type: :service do
       call
     end
 
-    it "includes the album name in the zip filename" do
-      expect(storage).to receive(:multipart_put).with(
-        a_string_including(album.name),
-        content_type: "application/zip"
-      ) { |_key, **_opts, &block| block.call(StringIO.new) }
+    it "includes the album name in the download filename via Content-Disposition" do
+      expect(storage).to receive(:presigned_get_url).with(
+        anything,
+        expires_in: 900,
+        response_content_disposition: a_string_including(album.name)
+      )
       call
+    end
+
+    it "derives a deterministic s3_key from the token so retries reuse the object" do
+      expect(call.s3_key).to eq("downloads/#{user.id}/#{token}/album.zip")
     end
   end
 
   describe "missing credential" do
     it "returns success?: false" do
-      result = described_class.call(album: album, user: user, storage: nil)
+      result = described_class.call(album: album, user: user, storage: nil, token: token)
       expect(result.success?).to be(false)
     end
 
     it "reports the missing credential" do
-      result = described_class.call(album: album, user: user, storage: nil)
+      result = described_class.call(album: album, user: user, storage: nil, token: token)
       expect(result.error).to eq("No S3 credentials on file")
     end
 
     it "does not touch S3" do
       expect(storage).not_to receive(:stream_object)
-      described_class.call(album: album, user: user, storage: nil)
+      described_class.call(album: album, user: user, storage: nil, token: token)
     end
   end
 
