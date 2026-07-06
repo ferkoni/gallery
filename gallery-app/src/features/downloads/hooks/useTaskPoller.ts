@@ -14,8 +14,8 @@ export function useTaskPoller() {
         pending.map(async ({ taskId }) => {
           try {
             const task = await getAsyncTask(taskId);
-            if (task.attributes.status === 'ready') {
-              useDownloadStore.getState().setReady(taskId, task.attributes.result.url ?? '');
+            if (task.attributes.status === 'completed') {
+              useDownloadStore.getState().setCompleted(taskId, task.attributes.result.url ?? '');
             } else if (task.attributes.status === 'failed') {
               useDownloadStore.getState().setFailed(taskId, task.attributes.result.error ?? 'Download failed');
             }

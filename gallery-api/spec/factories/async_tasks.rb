@@ -6,8 +6,8 @@ FactoryBot.define do
     result { {} }
     association :user
 
-    trait :ready do
-      status { "ready" }
+    trait :completed do
+      status { "completed" }
       result { { "url" => "https://example.com/download.zip" } }
     end
 

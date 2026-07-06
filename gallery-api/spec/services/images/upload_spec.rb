@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe Images::Upload, type: :service do
   let(:user) { create(:user) }
   let(:album) { create(:album, user: user) }
-  let(:credential) { instance_double(S3Credential, persisted?: true) }
+  let(:storage) { instance_double(S3::Storage) }
 
   let(:file) do
     instance_double(
@@ -15,13 +15,13 @@ RSpec.describe Images::Upload, type: :service do
   end
 
   before do
-    allow(credential).to receive(:upload).and_return("albums/#{album.id}/uuid/vacation.jpg")
+    allow(storage).to receive(:upload).and_return("albums/#{album.id}/uuid/vacation.jpg")
   end
 
   def call(title: "Vacation", album_id: album.id, upload_file: file)
     described_class.call(
       user: user,
-      credential: credential,
+      storage: storage,
       file: upload_file,
       title: title,
       album_id: album_id
@@ -57,26 +57,19 @@ RSpec.describe Images::Upload, type: :service do
   end
 
   describe "validation guards (no S3 call)" do
-    context "when credential is nil" do
+    context "when storage is nil (no credentials on file)" do
       it "returns success?: false" do
         result = described_class.call(
-          user: user, credential: nil, file: file, title: "T", album_id: album.id
+          user: user, storage: nil, file: file, title: "T", album_id: album.id
         )
         expect(result.success?).to be(false)
       end
 
       it "reports the missing credential" do
         result = described_class.call(
-          user: user, credential: nil, file: file, title: "T", album_id: album.id
+          user: user, storage: nil, file: file, title: "T", album_id: album.id
         )
         expect(result.error).to eq("No S3 credentials on file")
-      end
-
-      it "does not call upload" do
-        expect(credential).not_to receive(:upload)
-        described_class.call(
-          user: user, credential: nil, file: file, title: "T", album_id: album.id
-        )
       end
     end
 
@@ -99,7 +92,7 @@ RSpec.describe Images::Upload, type: :service do
       end
 
       it "does not call upload" do
-        expect(credential).not_to receive(:upload)
+        expect(storage).not_to receive(:upload)
         call
       end
     end
@@ -123,7 +116,7 @@ RSpec.describe Images::Upload, type: :service do
       end
 
       it "does not call upload" do
-        expect(credential).not_to receive(:upload)
+        expect(storage).not_to receive(:upload)
         call
       end
     end
@@ -131,26 +124,26 @@ RSpec.describe Images::Upload, type: :service do
 
   describe "rollback on DB failure" do
     before do
-      allow(credential).to receive(:upload).and_return("albums/1/uuid/vacation.jpg")
+      allow(storage).to receive(:upload).and_return("albums/1/uuid/vacation.jpg")
       allow_any_instance_of(Image).to receive(:save!).and_raise(
         ActiveRecord::RecordInvalid.new(Image.new)
       )
     end
 
     it "calls delete_object with the uploaded key" do
-      expect(credential).to receive(:delete_object).with("albums/1/uuid/vacation.jpg")
+      expect(storage).to receive(:delete_object).with("albums/1/uuid/vacation.jpg")
       call
     end
 
     it "returns success?: false" do
-      allow(credential).to receive(:delete_object)
+      allow(storage).to receive(:delete_object)
       expect(call.success?).to be(false)
     end
   end
 
   describe "S3 upload error" do
     before do
-      allow(credential).to receive(:upload).and_raise(
+      allow(storage).to receive(:upload).and_raise(
         Aws::S3::Errors::ServiceError.new(nil, "access denied")
       )
     end

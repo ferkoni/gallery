@@ -23,7 +23,7 @@ describe('downloadStore', () => {
     });
   });
 
-  describe('setReady', () => {
+  describe('setCompleted', () => {
     beforeEach(() => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2026-01-15T12:00:00'));
@@ -33,26 +33,26 @@ describe('downloadStore', () => {
       vi.useRealTimers();
     });
 
-    it('transitions status to ready and sets url', () => {
+    it('transitions status to completed and sets url', () => {
       useDownloadStore.getState().enqueue(1, 10, 'Summer 2026');
-      useDownloadStore.getState().setReady(1, 'https://example.com/file.zip');
+      useDownloadStore.getState().setCompleted(1, 'https://example.com/file.zip');
 
       expect(useDownloadStore.getState().downloads[1]).toMatchObject({
-        status: 'ready',
+        status: 'completed',
         url: 'https://example.com/file.zip',
-        readyAt: '2026-01-15',
+        completedAt: '2026-01-15',
       });
     });
 
     it('preserves other fields', () => {
       useDownloadStore.getState().enqueue(1, 10, 'Summer 2026');
-      useDownloadStore.getState().setReady(1, 'https://example.com/file.zip');
+      useDownloadStore.getState().setCompleted(1, 'https://example.com/file.zip');
 
       expect(useDownloadStore.getState().downloads[1].albumName).toBe('Summer 2026');
     });
 
     it('is a no-op for an unknown taskId', () => {
-      useDownloadStore.getState().setReady(999, 'https://example.com/file.zip');
+      useDownloadStore.getState().setCompleted(999, 'https://example.com/file.zip');
       expect(useDownloadStore.getState().downloads[999]).toBeUndefined();
     });
   });

@@ -4,13 +4,13 @@ import { useDownloadStore } from '../store/downloadStore';
 
 const statusLabel: Record<DownloadStatus, string> = {
   pending: 'Preparing your download…',
-  ready: 'Download ready',
+  completed: 'Download ready',
   failed: 'Failed',
 };
 
 const statusColor: Record<DownloadStatus, string> = {
   pending: 'text-blue-500',
-  ready: 'text-green-500',
+  completed: 'text-green-500',
   failed: 'text-red-500',
 };
 
@@ -31,10 +31,10 @@ export const DownloadToast = memo(function DownloadToast({ item, onRetry }: Prop
         </span>
       </div>
 
-      {item.status === 'ready' && (
+      {item.status === 'completed' && (
         <a
           href={item.url}
-          download={`${item.albumName} ${item.readyAt}.zip`}
+          download={`${item.albumName} ${item.completedAt}.zip`}
           className="text-xs text-blue-500 hover:text-blue-700 font-medium mt-1 block"
         >
           Save file

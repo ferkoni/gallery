@@ -8,18 +8,19 @@ module Albums
       new(**args).call
     end
 
-    def initialize(album:, user:, credential:)
+    def initialize(album:, user:, storage:, token:)
       @album = album
       @user = user
-      @credential = credential
+      @storage = storage
+      @token = token
     end
 
     def call
-      return failure("No S3 credentials on file") unless @credential&.persisted?
+      return failure("No S3 credentials on file") unless @storage
 
       images = Image.with_user(@user).where(album: @album)
       zip_key = stream_zip(images)
-      url = @credential.presigned_get_url(
+      url = @storage.presigned_get_url(
         zip_key,
         expires_in: 900,
         response_content_disposition: "attachment; filename=\"#{zip_filename}\""
@@ -37,14 +38,18 @@ module Albums
     end
 
     def stream_zip(images)
-      key = "downloads/#{@user.id}/#{SecureRandom.uuid}/#{zip_filename}"
-      @credential.multipart_put(key, content_type: "application/zip") do |sink|
+      # Key is derived from a stable per-download token (the AsyncTask id) rather
+      # than a random UUID, so a retry overwrites the same object instead of
+      # orphaning a new zip in the bucket. The user-facing, date-stamped filename
+      # lives in the Content-Disposition (see #call), not in the key.
+      key = "downloads/#{@user.id}/#{@token}/album.zip"
+      @storage.multipart_put(key, content_type: "application/zip") do |sink|
         ZipKit::Streamer.open(sink) do |zip|
           seen = Hash.new(0)
           images.each do |image|
             entry_name = unique_name(File.basename(image.s3_key), seen)
             zip.write_stored_file(entry_name) do |entry_sink|
-              @credential.stream_object(image.s3_key) do |chunk|
+              @storage.stream_object(image.s3_key) do |chunk|
                 entry_sink << chunk
               end
             end

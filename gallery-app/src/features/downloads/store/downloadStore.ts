@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type DownloadStatus = 'pending' | 'ready' | 'failed';
+export type DownloadStatus = 'pending' | 'completed' | 'failed';
 
 export type DownloadItem = {
   taskId: number;
@@ -8,14 +8,14 @@ export type DownloadItem = {
   albumName: string;
   status: DownloadStatus;
   url?: string;
-  readyAt?: string;
+  completedAt?: string;
   error?: string;
 };
 
 type DownloadStore = {
   downloads: Record<number, DownloadItem>;
   enqueue: (taskId: number, albumId: number, albumName: string) => void;
-  setReady: (taskId: number, url: string) => void;
+  setCompleted: (taskId: number, url: string) => void;
   setFailed: (taskId: number, error: string) => void;
   remove: (taskId: number) => void;
 };
@@ -28,7 +28,7 @@ export const useDownloadStore = create<DownloadStore>((set) => ({
       downloads: { ...s.downloads, [taskId]: { taskId, albumId, albumName, status: 'pending' } },
     })),
 
-  setReady: (taskId, url) =>
+  setCompleted: (taskId, url) =>
     set((s) => {
       if (!s.downloads[taskId]) return s;
       return {
@@ -36,9 +36,9 @@ export const useDownloadStore = create<DownloadStore>((set) => ({
           ...s.downloads,
           [taskId]: {
             ...s.downloads[taskId],
-            status: 'ready',
+            status: 'completed',
             url,
-            readyAt: new Date().toLocaleDateString('en-CA'),
+            completedAt: new Date().toLocaleDateString('en-CA'),
           },
         },
       };

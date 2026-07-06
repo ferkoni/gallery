@@ -1,15 +1,15 @@
 class Images::Destroy < Images::Base
-  def initialize(image:, credential:)
+  def initialize(image:, storage:)
     @image = image
-    @credential = credential
+    @storage = storage
   end
 
   def call
     # Missing credentials → fail immediately; cannot safely delete without them.
-    return failure("No S3 credentials on file") unless @credential&.persisted?
+    return failure("No S3 credentials on file") unless @storage
 
     # S3 first — if this raises, the DB record is untouched (natural rollback).
-    @credential.delete_object!(@image.s3_key)
+    @storage.delete_object!(@image.s3_key)
     @image.destroy!
 
     success
