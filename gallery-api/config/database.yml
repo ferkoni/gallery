@@ -13,7 +13,7 @@ development:
     database: <%= ENV.fetch("POSTGRES_DB") { "gallery_api_development" } %>
   cable:
     <<: *default
-    database: <%= ENV.fetch("POSTGRES_DB") { "gallery_api_development" } %>
+    database: <%= ENV.fetch("POSTGRES_CABLE_DB") { "gallery_api_development_cable" } %>
     migrations_paths: db/cable_migrate
 
 test:
@@ -32,5 +32,5 @@ production:
     migrations_paths: db/cache_migrate
   cable:
     <<: *primary_production
-    database: gallery_api_production_cable
+    database: <%= ENV.fetch("POSTGRES_CABLE_DB") { "gallery_api_production_cable" } %>
     migrations_paths: db/cable_migrate
