@@ -1,7 +1,7 @@
 # How is the streaming zip built and uploaded in Node?
 
 Type: research
-Status: open
+Status: resolved
 Blocked by: —
 
 ## Question
@@ -52,3 +52,49 @@ Specifics that matter for parity:
 Answer with citations to AWS SDK v3 and library docs.
 
 ## Answer
+
+**Recommended stack: `GetObjectCommand.Body` (already a Node `Readable`) → `yazl` →
+`@aws-sdk/lib-storage`'s `Upload`.** Full findings, with a 40-line wiring sketch, cited to
+lib-storage source and ECMA-262:
+[`../research/08-zip-streaming-port.md`](../research/08-zip-streaming-port.md).
+
+1. **`Upload` replaces `S3::MultipartWriter` outright.** It accepts a Node `Readable`, chunks
+   it into parts (default `partSize` 5 MB, `queueSize` 4), tracks part numbers and ETags, and
+   sorts them before `CompleteMultipartUpload`. `leavePartsOnError` defaults to `false`, so
+   `AbortMultipartUpload` fires automatically on error — no configuration needed, and no
+   orphaned parts.
+
+   **Concurrency does not reorder the byte stream**, which was the load-bearing worry.
+   `__doMultipartUpload` creates one chunker generator and hands the *same* generator object
+   to all four workers; per ECMA-262 §27.9.1.2 / §27.9.3.4-5, concurrent `next()` calls queue
+   FIFO and the body only resumes from a suspended state. So the stream is drained
+   sequentially by one logical reader, `partNumber` is stamped at read time and travels with
+   the buffer, and only the `UploadPart` HTTP calls overlap.
+2. **Zip layer: `yazl`.** `addReadStreamLazy(name, { compress: false }, cb)` gives stored
+   (method 0) framing with a data descriptor for unknown size — the direct analogue of
+   `write_stored_file`. Entries are pumped strictly one at a time and the read stream is not
+   opened until that entry's turn, so exactly one `GetObject` socket is live at any moment. It
+   moves file data with `.pipe()`, so backpressure propagates all the way to S3. `zip-stream`
+   is the closest structural match but is ESM-only; `archiver` is `zip-stream` plus a queue
+   and helpers this use case does not need.
+3. **`GetObjectCommand`'s `Body` is already a Node `Readable`** (`SdkStream<IncomingMessage>`).
+   Narrow it with `new S3Client({}) as NodeJsClient<S3Client>` from `@smithy/types`, and never
+   call `transformTo*` — those buffer the whole object.
+4. **Memory is bounded, but at ~25 MB, not ~5 MB.** lib-storage's own `types.ts` states the
+   uploader buffers at most `queueSize * partSize` — 20 MB in flight plus one accumulating
+   part. Set `queueSize: 1` to match the Ruby profile.
+
+### The gotcha that must not be missed
+
+**`yazl` emits errors on the `ZipFile` EventEmitter, never on `zipfile.outputStream`, and
+never destroys it.** So a `GetObject` that fails mid-album leaves `outputStream` open,
+`Upload`'s `for await` never terminates, and `upload.done()` hangs forever with the multipart
+upload un-aborted. One mandatory line prevents it:
+
+```js
+zip.on("error", e => zip.outputStream.destroy(e));
+```
+
+Secondary constraints: the 10,000-part cap means a ~50 GB ceiling at the default part size,
+and never set `ContentLength` alongside a stream `Body` — `Upload` will assert an expected
+part count.

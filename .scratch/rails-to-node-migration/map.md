@@ -89,18 +89,38 @@ tickets, `/tdd` when porting behaviour that already has Rails specs to mirror.
 
 ## Decisions so far
 
-<!-- one line per resolved ticket: gist + link. Nothing resolved yet. -->
+<!-- one line per resolved ticket: gist + link. -->
+
+- [What is ActiveRecord Encryption's on-disk format, and can Node read it?](issues/02-ar-encryption-envelope.md)
+  — Node can read *and* write it, proven round-trip in both directions: plain JSON
+  `{"p":…,"h":{"iv":…,"at":…}}`, AES-256-GCM, key is
+  `PBKDF2-HMAC-SHA256(primary_key, salt, 65536, 32)` used directly. ~30 lines of
+  `node:crypto`. No npm package does it. The real risk is that the PBKDF2 digest is
+  *configuration*, not recorded in the envelope, and already changed once in Rails 7.1 —
+  so ticket 03 weighs maintenance coupling, not feasibility.
+- [How is the streaming zip built and uploaded in Node?](issues/08-zip-streaming-port.md)
+  — Stack is `GetObjectCommand.Body` (already a Node `Readable`) → `yazl`
+  (`addReadStreamLazy`, `compress: false`) → `@aws-sdk/lib-storage` `Upload`, which replaces
+  `S3::MultipartWriter` outright including abort-on-error. `Upload`'s `queueSize: 4` does
+  *not* reorder the stream. Memory is bounded at `queueSize * partSize` (~25 MB), so use
+  `queueSize: 1` to match Ruby. Mandatory:
+  `zip.on("error", e => zip.outputStream.destroy(e))`, or a mid-album failure hangs
+  `upload.done()` forever with the MPU un-aborted.
+- [Build the contract suite against Rails](issues/01-contract-suite-against-rails.md)
+  — Built at `contract/` (Vitest 4, TS, `pg`), base URL from `CONTRACT_BASE_URL`.
+  Snapshots are recorded from Rails, not authored. **S3 resolved as two tiers**: only four
+  paths reach AWS, and their rejections are free because validation and Pundit run first,
+  so only the happy paths are gated behind `CONTRACT_LIVE_S3=1`. MinIO/LocalStack ruled out
+  — `S3::Storage#s3_client` takes no `endpoint:`. **Ids are pinned, not normalised**, via a
+  dedicated `gallery_api_contract` database (`POSTGRES_DB`) truncated `RESTART IDENTITY`
+  per file, which is what makes Kaminari `meta` assertable exactly. Credentials are seeded
+  by writing AR Encryption's envelope directly, so the suite doubles as a standing
+  regression test for ticket 03.
 
 ## Not yet specified
 
 In scope, not yet sharp enough to ticket. Graduates as the frontier advances.
 
-- **Error-response shape parity.** The Rails API returns `{errors: …}` as an object
-  (`resource.errors`), a bare string (`"Not found"`), and an array (`["Invalid email or
-  password"]`) depending on the path. Whether Node reproduces all three shapes or the
-  snapshots force a decision is unclear until the suite exists.
-- **Kaminari `meta` reproduction.** `current_page`/`total_pages`/`total_count`/`per_page`
-  must match exactly, including the default page size and out-of-range page behaviour.
 - **Pundit → Nest guards.** Whether the five policies map one-to-one onto guards or want a
   policy abstraction. Depends on how much ownership logic the Prisma query layer absorbs.
 - **The `Images::Result` pattern.** Nest prefers exceptions and filters; the Rails services
@@ -108,7 +128,12 @@ In scope, not yet sharp enough to ticket. Graduates as the frontier advances.
 - **Multipart upload semantics.** Fastify's multipart handling versus Rails'
   `ActionDispatch::Http::UploadedFile` — content type, size limits, streaming to S3.
 - **rack-attack's dual throttle.** Whether the IP + email login throttle is reproduced,
-  and with what (in-memory, Postgres, Redis).
+  and with what (in-memory, Postgres, Redis). Sharpened while building the contract suite:
+  the middleware is mounted unconditionally in `config/application.rb` and development's
+  `cache_store` is `:memory_store`, so the throttle is **live in development**, not just
+  production — 5 login POSTs per IP per 60s. The contract suite is built around that budget
+  and its pacer would need revisiting if Node's throttle differs. Ticket 05 carries this as
+  a sub-question; it becomes its own ticket if the answer is "reproduce it".
 - **`AsyncTask.processing`.** Defined in the Rails enum but never set. Whether Node
   implements it or the status is dropped.
 - **Frontend coverage through the WebSocket swap.** `gallery-app` enforces 100% per-file

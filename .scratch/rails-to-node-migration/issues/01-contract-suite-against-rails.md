@@ -1,7 +1,7 @@
 # Build the contract suite against Rails
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: —
 
 ## Question
@@ -47,3 +47,93 @@ status and error shape. This choice bounds how much parity the suite can actuall
 so it is the main risk in this ticket.
 
 ## Answer
+
+Suite built at `contract/`. Vitest 4, TypeScript, `pg` as the only runtime dependency;
+base URL from `CONTRACT_BASE_URL`, so the same suite runs against `:3000` and `:4000`
+unchanged. Setup, layout and rationale are in `contract/README.md`.
+
+**Snapshots are deliberately not committed.** They are golden captures of what Rails
+actually emits and must be recorded by running the suite against Rails
+(`npm run record`). Authoring them by hand would invent the contract rather than
+observe it.
+
+### The S3 sub-question, resolved
+
+The premise turned out to be narrower than the ticket assumed. `ImageSerializer`
+presigns *locally* — pure crypto, no network call, as the comment on
+`Api::ImagesController#serializer_params` states — so every read endpoint produces a
+real, assertable URL from seeded fake credentials. Only four paths genuinely reach AWS:
+
+- `POST /api/images`
+- `DELETE /api/images/:id`
+- `DELETE /api/albums/:id` when the album has images (empty albums short-circuit)
+- `PUT /api/s3_credentials`, whose `reachable?` probe runs `head_bucket` +
+  `put_object` + `delete_object` unconditionally
+
+**Decision: two tiers.** The default tier covers everything else at full snapshot
+fidelity, *plus* every rejection of those four — because validation and Pundit run
+before S3 is touched, so "no credentials → 422", "bad MIME → 422", ">25 MB → 422",
+"non-owner → 403/404" and "no token → 401" are all free. Only the happy paths sit in
+`tests/live-s3.test.ts`, skipped unless `CONTRACT_LIVE_S3=1` with credentials for a
+throwaway bucket.
+
+**MinIO and LocalStack were ruled out on a code fact, not a preference.**
+`S3::Storage#s3_client` builds `Aws::S3::Client.new(region:, credentials:)` with no
+`endpoint:` and no `force_path_style:`, so it cannot be redirected at a local stub
+without editing the app — which the map puts out of scope, and which would have to be
+mirrored in Node.
+
+### Deterministic seed data, resolved
+
+Runs against a dedicated `gallery_api_contract` database, selected with `POSTGRES_DB`
+since `config/database.yml` already reads the development database name from it.
+`config.ts` refuses to start if `CONTRACT_DATABASE_URL` names `gallery_api_development`.
+
+**Ids are pinned, not normalised away.** Users are seeded once per run through
+`POST /api/users` in fixed order (ids 1–4) and never truncated; every other table is
+truncated `RESTART IDENTITY` before each test file and re-seeded with explicit ids and
+explicit timestamps. That is what makes `total_count`, `total_pages`, `per_page` and
+`created_at DESC` ordering assertable as exact values. Only two things are normalised:
+the JWT, and the volatile query parameters of a presigned URL — host and path survive,
+so the `s3_key` is still asserted.
+
+Seeding `s3_credentials` cannot go through the API, since `PUT` always probes S3. The
+suite therefore writes ActiveRecord Encryption's envelope directly, using the format
+established by ticket 02 (`src/support/ar-encryption.ts`, ~40 lines of `node:crypto`).
+This has a useful side effect: `tests/s3-credentials.test.ts` asserts that the backend
+can decrypt what the suite wrote, which makes the suite a **standing regression test for
+whatever ticket 03 decides**. If 03 changes the scheme, that module changes with it.
+
+### Discovered while building: rack-attack is live in development
+
+`config.middleware.use Rack::Attack` is unconditional in `config/application.rb:16` and
+development's `cache_store` is `:memory_store`, so the login throttle really applies:
+5 `POST /api/users/login` per IP per 60s. A suite that authenticates per test collects
+429s within seconds and records garbage as the contract.
+
+The suite spends exactly five logins — three in global setup, two in
+`tests/users.test.ts` on a dedicated `authfixture` user — and routes every login through
+a pacer that waits out the window rather than letting a 429 be snapshotted. Login also
+rotates `users.jti`, so no two suites share a user whose jti one of them rotates.
+
+### Quirks now frozen as contract
+
+Worth listing because each is a place a naive Node port would diverge silently:
+
+- `POST /api/albums` and `POST /api/users` answer **200**; `POST /api/images` and
+  `POST /api/async_tasks` answer **201**. `BaseApi#create` renders without a status.
+- A stranger's *album* answers **404** (`AlbumsController` overrides `#resource` to scope
+  through `#resources`); a stranger's *image* answers **403** (`BaseApi#resource` finds
+  unscoped, then Pundit rejects).
+- The async tasks index carries **no pagination meta** — `AsyncTasksController#resources`
+  never calls `.page`.
+- `AsyncTaskSerializer` declares no `:id` attribute, so tasks carry the id only at
+  `data.id`, unlike albums, images and users which carry it in both places.
+- All three `{errors: …}` shapes: object, bare string, and array.
+
+### Coverage
+
+`tests/health.test.ts`, `users.test.ts`, `albums.test.ts`, `album-images.test.ts`,
+`images.test.ts` (including all search/filter/favorites params), `s3-credentials.test.ts`,
+`async-tasks.test.ts`, and the gated `live-s3.test.ts`. Every route in
+`config/routes.rb` is exercised.
