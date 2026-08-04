@@ -1,0 +1,21 @@
+{
+  "name": "gallery-contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-agnostic HTTP contract suite. Runs unchanged against Rails or Node.",
+  "scripts": {
+    "test": "vitest run",
+    "test:rails": "CONTRACT_BASE_URL=http://localhost:3000 vitest run",
+    "test:node": "CONTRACT_BASE_URL=http://localhost:4000 vitest run",
+    "record": "vitest run --update",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/pg": "^8.11.10",
+    "pg": "^8.13.1",
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.0"
+  }
+}
