@@ -11,6 +11,11 @@ echo "Generating .env..."
 POSTGRES_PASSWORD="$(openssl rand -hex 32)"
 
 cat > .env <<EOF
+# Origin you browse the app from. Action Cable refuses WebSocket connections
+# from any other origin, so change this if you reach the app from another
+# machine (e.g. http://192.168.1.50:8080). Comma-separated for several.
+APP_ORIGIN=http://localhost:8080
+
 SECRET_KEY_BASE=$(openssl rand -hex 64)
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 GALLERY_API_DATABASE_PASSWORD=${POSTGRES_PASSWORD}
