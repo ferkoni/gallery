@@ -106,6 +106,20 @@ jobs:
           ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: AGLY8rjLJeBM7hiKIFYT3MZqTuILAhge
         run: bundle exec rspec
 
+      - name: Verify the production environment boots
+        # No other job loads config/environments/production.rb, so anything it
+        # names — the Active Job adapter, the cache store, the Action Cable
+        # backend — is unverified until a container starts. A queue adapter that
+        # no bundled gem provided shipped undetected this way. Needs no database:
+        # boot resolves the adapter constant without connecting.
+        env:
+          RAILS_ENV: production
+          SECRET_KEY_BASE: dummy_key_for_boot_check_only
+          ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: SXfQ7DCcBD8Sqsav4DPVlxb3Rr7bvCrD
+          ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: nzMgfs3mYOtaITTmgLzwviWaMd9kPYbn
+          ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: AGLY8rjLJeBM7hiKIFYT3MZqTuILAhge
+        run: bin/rails runner 'puts "production boots, Active Job adapter=#{ActiveJob::Base.queue_adapter.class}"'
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
         with:
