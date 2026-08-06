@@ -7,42 +7,50 @@ A self-hostable photo management app with album organisation, image uploads, and
 ### Requirements
 
 - Docker with the Compose plugin
-- An S3-compatible bucket for image storage
+- An S3 bucket for image storage, plus an access key that can read and write it
+
+> Image storage is **not** included. Each user enters their own S3 credentials on the Settings page, so an AWS account (or another S3-compatible provider) is required for now. Support for a bundled MinIO service, which would remove that dependency, is planned.
 
 ### Install
 
 ```bash
 mkdir gallery && cd gallery
-
-curl -sSL https://github.com/OWNER/gallery/releases/latest/download/docker-compose.yml -o docker-compose.yml
-curl -sSL https://github.com/OWNER/gallery/releases/latest/download/setup.sh -o setup.sh
-
-chmod +x setup.sh && ./setup.sh
+curl -sSL https://github.com/ferkoni/gallery/releases/latest/download/install.sh | bash
 ```
 
-`setup.sh` generates secrets, pulls the images, and starts all services. The app will be available at **http://localhost:8080**.
+The script checks prerequisites, downloads `docker-compose.yml` and `setup.sh`, generates secrets into `.env`, pulls the images, starts everything, and prompts for the email and password of your first account.
+
+The app is then at **http://localhost:8080**. Log in and add your S3 credentials on the Settings page before uploading anything.
+
+### Reaching it from another machine
+
+If you browse the app from anywhere other than the host itself — the usual case for a home server — set `CORS_ALLOWED_ORIGINS` in `.env` to the address you actually type, then restart:
+
+```bash
+CORS_ALLOWED_ORIGINS=http://192.168.1.50:8080   # in .env, comma-separated for several
+docker compose up -d
+```
+
+Skipping this is a quiet failure: pages load and uploads work, but album downloads never finish, because the browser's WebSocket is refused.
 
 ### Update
 
-Re-download `docker-compose.yml` and re-run `setup.sh`. Your `.env` (including all secrets) is not touched on subsequent runs.
+Re-run the install command. `setup.sh` will not overwrite an existing `.env`, the account prompt is skipped once a user exists, and database migrations run automatically on start.
 
 ```bash
-curl -sSL https://github.com/OWNER/gallery/releases/latest/download/docker-compose.yml -o docker-compose.yml
-./setup.sh
+curl -sSL https://github.com/ferkoni/gallery/releases/latest/download/install.sh | bash
 ```
 
 ### Configuration
 
-All configuration lives in `.env` (created by `setup.sh`):
+All configuration lives in `.env` (created by `setup.sh`, mode `600`):
 
 | Variable | Description |
 |---|---|
 | `POSTGRES_PASSWORD` | Generated on first run |
 | `SECRET_KEY_BASE` | Generated on first run |
-| `ACTIVE_RECORD_ENCRYPTION_*` | Generated on first run |
-| `CORS_ALLOWED_ORIGINS` | URL(s) used to reach the app — defaults to `http://localhost:8080` |
-
-After first install, configure S3 credentials from the app's Settings page.
+| `ACTIVE_RECORD_ENCRYPTION_*` | Generated on first run — **back these up**, they are the only way to decrypt your stored S3 credentials |
+| `CORS_ALLOWED_ORIGINS` | Address(es) you reach the app on — defaults to `http://localhost:8080` |
 
 ### Stop / remove
 
@@ -82,6 +90,6 @@ npm install
 npm run dev            # http://localhost:5173
 ```
 
-The dev server proxies `/api` requests to `http://localhost:3000`.
+The dev server reads `VITE_API_URL` from `gallery-app/.env.development`, which points at `http://localhost:3000`. In the Docker build it is baked in empty, so the SPA calls the API on its own origin.
 
 See [`gallery-app/README.md`](gallery-app/README.md) for full details.
