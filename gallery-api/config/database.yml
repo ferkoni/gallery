@@ -34,3 +34,7 @@ production:
     <<: *primary_production
     database: <%= ENV.fetch("POSTGRES_CABLE_DB") { "gallery_api_production_cable" } %>
     migrations_paths: db/cable_migrate
+  queue:
+    <<: *primary_production
+    database: gallery_api_production_queue
+    migrations_paths: db/queue_migrate
