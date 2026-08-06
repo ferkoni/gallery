@@ -32,7 +32,10 @@ docker compose up -d
 
 echo "Waiting for api to be ready..."
 for i in $(seq 1 36); do
-  if docker compose ps api 2>/dev/null | grep -q "healthy"; then
+  # Inspect the status directly — `docker compose ps | grep healthy` also
+  # matches "unhealthy", so a failed container would read as ready.
+  cid="$(docker compose ps -q api 2>/dev/null || true)"
+  if [ -n "$cid" ] && [ "$(docker inspect -f '{{.State.Health.Status}}' "$cid" 2>/dev/null)" = "healthy" ]; then
     break
   fi
   if [ "$i" = "36" ]; then
@@ -43,16 +46,34 @@ for i in $(seq 1 36); do
   sleep 5
 done
 
-USER_EXISTS=$(docker compose exec -T api bin/rails runner "print(User.any?)" 2>/dev/null)
+# `< /dev/null` on every exec: under `curl ... | bash` stdin is the remaining
+# script text, and `docker compose exec` would otherwise swallow it, silently
+# ending the install partway through.
+USER_EXISTS="$(docker compose exec -T api bin/rails runner "print(User.any?)" </dev/null 2>/dev/null || true)"
 if [ "$USER_EXISTS" = "false" ]; then
+  # This script is normally run as `curl ... | bash`, where stdin is the
+  # script text itself — a bare `read` hits EOF and returns empty instead of
+  # prompting. Read from the terminal explicitly.
+  if ! ( : < /dev/tty ) 2>/dev/null; then
+    echo "" >&2
+    echo "No users found, and there is no terminal to prompt on." >&2
+    echo "Create the first account with:" >&2
+    echo "  docker compose exec -T -e E=you@example.com -e P=yourpassword api \\" >&2
+    echo "    bin/rails runner 'User.create!(email: ENV.fetch(\"E\"), password: ENV.fetch(\"P\"))'" >&2
+    exit 1
+  fi
+
   echo ""
   echo "No users found. Create your first account:"
-  read -rp "Email: " EMAIL
-  read -rsp "Password: " PASSWORD
+  read -rp "Email: " EMAIL < /dev/tty
+  read -rsp "Password: " PASSWORD < /dev/tty
   echo ""
 
-  docker compose exec -T api bin/rails runner \
-    "User.create!(email: '${EMAIL}', password: '${PASSWORD}')" || {
+  # Passed through the environment rather than interpolated into the Ruby
+  # string, so quotes in the password cannot break or inject into it.
+  docker compose exec -T -e SEED_EMAIL="$EMAIL" -e SEED_PASSWORD="$PASSWORD" api \
+    bin/rails runner \
+    'User.create!(email: ENV.fetch("SEED_EMAIL"), password: ENV.fetch("SEED_PASSWORD"))' </dev/null || {
     echo "" >&2
     echo "Failed to create account. Re-run this script to try again." >&2
     exit 1
