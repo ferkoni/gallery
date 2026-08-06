@@ -6,6 +6,8 @@ class Api::S3CredentialsController < ApplicationController
   # PUT /api/s3_credentials — create or update (upsert)
   def update
     resource.assign_attributes(resource_params)
+    # validate reachability
+    validate_credentials!
     resource.save!
     head :no_content
   end
@@ -30,4 +32,13 @@ class Api::S3CredentialsController < ApplicationController
     params.require(:s3_credential).permit(:access_key_id, :secret_access_key, :region, :bucket)
   end
   def new_resource_params = resource_params
+
+  private
+
+  def validate_credentials!
+    unless S3::Storage.for(resource).reachable?
+      resource.errors.add(:base, "Cannot reach the S3 bucket — check your credentials, region, and bucket name")
+      raise ActiveRecord::RecordInvalid.new(resource)
+    end
+  end
 end

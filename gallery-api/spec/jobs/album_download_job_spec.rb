@@ -1,8 +1,6 @@
 require "rails_helper"
 
 RSpec.describe AlbumDownloadJob, type: :job do
-  before { allow_any_instance_of(S3Credential).to receive(:reachable?).and_return(true) }
-
   let(:user) { create(:user) }
   let(:album) { create(:album, user: user) }
   let!(:s3_credential) { create(:s3_credential, user: user) }
@@ -20,14 +18,17 @@ RSpec.describe AlbumDownloadJob, type: :job do
     )
   end
 
+  let(:storage) { instance_double(S3::Storage) }
+
   before do
+    allow(S3::Storage).to receive(:for).and_return(storage)
     allow(Albums::ZipDownload).to receive(:call).and_return(success_result)
   end
 
   describe "success path" do
-    it "transitions the task to ready" do
+    it "transitions the task to completed" do
       described_class.new.perform(album.id, task.id)
-      expect(task.reload.status).to eq("ready")
+      expect(task.reload.status).to eq("completed")
     end
 
     it "stores the presigned URL in result" do
@@ -49,17 +50,32 @@ RSpec.describe AlbumDownloadJob, type: :job do
       expect(Albums::ZipDownload).to receive(:call).with(
         album: album,
         user: user,
-        credential: s3_credential
+        storage: storage,
+        token: task.id
       )
       described_class.new.perform(album.id, task.id)
     end
 
-    it "broadcasts ready status to the user's channel" do
+    it "broadcasts completed status to the user's channel" do
       expect(ActionCable.server).to receive(:broadcast).with(
         "user_#{user.id}",
-        hash_including(task_type: "album_download", task_id: task.id, status: "ready",
+        hash_including(task_type: "album_download", task_id: task.id, status: "completed",
           album_name: album.name, url: "https://s3.example.com/zip?sig=abc")
       )
+      described_class.new.perform(album.id, task.id)
+    end
+  end
+
+  describe "idempotency" do
+    before { task.update!(status: :completed) }
+
+    it "does not re-run ZipDownload when the task is already completed" do
+      expect(Albums::ZipDownload).not_to receive(:call)
+      described_class.new.perform(album.id, task.id)
+    end
+
+    it "does not broadcast when the task is already completed" do
+      expect(ActionCable.server).not_to receive(:broadcast)
       described_class.new.perform(album.id, task.id)
     end
   end

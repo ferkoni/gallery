@@ -11,7 +11,7 @@ class Api::ImagesController < ApplicationController
   def create
     result = Images::Upload.call(
       user: current_user,
-      credential: current_user.s3_credential,
+      storage: S3::Storage.for(current_user.s3_credential),
       file: params.require(:image).require(:file),
       title: params.dig(:image, :title),
       album_id: params.dig(:image, :album_id)
@@ -46,7 +46,7 @@ class Api::ImagesController < ApplicationController
   def destroy
     result = Images::Destroy.call(
       image: resource,
-      credential: current_user.s3_credential
+      storage: S3::Storage.for(current_user.s3_credential)
     )
 
     if result.success?
@@ -78,8 +78,8 @@ class Api::ImagesController < ApplicationController
   # Passes the presigned-URL credential to the serializer.
   # Presigning is a local crypto operation — no S3 network call is made per image.
   def serializer_params
-    credential = current_user.s3_credential
-    { presigner: credential.presigner, bucket: credential.bucket }
+    storage = S3::Storage.for(current_user.s3_credential)
+    { presigner: storage.presigner, bucket: storage.bucket }
   end
 
   def resource_class = Image

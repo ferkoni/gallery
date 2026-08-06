@@ -3,16 +3,16 @@ require "rails_helper"
 RSpec.describe Images::AlbumDestroy, type: :service do
   let(:user) { create(:user) }
   let(:album) { create(:album, user: user) }
-  let(:credential) { instance_double(S3Credential, persisted?: true) }
+  let(:storage) { instance_double(S3::Storage) }
 
   def call
-    described_class.call(album: album, credential: credential)
+    described_class.call(album: album, storage: storage)
   end
 
   describe "success path — album with images" do
     let!(:images) { create_list(:image, 3, user: user, album: album) }
 
-    before { allow(credential).to receive(:delete_objects!) }
+    before { allow(storage).to receive(:delete_objects!) }
 
     it "returns success?: true" do
       expect(call.success?).to be(true)
@@ -20,7 +20,7 @@ RSpec.describe Images::AlbumDestroy, type: :service do
 
     it "calls delete_objects! with all image s3_keys" do
       keys = images.map(&:s3_key)
-      expect(credential).to receive(:delete_objects!).with(match_array(keys))
+      expect(storage).to receive(:delete_objects!).with(match_array(keys))
       call
     end
 
@@ -35,18 +35,18 @@ RSpec.describe Images::AlbumDestroy, type: :service do
 
   describe "success path — album with no images" do
     it "returns success?: true without requiring credentials" do
-      result = described_class.call(album: album, credential: nil)
+      result = described_class.call(album: album, storage: nil)
       expect(result.success?).to be(true)
     end
 
     it "destroys the album" do
-      nil_result = described_class.call(album: album, credential: nil)
+      nil_result = described_class.call(album: album, storage: nil)
       expect(nil_result.success?).to be(true)
       expect(Album.exists?(album.id)).to be(false)
     end
 
     it "does not call delete_objects!" do
-      expect(credential).not_to receive(:delete_objects!)
+      expect(storage).not_to receive(:delete_objects!)
       call
     end
   end
@@ -55,18 +55,18 @@ RSpec.describe Images::AlbumDestroy, type: :service do
     let!(:images) { create_list(:image, 2, user: user, album: album) }
 
     it "returns success?: false" do
-      result = described_class.call(album: album, credential: nil)
+      result = described_class.call(album: album, storage: nil)
       expect(result.success?).to be(false)
       expect(result.error).to eq("No S3 credentials on file")
     end
 
     it "does not destroy the album" do
-      expect { described_class.call(album: album, credential: nil) }
+      expect { described_class.call(album: album, storage: nil) }
         .not_to change { Album.count }
     end
 
     it "does not destroy the image records" do
-      expect { described_class.call(album: album, credential: nil) }
+      expect { described_class.call(album: album, storage: nil) }
         .not_to change { Image.count }
     end
   end
@@ -75,7 +75,7 @@ RSpec.describe Images::AlbumDestroy, type: :service do
     let!(:images) { create_list(:image, 2, user: user, album: album) }
 
     before do
-      allow(credential).to receive(:delete_objects!).and_raise(
+      allow(storage).to receive(:delete_objects!).and_raise(
         Aws::S3::Errors::ServiceError.new(nil, "albums/1/uuid/photo.jpg: AccessDenied")
       )
     end

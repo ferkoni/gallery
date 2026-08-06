@@ -5,15 +5,21 @@ class AlbumDownloadJob < ApplicationJob
 
   def perform(album_id, task_id)
     task = AsyncTask.find(task_id)
+    # Idempotency guard: once a task is completed its zip already sits at a
+    # stable key, so a retry or duplicate enqueue is a no-op. We deliberately do
+    # not re-broadcast or refresh the (possibly expired) presigned URL here — a
+    # client needing a fresh link enqueues a new task.
+    return if task.completed?
+
     user = task.user
     album = Album.with_user(user).find(album_id)
-    credential = S3Credential.find_by(user: user)
+    storage = S3::Storage.for(S3Credential.find_by(user: user))
 
-    result = Albums::ZipDownload.call(album: album, user: user, credential: credential)
+    result = Albums::ZipDownload.call(album: album, user: user, storage: storage, token: task.id)
 
     if result.success?
-      task.update!(status: :ready, result: { "url" => result.url, "s3_key" => result.s3_key })
-      broadcast(user.id, task_type: task.task_type, task_id: task.id, status: "ready", album_name: album.name, url: result.url)
+      task.update!(status: :completed, result: { "url" => result.url, "s3_key" => result.s3_key })
+      broadcast(user.id, task_type: task.task_type, task_id: task.id, status: "completed", album_name: album.name, url: result.url)
     else
       raise result.error
     end

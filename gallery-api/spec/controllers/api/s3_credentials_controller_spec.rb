@@ -1,19 +1,20 @@
 require "rails_helper"
 
 RSpec.describe Api::S3CredentialsController, type: :controller do
-  # Stub reachability so saves don't make real AWS calls.
-  before { allow_any_instance_of(S3Credential).to receive(:reachable?).and_return(true) }
+  # Stub the S3 gateway so reachability checks don't make real AWS calls.
+  let(:storage) { instance_double(S3::Storage, reachable?: true) }
+  before { allow(S3::Storage).to receive(:for).and_return(storage) }
 
-  let(:user)       { create(:user) }
+  let(:user) { create(:user) }
   let(:other_user) { create(:user) }
 
   let(:valid_params) do
     {
       s3_credential: {
-        access_key_id:     "AKIAIOSFODNN7EXAMPLE",
+        access_key_id: "AKIAIOSFODNN7EXAMPLE",
         secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-        region:            "us-east-1",
-        bucket:            "my-gallery-bucket"
+        region: "us-east-1",
+        bucket: "my-gallery-bucket"
       }
     }
   end
@@ -69,6 +70,21 @@ RSpec.describe Api::S3CredentialsController, type: :controller do
         it "does not create a credential" do
           expect { put :update, params: { s3_credential: valid_params[:s3_credential].merge(region: "") }, as: :json }
             .not_to change { S3Credential.count }
+        end
+      end
+
+      context "when credentials are present but unreachable" do
+        before { allow(storage).to receive(:reachable?).and_return(false) }
+
+        it "returns http unprocessable content" do
+          put :update, params: valid_params, as: :json
+          expect(response).to have_http_status(:unprocessable_content)
+        end
+
+        it "returns error description" do
+          put :update, params: valid_params, as: :json
+          body = JSON.parse(response.body)
+          expect(body["errors"]["base"]).to include("Cannot reach the S3 bucket — check your credentials, region, and bucket name")
         end
       end
     end

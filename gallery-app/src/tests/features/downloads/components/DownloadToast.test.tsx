@@ -10,7 +10,7 @@ beforeEach(() => {
 });
 
 const pendingItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'pending' };
-const readyItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'ready', url: 'https://example.com/file.zip', readyAt: '2026-01-15' };
+const readyItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'completed', url: 'https://example.com/file.zip', completedAt: '2026-01-15' };
 const failedItem: DownloadItem = { taskId: 1, albumId: 10, albumName: 'Summer', status: 'failed', error: 'S3 upload failed' };
 
 describe('DownloadToast', () => {

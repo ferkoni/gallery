@@ -1,19 +1,19 @@
 class Images::AlbumDestroy < Images::Base
-  def initialize(album:, credential:)
+  def initialize(album:, storage:)
     @album = album
-    @credential = credential
+    @storage = storage
   end
 
   def call
     keys = @album.images.pluck(:s3_key)
 
     if keys.any?
-      return failure("No S3 credentials on file") unless @credential&.persisted?
+      return failure("No S3 credentials on file") unless @storage
 
       # Batch-delete all S3 objects. Keys come from the DB so no s3:ListBucket
       # is needed. delete_objects! slices into 1000-key batches automatically
       # and raises on any per-key error.
-      @credential.delete_objects!(keys)
+      @storage.delete_objects!(keys)
     end
 
     # All S3 objects removed (or album was empty). Destroy the album; the

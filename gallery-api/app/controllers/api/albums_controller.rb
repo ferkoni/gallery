@@ -10,7 +10,7 @@ class Api::AlbumsController < ApplicationController
   def destroy
     result = Images::AlbumDestroy.call(
       album: resource,
-      credential: current_user.s3_credential
+      storage: S3::Storage.for(current_user.s3_credential)
     )
 
     if result.success?

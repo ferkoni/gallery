@@ -6,7 +6,7 @@ import { useDownloadStore } from '../store/downloadStore';
 type ChannelMessage = {
   task_type: string;
   task_id: number;
-  status: 'ready' | 'failed';
+  status: 'completed' | 'failed';
   album_name: string;
   url?: string;
   error?: string;
@@ -37,8 +37,8 @@ export function useUserChannel() {
       received(raw: unknown) {
         const data = raw as ChannelMessage;
         if (data.task_type !== 'album_download') return;
-        if (data.status === 'ready' && data.url) {
-          useDownloadStore.getState().setReady(data.task_id, data.url);
+        if (data.status === 'completed' && data.url) {
+          useDownloadStore.getState().setCompleted(data.task_id, data.url);
         } else if (data.status === 'failed') {
           useDownloadStore.getState().setFailed(data.task_id, data.error ?? 'Download failed');
         }

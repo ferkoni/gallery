@@ -82,7 +82,7 @@ describe('useUserChannel', () => {
     expect(consumer.subscriptions.create).toHaveBeenCalledWith('UserChannel', expect.any(Object));
   });
 
-  it('sets task to ready when a ready message is received', () => {
+  it('sets task to completed when a completed message is received', () => {
     useDownloadStore.getState().enqueue(1, 10, 'Summer');
     renderHook(() => useUserChannel());
 
@@ -90,14 +90,14 @@ describe('useUserChannel', () => {
       getReceived()({
         task_type: 'album_download',
         task_id: 1,
-        status: 'ready',
+        status: 'completed',
         album_name: 'Summer',
         url: 'https://example.com/file.zip',
       });
     });
 
     expect(useDownloadStore.getState().downloads[1]).toMatchObject({
-      status: 'ready',
+      status: 'completed',
       url: 'https://example.com/file.zip',
     });
   });
@@ -149,7 +149,7 @@ describe('useUserChannel', () => {
       getReceived()({
         task_type: 'other_task',
         task_id: 1,
-        status: 'ready',
+        status: 'completed',
         url: 'https://example.com/file.zip',
       });
     });
@@ -157,7 +157,7 @@ describe('useUserChannel', () => {
     expect(useDownloadStore.getState().downloads[1].status).toBe('pending');
   });
 
-  it('ignores a ready message that has no url', () => {
+  it('ignores a completed message that has no url', () => {
     useDownloadStore.getState().enqueue(1, 10, 'Summer');
     renderHook(() => useUserChannel());
 
@@ -165,7 +165,7 @@ describe('useUserChannel', () => {
       getReceived()({
         task_type: 'album_download',
         task_id: 1,
-        status: 'ready',
+        status: 'completed',
         album_name: 'Summer',
       });
     });

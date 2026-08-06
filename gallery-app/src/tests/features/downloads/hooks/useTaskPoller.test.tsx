@@ -35,11 +35,11 @@ describe('useTaskPoller', () => {
     expect(mockGetAsyncTask).toHaveBeenCalledWith(1);
   });
 
-  it('transitions task to ready when API returns ready', async () => {
+  it('transitions task to completed when API returns completed', async () => {
     useDownloadStore.getState().enqueue(1, 10, 'Summer 2026');
     mockGetAsyncTask.mockResolvedValue({
       id: '1',
-      attributes: { status: 'ready', result: { url: 'https://s3.example.com/file.zip' } },
+      attributes: { status: 'completed', result: { url: 'https://s3.example.com/file.zip' } },
     });
 
     renderHook(() => useTaskPoller());
@@ -50,7 +50,7 @@ describe('useTaskPoller', () => {
     });
 
     expect(useDownloadStore.getState().downloads[1]).toMatchObject({
-      status: 'ready',
+      status: 'completed',
       url: 'https://s3.example.com/file.zip',
     });
   });
@@ -94,7 +94,7 @@ describe('useTaskPoller', () => {
 
   it('does not call getAsyncTask when there are no pending tasks', async () => {
     useDownloadStore.getState().enqueue(1, 10, 'Summer 2026');
-    useDownloadStore.getState().setReady(1, 'https://s3.example.com/file.zip');
+    useDownloadStore.getState().setCompleted(1, 'https://s3.example.com/file.zip');
 
     renderHook(() => useTaskPoller());
 
