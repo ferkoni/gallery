@@ -1,7 +1,7 @@
 services:
   db:
     restart: unless-stopped
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: gallery_api
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
