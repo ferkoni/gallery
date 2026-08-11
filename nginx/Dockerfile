@@ -1,4 +1,6 @@
-FROM node:22-alpine AS build
+# Make sure NODE_VERSION matches the version in gallery-app/.nvmrc
+ARG NODE_VERSION=24
+FROM node:$NODE_VERSION-alpine AS build
 WORKDIR /app
 COPY gallery-app/package.json gallery-app/package-lock.json ./
 RUN npm ci

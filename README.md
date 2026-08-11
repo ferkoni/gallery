@@ -1,12 +1,13 @@
 # Gallery
 
-A self-hostable photo management app with album organisation, image uploads, and S3 storage. Built with React and Rails.
+A self-hostable photo management app. Organise images into albums, tag and favourite them, search your library, and download a whole album as a zip. Images live in your own S3 bucket, not on the server. Built with React and Rails.
 
 ## Self-hosting
 
 ### Requirements
 
 - Docker with the Compose plugin
+- `curl` and `openssl` — the install script uses both and exits early if either is missing
 - An S3 bucket for image storage, plus an access key that can read and write it
 
 > Image storage is **not** included. Each user enters their own S3 credentials on the Settings page, so an AWS account (or another S3-compatible provider) is required for now. Support for a bundled MinIO service, which would remove that dependency, is planned.
@@ -21,6 +22,8 @@ curl -sSL https://github.com/ferkoni/gallery/releases/latest/download/install.sh
 The script checks prerequisites, downloads `docker-compose.yml` and `setup.sh`, generates secrets into `.env`, pulls the images, starts everything, and prompts for the email and password of your first account.
 
 The app is then at **http://localhost:8080**. Log in and add your S3 credentials on the Settings page before uploading anything.
+
+Four containers start: `nginx` (serves the built frontend and proxies the API, the only one with a published port), `api`, `worker` (background jobs such as album downloads), and `db` (PostgreSQL, storing its data in a `postgres_data` volume).
 
 ### Reaching it from another machine
 
@@ -48,6 +51,7 @@ All configuration lives in `.env` (created by `setup.sh`, mode `600`):
 | Variable | Description |
 |---|---|
 | `POSTGRES_PASSWORD` | Generated on first run |
+| `GALLERY_API_DATABASE_PASSWORD` | Generated on first run — the same value as `POSTGRES_PASSWORD`; the database is created with one and connected to with the other, so change both together or neither |
 | `SECRET_KEY_BASE` | Generated on first run |
 | `ACTIVE_RECORD_ENCRYPTION_*` | Generated on first run — **back these up**, they are the only way to decrypt your stored S3 credentials |
 | `CORS_ALLOWED_ORIGINS` | Address(es) you reach the app on — defaults to `http://localhost:8080` |
@@ -65,9 +69,11 @@ docker compose down -v     # stop and delete all data
 
 ### Prerequisites
 
-- Ruby 3.4
-- Node.js 22
-- Docker (for PostgreSQL)
+- Ruby 3.4 (see `gallery-api/.ruby-version`)
+- Node.js 24 (see `gallery-app/.nvmrc`)
+- Docker, for PostgreSQL
+
+PostgreSQL must have the [pgvector](https://github.com/pgvector/pgvector) extension available — `db/schema.rb` enables it, so `db:migrate` and `db:schema:load` both fail without it. The bundled `gallery-api/docker-compose.yml` uses `pgvector/pgvector:pg16` and needs no extra setup; a system-installed PostgreSQL needs the extension added separately.
 
 ### API (`gallery-api/`)
 
