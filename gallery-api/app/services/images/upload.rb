@@ -22,12 +22,30 @@ class Images::Upload < Images::Base
     # This avoids prompting the user per file during bulk uploads.
     title = @title.presence || File.basename(@file.original_filename, ".*")
 
-    @s3_key = @storage.upload(@file, album_id: @album_id)
+    # Strip between validation and the S3 write, so the bytes at rest carry no GPS,
+    # no camera serial and no embedded thumbnail. Filename and content type come
+    # from the multipart object rather than from the stripped bytes, which are a
+    # bare StringIO — see S3::Storage#upload.
+    #
+    # This protects new uploads only. Objects already in the bucket keep their
+    # metadata; backfilling them rewrites the user's files and is out of scope.
+    @s3_key = @storage.upload(
+      Exif::Strip.call(@file),
+      album_id: @album_id,
+      filename: @file.original_filename,
+      content_type: @file.content_type
+    )
 
     image = Image.new(title: title, album_id: @album_id, s3_key: @s3_key, user: @user)
     image.save!
 
     success(record: image)
+  rescue Exif::Strip::UndecodableImage => e
+    # Declared an allowed type but the bytes are not decodable — a truncated or
+    # corrupt file. Nothing has been written to S3 yet, so there is nothing to roll
+    # back. A user error, so it reports like the other validation failures rather
+    # than as a 500.
+    failure("File could not be processed: #{e.message}")
   rescue ActiveRecord::RecordInvalid => e
     # The file is already in S3. Roll back by deleting the object so the
     # bucket does not accumulate files with no corresponding database record.

@@ -5,12 +5,17 @@ RSpec.describe Images::Upload, type: :service do
   let(:album) { create(:album, user: user) }
   let(:storage) { instance_double(S3::Storage) }
 
-  let(:file) do
-    instance_double(
-      ActionDispatch::Http::UploadedFile,
-      original_filename: "vacation.jpg",
-      content_type: "image/jpeg",
-      size: 1.megabyte
+  # A real UploadedFile over a real photo, not a double: the service strips EXIF
+  # before the S3 write now, so it needs bytes it can actually decode. Using the
+  # genuine multipart object also means these specs exercise the same read/rewind
+  # behaviour the controller hands over in production.
+  let(:file) { uploaded_file("gps_tagged.jpg", filename: "vacation.jpg") }
+
+  def uploaded_file(fixture, filename:, type: "image/jpeg")
+    ActionDispatch::Http::UploadedFile.new(
+      tempfile: File.open(fixture_file(fixture), "rb"),
+      filename: filename,
+      type: type
     )
   end
 
@@ -117,6 +122,61 @@ RSpec.describe Images::Upload, type: :service do
 
       it "does not call upload" do
         expect(storage).not_to receive(:upload)
+        call
+      end
+    end
+  end
+
+  # The point of the issue: what lands in the bucket, not what the service returns.
+  # These assert against the bytes handed to the gateway, which is the closest a
+  # spec can get to the object at rest without a live S3.
+  describe "EXIF stripping" do
+    def uploaded_bytes
+      captured = nil
+      allow(storage).to receive(:upload) do |body, **|
+        captured = body.read
+        "albums/1/uuid/vacation.jpg"
+      end
+      call
+      Vips::Image.new_from_buffer(captured, "")
+    end
+
+    it "sends bytes with no GPS coordinates to S3" do
+      expect(uploaded_bytes.get_fields.grep(/gps/i)).to be_empty
+    end
+
+    it "sends bytes with no camera serial or capture timestamp to S3" do
+      expect(uploaded_bytes.get_fields.grep(/serial|datetime/i)).to be_empty
+    end
+
+    it "keeps the colour profile, so stored photos do not render duller" do
+      expect(uploaded_bytes.get_fields).to include("icc-profile-data")
+    end
+
+    # The regression the signature change can introduce. A bare StringIO has no
+    # filename and no content type, and losing them breaks downloads and inline
+    # display without breaking the upload — it fails silently, in the browser,
+    # long after this code ran.
+    it "passes the filename and content type explicitly, since the bytes carry neither" do
+      expect(storage).to receive(:upload).with(
+        an_instance_of(StringIO),
+        hash_including(filename: "vacation.jpg", content_type: "image/jpeg")
+      ).and_return("albums/1/uuid/vacation.jpg")
+
+      call
+    end
+
+    context "when the bytes are corrupt despite an allowed MIME type" do
+      let(:file) { uploaded_file("corrupt.jpg", filename: "broken.jpg") }
+
+      it "fails rather than raising" do
+        expect(call.success?).to be(false)
+        expect(call.error).to include("could not be processed")
+      end
+
+      it "never writes to S3, so there is nothing to roll back" do
+        expect(storage).not_to receive(:upload)
+        expect(storage).not_to receive(:delete_object)
         call
       end
     end

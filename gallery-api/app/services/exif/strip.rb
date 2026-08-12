@@ -23,16 +23,13 @@ module Exif
     KEEP = :icc
 
     # libvips names its loaders after the format, which is how the output format is
-    # matched to the input. Anything unrecognized becomes a JPEG, which is lossy but
-    # decodable — and unreachable in practice, since Images::Upload::ALLOWED_TYPES is
-    # exactly these four.
+    # matched to the input. These are exactly Images::Upload::ALLOWED_TYPES.
     SUFFIXES = {
       "jpegload" => ".jpg",
       "pngload" => ".png",
       "webpload" => ".webp",
       "gifload" => ".gif"
     }.freeze
-    DEFAULT_SUFFIX = ".jpg".freeze
 
     def self.call(io) = new(io).call
 
@@ -59,11 +56,17 @@ module Exif
 
     private
 
+    # Raises rather than defaulting to JPEG for an unrecognized format. A default
+    # would silently re-encode, say, a TIFF into a JPEG while the object it is stored
+    # under keeps the caller's declared content type — a format/label mismatch that
+    # breaks inline display with nothing failing loudly. Unreachable through the
+    # upload path, which validates ALLOWED_TYPES first; reachable through the adapter,
+    # which is exactly why it should not guess.
     def suffix_for(image)
-      loader = image.get("vips-loader") # e.g. "jpegload_buffer"
-      SUFFIXES.fetch(loader.to_s.sub(/_buffer\z/, ""), DEFAULT_SUFFIX)
-    rescue Vips::Error
-      DEFAULT_SUFFIX
+      loader = image.get("vips-loader").to_s.sub(/_buffer\z/, "")
+      SUFFIXES.fetch(loader) { raise UndecodableImage, "unsupported image format: #{loader}" }
+    rescue Vips::Error => e
+      raise UndecodableImage, "could not determine image format: #{e.message}"
     end
   end
 end

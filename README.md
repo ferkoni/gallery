@@ -56,6 +56,28 @@ All configuration lives in `.env` (created by `setup.sh`, mode `600`):
 | `ACTIVE_RECORD_ENCRYPTION_*` | Generated on first run — **back these up**, they are the only way to decrypt your stored S3 credentials |
 | `CORS_ALLOWED_ORIGINS` | Address(es) you reach the app on — defaults to `http://localhost:8080` |
 
+### Privacy: photo metadata
+
+Photos straight off a phone carry EXIF metadata — GPS coordinates accurate to a few
+metres, the capture timestamp, the camera make, model and serial number, and an
+embedded thumbnail that is a full second copy of the image. Shared as a link, a photo
+shares all of it.
+
+**Gallery strips EXIF from every photo as it is uploaded.** What reaches your bucket is
+the image and nothing else. Two things are deliberately kept:
+
+- **The ICC colour profile.** Removing it would make wide-gamut photos render as sRGB —
+  a visible desaturation, with no error to explain it.
+- **Orientation**, applied to the pixels rather than left as a tag. Portrait photos stay
+  portrait.
+
+Two limits worth stating plainly:
+
+- **Photos uploaded before this shipped keep their metadata.** Rewriting objects already
+  in your bucket is not something the app does on its own. To clear them, re-upload.
+- **Stripping happens server-side**, so the original bytes do travel from your browser to
+  your Gallery instance. On a self-hosted install that is your own machine.
+
 ### Stop / remove
 
 ```bash

@@ -27,25 +27,30 @@ module S3
       @secret_access_key = secret_access_key
     end
 
-    # Uploads a file to S3 and returns the key it was stored under.
+    # Uploads bytes to S3 and returns the key it was stored under.
     #
-    # `file` is an ActionDispatch::Http::UploadedFile — the object Rails builds
-    # from a multipart form field. It responds to:
-    #   .original_filename  → the name the user gave the file on their machine
-    #   .content_type       → MIME type the browser declared (e.g. "image/jpeg")
-    #   .read / .to_io      → the raw bytes
+    # `body` is anything put_object accepts — an IO, a StringIO, or a String. It
+    # used to be an ActionDispatch::Http::UploadedFile, and filename/content_type
+    # were read off it. They are keyword arguments now because the upload path
+    # strips EXIF before this point, and what it hands over is a bare StringIO that
+    # has neither. Passing them explicitly also narrows this gateway's coupling to
+    # Rails' multipart object, in the spirit of the duck-typing in .for above.
+    #
+    # content_type matters more than it looks: lose it and objects land as
+    # binary/octet-stream, which breaks inline display in the browser without
+    # breaking the upload.
     #
     # The key is prefixed with the album id so all of an album's objects share a
     # common S3 prefix. A UUID prevents collisions between uploads of the same
     # filename to the same album. File.basename strips any path the browser may
-    # include in original_filename (some older browsers sent the full local path).
-    def upload(file, album_id:)
-      key = "albums/#{album_id}/#{SecureRandom.uuid}/#{File.basename(file.original_filename)}"
+    # include in the filename (some older browsers sent the full local path).
+    def upload(body, album_id:, filename:, content_type:)
+      key = "albums/#{album_id}/#{SecureRandom.uuid}/#{File.basename(filename)}"
       s3_client.put_object(
         bucket: @bucket,
         key: key,
-        body: file,
-        content_type: file.content_type
+        body: body,
+        content_type: content_type
       )
       key
     end
