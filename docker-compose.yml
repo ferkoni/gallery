@@ -1,7 +1,12 @@
 services:
   db:
     restart: unless-stopped
-    image: pgvector/pgvector:pg16
+    # Pinned, not floating. `pg16` pins only the Postgres major and tracks whatever base
+    # OS upstream ships alongside it; moving between glibc versions under an existing
+    # volume risks subtly wrong text indexes, which is what the image swap in #22 took a
+    # dump and a reindex to do safely. Resolves to the bookworm build today.
+    # pgvector >= 0.8 is required for hnsw.iterative_scan — see gallery-api/README.md.
+    image: pgvector/pgvector:0.8.6-pg16
     environment:
       POSTGRES_USER: gallery_api
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

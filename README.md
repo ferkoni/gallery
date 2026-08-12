@@ -95,7 +95,7 @@ docker compose down -v     # stop and delete all data
 - Node.js 24 (see `gallery-app/.nvmrc`)
 - Docker, for PostgreSQL
 
-PostgreSQL must have the [pgvector](https://github.com/pgvector/pgvector) extension available — `db/schema.rb` enables it, so `db:migrate` and `db:schema:load` both fail without it. The bundled `gallery-api/docker-compose.yml` uses `pgvector/pgvector:pg16` and needs no extra setup; a system-installed PostgreSQL needs the extension added separately.
+PostgreSQL must have the [pgvector](https://github.com/pgvector/pgvector) extension available, **version 0.8 or later** — `db/schema.rb` enables it, so `db:migrate` and `db:schema:load` both fail without it. The 0.8 minimum is for iterative index scans, which keep filtered vector search from silently returning too few rows. The bundled `gallery-api/docker-compose.yml` uses `pgvector/pgvector:0.8.6-pg16` and needs no extra setup; a system-installed PostgreSQL needs the extension added separately.
 
 ### API (`gallery-api/`)
 
