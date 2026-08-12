@@ -16,3 +16,11 @@ Rails.application.config.to_prepare do
     c.timeout  = ENV.fetch("INFERENCE_TIMEOUT", "10").to_i
   end
 end
+
+# Does the configured backend produce vectors the column can hold? A boot-time crash
+# naming both numbers is enormously better than a runtime insert error, and infinitely
+# better than silence. The reasoning, and why this is only the first of two layers, is in
+# Inference::DimensionCheck.
+Rails.application.config.after_initialize do
+  Inference::DimensionCheck.call
+end

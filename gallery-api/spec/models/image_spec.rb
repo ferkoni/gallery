@@ -114,4 +114,46 @@ RSpec.describe Image, type: :model do
       expect(image).to be_valid
     end
   end
+
+  describe ".needing_embedding" do
+    let(:user) { create(:user) }
+    let(:album) { create(:album, user: user) }
+    let(:active) { "clip-vit-b-32/openai/v1" }
+
+    it "selects images with no embedding for the given model" do
+      image = create(:image, user: user, album: album)
+
+      expect(Image.needing_embedding(active)).to include(image)
+    end
+
+    it "excludes an image once it has one, without writing anything to images" do
+      image = create(:image, user: user, album: album)
+      expect { create(:image_embedding, image: image, model_id: active) }
+        .to change { Image.needing_embedding(active).count }.by(-1)
+
+      expect(image.reload.attributes.keys).not_to include("embedded_at", "embedding_status")
+    end
+
+    # The distinction that matters. A model-blind scope ("has no embedding at all") passes
+    # every other test here and then selects nothing after a model bump: the backfill
+    # enqueues zero jobs and reports success, while search — which filters on the active
+    # model — returns empty for every user, with nothing raised anywhere.
+    it "still selects an image embedded only under a different model" do
+      image = create(:image, user: user, album: album)
+      create(:image_embedding, image: image, model_id: "clip-vit-b-32/openai/v2")
+
+      expect(Image.needing_embedding(active)).to include(image)
+    end
+
+    it "composes, so a per-user filter can chain onto it" do
+      mine = create(:image, user: user, album: album)
+      other_user = create(:user)
+      theirs = create(:image, user: other_user, album: create(:album, user: other_user))
+
+      scoped = Image.needing_embedding(active).where(user: user)
+
+      expect(scoped).to include(mine)
+      expect(scoped).not_to include(theirs)
+    end
+  end
 end
