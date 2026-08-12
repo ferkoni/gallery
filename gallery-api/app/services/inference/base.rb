@@ -22,13 +22,15 @@ module Inference
     # S3 URL is a bearer token to the untouched original. Preventing *content* from
     # escaping is the strip below. Two guarantees, two mechanisms, both required.
     #
-    # TODO(03-exif-strip-adapter-boundary): the strip is the one line this method is
-    # missing. It becomes `perform_embed_image(Exif::Strip.call(io))` once Exif::Strip
-    # exists. Until then no caller sends bytes anywhere — 06 and 07 are unbuilt — but
-    # the chokepoint is already the only entry point, so 03 is a one-line change here
-    # and nothing else in the codebase moves.
+    # Exif::Strip raises its own error rather than one of ours, so that it stays
+    # usable from the upload path without dragging the inference taxonomy along.
+    # Translating it here is the whole of that coupling: undecodable bytes will fail
+    # identically forever, which is precisely what InvalidInput means to 06's retry
+    # logic — discard, never retry.
     def embed_image(io)
-      perform_embed_image(io)
+      perform_embed_image(Exif::Strip.call(io))
+    rescue Exif::Strip::UndecodableImage => e
+      raise InvalidInput, e.message
     end
 
     # Text needs no stripping, so it has no template method — a string carries no

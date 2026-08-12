@@ -49,7 +49,7 @@ RSpec.describe Inference::Local do
     it "goes through the chokepoint and base64-encodes the bytes" do
       stub_http(ok(embedding_body))
 
-      expect(adapter.embed_image(StringIO.new("rawbytes")).vector).to eq([ 0.6, 0.8 ])
+      expect(adapter.embed_image(plain_image).vector).to eq([ 0.6, 0.8 ])
     end
   end
 

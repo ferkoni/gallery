@@ -28,6 +28,6 @@ RSpec.describe Inference::Fake do
   end
 
   it "embeds images through the chokepoint" do
-    expect(adapter.embed_image(StringIO.new("bytes")).vector.length).to eq(512)
+    expect(adapter.embed_image(plain_image).vector.length).to eq(512)
   end
 end

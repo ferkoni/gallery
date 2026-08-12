@@ -12,7 +12,7 @@ RSpec.describe Inference::Null do
   end
 
   it "raises rather than returning a zero vector for an image" do
-    expect { adapter.embed_image(StringIO.new("bytes")) }.to raise_error(Inference::Disabled)
+    expect { adapter.embed_image(plain_image) }.to raise_error(Inference::Disabled)
   end
 
   # A zero vector would save, index cleanly, and rank arbitrarily forever. This is
