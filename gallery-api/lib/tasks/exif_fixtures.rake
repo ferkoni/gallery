@@ -76,7 +76,13 @@ namespace :exif do
     # is given, and they should not carry EXIF baggage unrelated to what they assert.
     File.binwrite(dir.join("plain.jpg"), base.call(32, 32).write_to_buffer(".jpg", keep: :none))
 
-    dir.glob("{gps_tagged,wide_gamut,rotated,plain}.jpg").sort.each do |path|
+    # A truncated JPEG: the right magic bytes, so MIME sniffing and the upload path's
+    # ALLOWED_TYPES check both wave it through, and undecodable after that. This is
+    # the file that proves a corrupt upload fails as a validation error rather than a
+    # 500, and that nothing reaches S3 for it.
+    File.binwrite(dir.join("corrupt.jpg"), "\xFF\xD8\xFF\xE0".b + ("\x00".b * 64))
+
+    dir.glob("{gps_tagged,wide_gamut,rotated,plain,corrupt}.jpg").sort.each do |path|
       puts format("%-40s %6dB", path.relative_path_from(Rails.root), path.size)
     end
   end

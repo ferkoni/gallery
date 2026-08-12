@@ -29,36 +29,56 @@ RSpec.describe S3::Storage, type: :model do
   end
 
   describe "#upload" do
-    let(:file) do
-      instance_double(
-        ActionDispatch::Http::UploadedFile,
-        original_filename: "photo.jpg",
-        content_type: "image/jpeg"
-      )
+    # Bare bytes, because that is what the gateway takes now: the upload path strips
+    # EXIF first and hands over a StringIO with no filename and no content type of
+    # its own. Both arrive as keyword arguments instead.
+    let(:body) { StringIO.new("bytes") }
+
+    def upload(album_id: 42, filename: "photo.jpg", content_type: "image/jpeg")
+      storage.upload(body, album_id: album_id, filename: filename, content_type: content_type)
     end
 
     it "calls put_object on the S3 client" do
       expect(client).to receive(:put_object).with(
-        hash_including(bucket: bucket, body: file, content_type: "image/jpeg")
+        hash_including(bucket: bucket, body: body, content_type: "image/jpeg")
       )
-      storage.upload(file, album_id: 42)
+      upload
+    end
+
+    it "takes the content type from the argument rather than from the body" do
+      expect(client).to receive(:put_object).with(
+        hash_including(content_type: "image/webp")
+      )
+      upload(content_type: "image/webp")
     end
 
     it "includes the album_id in the key prefix" do
       allow(client).to receive(:put_object)
-      key = storage.upload(file, album_id: 42)
-      expect(key).to start_with("albums/42/")
+      expect(upload).to start_with("albums/42/")
     end
 
     it "returns a key that ends with the filename" do
       allow(client).to receive(:put_object)
-      key = storage.upload(file, album_id: 42)
-      expect(key).to end_with("/photo.jpg")
+      expect(upload).to end_with("/photo.jpg")
+    end
+
+    it "strips a POSIX path the browser included in the filename" do
+      allow(client).to receive(:put_object)
+      expect(upload(filename: "/home/me/pics/photo.jpg")).to end_with("/photo.jpg")
+    end
+
+    # Documents a gap rather than a guarantee: File.basename is POSIX-only, so a
+    # Windows path arrives with its backslashes intact and they become part of the
+    # key. Harmless — S3 keys are opaque strings, not filesystem paths, so there is
+    # nothing to traverse — but the comment on #upload claims more than it delivers.
+    it "does not strip a Windows path, which the code comment implies it does" do
+      allow(client).to receive(:put_object)
+      expect(upload(filename: "C:\\Users\\me\\photo.jpg")).to end_with("/C:\\Users\\me\\photo.jpg")
     end
 
     it "includes a UUID segment in the key so filenames don't collide" do
       allow(client).to receive(:put_object)
-      keys = 2.times.map { storage.upload(file, album_id: 42) }
+      keys = 2.times.map { upload }
       expect(keys.uniq.length).to eq(2)
     end
   end
