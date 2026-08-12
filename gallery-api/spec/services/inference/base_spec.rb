@@ -15,15 +15,69 @@ RSpec.describe Inference::Base do
 
     it "routes public embed_image through the private perform_embed_image" do
       backend = Class.new(described_class) do
-        def perform_embed_image(io) = "performed:#{io.read}"
+        def perform_embed_image(io) = "performed:#{io.read.bytesize}"
       end.new
 
-      expect(backend.embed_image(StringIO.new("bytes"))).to eq("performed:bytes")
+      expect(backend.embed_image(plain_image)).to start_with("performed:")
     end
 
     it "raises NotImplementedError when a subclass forgets to implement the hook" do
-      expect { Class.new(described_class).new.embed_image(StringIO.new("x")) }
+      expect { Class.new(described_class).new.embed_image(plain_image) }
         .to raise_error(NotImplementedError)
+    end
+  end
+
+  # The reason the chokepoint exists. Everything above proves there is exactly one
+  # entry point; these prove that passing through it removes the data. The backend
+  # here is written the way a backend author who has never read the design document
+  # would write one — it implements the hook and nothing else — and it still cannot
+  # see GPS. That is what makes this a safety property rather than a convention.
+  describe "the EXIF guarantee at the boundary" do
+    subject(:backend) { capturing_backend }
+
+    let(:captured) { {} }
+
+    let(:capturing_backend) do
+      bytes = captured
+      Class.new(described_class) do
+        define_method(:perform_embed_image) { |io| bytes[:io] = io.read }
+      end.new
+    end
+
+    def received_image
+      Vips::Image.new_from_buffer(captured.fetch(:io), "")
+    end
+
+    it "hands the backend bytes with no GPS in them" do
+      backend.embed_image(File.open(fixture_file("gps_tagged.jpg"), "rb"))
+
+      expect(received_image.get_fields.grep(/gps/i)).to be_empty
+    end
+
+    it "hands the backend bytes with no camera serial in them" do
+      backend.embed_image(File.open(fixture_file("gps_tagged.jpg"), "rb"))
+
+      expect(received_image.get_fields.grep(/serial/i)).to be_empty
+    end
+
+    it "still hands the backend a usable image, colour profile intact" do
+      backend.embed_image(File.open(fixture_file("wide_gamut.jpg"), "rb"))
+
+      expect(received_image.get_fields).to include("icc-profile-data")
+    end
+
+    it "hands the backend an upright image, which embeds better than a sideways one" do
+      backend.embed_image(File.open(fixture_file("rotated.jpg"), "rb"))
+
+      expect(received_image.height).to be > received_image.width
+    end
+
+    # Exif::Strip raises its own error so it stays usable from the upload path.
+    # Callers of the adapter should see the inference taxonomy, because 06 branches
+    # on it: InvalidInput means discard, never retry.
+    it "translates an undecodable image into InvalidInput" do
+      expect { backend.embed_image(StringIO.new("not an image")) }
+        .to raise_error(Inference::InvalidInput, /not a decodable image/)
     end
   end
 
