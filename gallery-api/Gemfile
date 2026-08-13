@@ -33,6 +33,12 @@ gem "kamal", require: false
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
+# pgvector support for ActiveRecord. Not optional plumbing: without it a `vector`
+# column comes back as a String, and ImageEmbedding's normalization validation would
+# raise NoMethodError instead of failing the record. Also supplies the nearest-neighbour
+# scope the search endpoint (07) needs, so it is one gem now rather than two later.
+gem "neighbor", "~> 1.2"
+
 gem "image_processing", "~> 2.0"
 # image_processing does not depend on a backend itself; ImageProcessing::Vips
 # needs this, and Active Storage's default variant_processor is :vips.

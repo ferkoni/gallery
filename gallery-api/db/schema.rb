@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_10_193604) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -35,6 +35,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_193604) do
     t.bigint "user_id", null: false
     t.index ["user_id", "created_at"], name: "index_async_tasks_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_async_tasks_on_user_id"
+  end
+
+  create_table "image_embeddings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "dimensions", null: false
+    t.vector "embedding", limit: 512, null: false
+    t.bigint "image_id", null: false
+    t.string "model_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["image_id", "model_id"], name: "index_image_embeddings_on_image_id_and_model_id", unique: true
+    t.index ["model_id"], name: "index_image_embeddings_on_model_id"
+    t.check_constraint "btrim(model_id::text) <> ''::text", name: "image_embeddings_model_id_not_blank"
   end
 
   create_table "images", force: :cascade do |t|
@@ -90,6 +102,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_193604) do
 
   add_foreign_key "albums", "users"
   add_foreign_key "async_tasks", "users"
+  add_foreign_key "image_embeddings", "images", on_delete: :cascade
   add_foreign_key "images", "albums"
   add_foreign_key "images", "users"
   add_foreign_key "s3_credentials", "users"

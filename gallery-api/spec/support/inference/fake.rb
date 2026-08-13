@@ -12,7 +12,10 @@ module Inference
 
     def embed_text(str) = deterministic(str)
 
-    def model_id = "fake-v1"
+    # arch/provenance/vN, like a real backend: ImageEmbedding validates the shape (04),
+    # so a fake carrying "fake-v1" would fail validation in exactly the specs it exists
+    # to enable.
+    def model_id = "fake/test/v1"
 
     def dimensions = DIMENSIONS
 

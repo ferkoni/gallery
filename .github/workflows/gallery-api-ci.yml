@@ -65,7 +65,10 @@ jobs:
 
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        # Pinned to match both compose files. The database here is created fresh each run, so
+        # collation is not the concern it is for a persistent volume — the risk is CI
+        # silently testing a different pgvector version than development runs.
+        image: pgvector/pgvector:0.8.6-pg16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

@@ -1,6 +1,10 @@
 services:
   db:
-    image: pgvector/pgvector:pg16
+    # Pinned, not floating — same reasoning as the root docker-compose.yml: `pg16` tracks
+    # whatever base OS upstream ships, and crossing glibc versions under an existing volume
+    # risks subtly wrong text indexes. Keep this in step with the root compose file; a split
+    # pin means a different Postgres depending on which directory you run from.
+    image: pgvector/pgvector:0.8.6-pg16
     env_file:
       - .env
     environment:

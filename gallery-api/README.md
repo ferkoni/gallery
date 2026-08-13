@@ -138,7 +138,7 @@ docker run -d -p 80:80 \
 For full-stack deployment the project is Kamal-ready (`gem "kamal"` in the Gemfile). For local development only PostgreSQL runs in Docker:
 
 ```bash
-docker compose up -d   # starts postgres:16-alpine with a persistent volume
+docker compose up -d   # starts pgvector/pgvector:0.8.6-pg16 with a persistent volume
 ```
 
 ---
