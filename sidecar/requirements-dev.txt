@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest==9.1.1
+# Both, deliberately. starlette's TestClient deprecation-warns on httpx 0.x and wants
+# httpx2; huggingface_hub still imports httpx and breaks without it. They coexist.
+httpx==0.28.1
+httpx2==2.10.0

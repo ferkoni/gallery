@@ -1,0 +1,12 @@
+[tool.pytest.ini_options]
+# The service is a flat module layout (`uvicorn app:app`), so the sidecar root has to
+# be importable from tests without an installed package.
+pythonpath = ["."]
+testpaths = ["tests"]
+
+# Deselected by default: `model` tests download ~600MB of weights and are slow on CPU.
+# Run them with `pytest -m model` after a model or preprocessing change.
+addopts = "-m 'not model'"
+markers = [
+    "model: requires the real CLIP weights",
+]
