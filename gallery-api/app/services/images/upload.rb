@@ -39,6 +39,8 @@ class Images::Upload < Images::Base
     image = Image.new(title: title, album_id: @album_id, s3_key: @s3_key, user: @user)
     image.save!
 
+    enqueue_embedding(image)
+
     success(record: image)
   rescue Exif::Strip::UndecodableImage => e
     # Declared an allowed type but the bytes are not decodable — a truncated or
@@ -56,6 +58,26 @@ class Images::Upload < Images::Base
   end
 
   private
+
+  # After `image.save!`, never inside a transaction with it: a worker can pick the job
+  # up the instant it is enqueued, and if the row is not committed yet the job finds
+  # nothing and does nothing.
+  #
+  # Guarded on availability so an INFERENCE_MODE=none install does not accumulate jobs
+  # for work that will never happen. The guard is a question about configuration, not
+  # an exception to rescue — Null answers false without raising.
+  #
+  # A failure here must not fail the upload: the bytes are in S3 and the row is
+  # committed, so the user's photo is safe. The backfill will pick it up later, which
+  # is precisely what makes that task idempotent rather than merely re-runnable.
+  def enqueue_embedding(image)
+    adapter = Inference.adapter
+    return unless adapter.available?
+
+    ImageEmbeddingJob.perform_later([ image.id ], model_id: adapter.model_id)
+  rescue StandardError => e
+    Rails.logger.error("Images::Upload: could not enqueue embedding for #{image.id}: #{e.message}")
+  end
 
   def allowed_type?
     ALLOWED_TYPES.include?(@file.content_type)

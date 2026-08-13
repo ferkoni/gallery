@@ -83,8 +83,10 @@ module Inference
       case response
       when Net::HTTPSuccess       then JSON.parse(response.body)
       when Net::HTTPInsufficientStorage
-        # 507 is the sidecar's OOM signal. Retryable, but only with a smaller batch,
-        # which is why it is a distinct class rather than another Unavailable.
+        # 507 is the sidecar's OOM signal. A distinct class rather than another
+        # Unavailable because it reports resource exhaustion rather than absence —
+        # though with one image per request (06) nothing can act differently on it
+        # yet. See the taxonomy in inference.rb.
         raise OutOfMemory, "sidecar out of memory"
       when Net::HTTPClientError
         # 4xx: the payload is the problem. Never retryable — it fails identically forever.

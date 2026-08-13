@@ -15,6 +15,15 @@ development:
     <<: *default
     database: <%= ENV.fetch("POSTGRES_CABLE_DB") { "gallery_api_development_cable" } %>
     migrations_paths: db/cable_migrate
+  # Mirrors the production entry added in #21. Development ran on the :async adapter
+  # until 06, which is an in-process MULTI-THREADED pool — so it would run several
+  # inference jobs at once against one GPU, and the resulting CUDA OOM would appear
+  # only locally and never in production. That direction is backwards from usual and
+  # easy to misdiagnose as a code bug.
+  queue:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_QUEUE_DB") { "gallery_api_development_queue" } %>
+    migrations_paths: db/queue_migrate
 
 test:
   <<: *default

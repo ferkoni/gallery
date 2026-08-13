@@ -3,10 +3,32 @@ default: &default
     - polling_interval: 1
       batch_size: 500
   workers:
-    - queues: "*"
+    # The general lane. Enumerated, not `"*"`, because inference must NOT be in it.
+    #
+    # The design called for `[ "*", "-inference" ]`. Solid Queue 1.6.0 has no negation:
+    # QueueSelector understands exact names, trailing-`*` prefixes, and the bare `"*"`,
+    # and nothing else. A leading `-` is not parsed as exclusion — it is read as an
+    # exact queue name, and worse, the presence of `"*"` short-circuits to "all queues",
+    # so `[ "*", "-inference" ]` would have produced a general pool that happily claims
+    # inference jobs. Silently, with the config *looking* like the isolation was there.
+    #
+    # The cost of enumerating is that a queue added later gets no worker and its jobs
+    # enqueue successfully and never run. That is why the spec in
+    # spec/config/queue_config_spec.rb asserts every job's queue_name appears here; it
+    # is not belt-and-braces, it is the only thing standing behind this list.
+    - queues: [ "default" ]
       threads: 3
       processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
       polling_interval: 0.1
+
+    # Inference serializes on one GPU. threads: 1 and processes: 1 is the whole point:
+    # more of either would queue at the sidecar anyway, while holding database
+    # connections and memory to do it. A second worker here is not "faster backfill",
+    # it is a CUDA OOM.
+    - queues: [ "inference" ]
+      threads: 1
+      processes: 1
+      polling_interval: 1
 
 development:
   <<: *default

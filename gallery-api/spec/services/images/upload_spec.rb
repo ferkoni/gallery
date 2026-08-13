@@ -216,4 +216,39 @@ RSpec.describe Images::Upload, type: :service do
       expect(call.error).to include("S3 upload failed")
     end
   end
+
+  describe "enqueueing the embedding job" do
+    it "enqueues nothing when inference is off" do
+      # The default for a fresh self-hosted install. Without this guard such an
+      # install accumulates jobs for work that will never happen.
+      allow(Inference).to receive(:adapter).and_return(Inference::Null.new)
+
+      expect { call }.not_to have_enqueued_job(ImageEmbeddingJob)
+    end
+
+    it "enqueues the new image for the active model when inference is on" do
+      adapter = Inference::Fake.new
+      allow(Inference).to receive(:adapter).and_return(adapter)
+
+      # Asserted after the call, not around it: the id being checked does not exist
+      # until the upload has run, and a `.with` built beforehand would match on a nil
+      # that quietly degrades the assertion to "some job was enqueued".
+      result = call
+
+      expect(ImageEmbeddingJob)
+        .to have_been_enqueued
+        .with([ result.record.id ], model_id: adapter.model_id)
+        .on_queue("inference")
+    end
+
+    it "does not fail the upload when enqueueing raises" do
+      # The bytes are in S3 and the row is committed by this point, so the user's
+      # photo is safe. The backfill will pick it up later — which is exactly what
+      # makes that task idempotent rather than merely re-runnable.
+      allow(Inference).to receive(:adapter).and_return(Inference::Fake.new)
+      allow(ImageEmbeddingJob).to receive(:perform_later).and_raise("queue is down")
+
+      expect(call.success?).to be(true)
+    end
+  end
 end
