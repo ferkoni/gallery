@@ -11,8 +11,18 @@ module Inference
   # Transport failed: sidecar down, restarting, or unreachable. Retry unchanged.
   class Unavailable < Error; end
 
-  # The sidecar ran out of memory. Retryable, but ONLY with a smaller batch —
-  # repeating the identical request is guaranteed to fail identically.
+  # The sidecar ran out of GPU memory (its HTTP 507).
+  #
+  # Kept distinct from Unavailable because it says something different — resource
+  # exhaustion rather than absence — and because it is the signal a batching caller
+  # would need. But note what it does NOT drive today: 06 decided against batching in
+  # the first implementation, so the adapter sends exactly one image per request and
+  # nothing halves anything. Retrying unchanged is all any caller can do, and with a
+  # single 224x224 forward pass this should not be reachable at all.
+  #
+  # If batch embedding is added later (deferred improvement in 06), this becomes the
+  # class the halve-and-retry branches on. Until then it is a signal with no special
+  # handler, which is why ImageEmbeddingJob does not mention it.
   class OutOfMemory < Error; end
 
   # Not an image, or too large. Never retryable; it will fail the same way forever.
