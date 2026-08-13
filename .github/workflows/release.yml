@@ -46,6 +46,25 @@ jobs:
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/gallery-nginx:${{ github.ref_name }}
 
+      # amd64 only, unlike the two above. This image carries a CUDA base and CUDA
+      # wheels; there is no arm64 build of it worth shipping, and QEMU-emulating one
+      # would take hours to produce something nobody can run.
+      #
+      # This is a third GHCR package, and new packages are PRIVATE by default — the
+      # same trap as the first release. Until its visibility is flipped to public it
+      # pulls fine from an authenticated shell and fails with `unauthorized` for every
+      # self-hoster. Re-run sections 3-4 of release-smoke-test.md the first time this
+      # ships.
+      - name: Build and push gallery-inference
+        uses: docker/build-push-action@v6
+        with:
+          context: sidecar
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            SIDECAR_VERSION=${{ github.ref_name }}
+          tags: ghcr.io/${{ github.repository_owner }}/gallery-inference:${{ github.ref_name }}
+
       - name: Prepare release artifacts
         env:
           OWNER: ${{ github.repository_owner }}

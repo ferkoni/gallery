@@ -31,6 +31,11 @@ services:
       ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY}
       ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY}
       ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT}
+      # Defaults to off. Setting this to `local` without also starting the inference
+      # profile is a supported state, not a broken one: the adapter reports unavailable
+      # and search falls back to lexical.
+      INFERENCE_MODE: ${INFERENCE_MODE:-none}
+      INFERENCE_ENDPOINT: ${INFERENCE_ENDPOINT:-http://inference:8000}
     depends_on:
       db:
         condition: service_healthy
@@ -53,9 +58,51 @@ services:
       ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY}
       ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY}
       ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT}
+      INFERENCE_MODE: ${INFERENCE_MODE:-none}
+      INFERENCE_ENDPOINT: ${INFERENCE_ENDPOINT:-http://inference:8000}
+    # Deliberately no `depends_on: inference`. First boot downloads several hundred
+    # megabytes of weights, and the queue must not wait on that before running unrelated
+    # jobs. The adapter raises Inference::Unavailable and the job retries.
     depends_on:
       api:
         condition: service_healthy
+
+  # The CLIP sidecar. Behind a profile, so `docker compose up` without
+  # `--profile inference` does not create it at all: a fresh install pulls no model,
+  # allocates no VRAM, and needs no GPU. That is what makes INFERENCE_MODE=none an
+  # honest default rather than a switch on a service that is running anyway.
+  inference:
+    profiles: ["inference"]
+    restart: unless-stopped
+    image: ghcr.io/${GHCR_OWNER}/gallery-inference:${VERSION}
+    environment:
+      # The single source of this service's identity: the model is built from these
+      # two and model_id is derived from them, so editing one here cannot produce a
+      # sidecar that misreports what it loaded.
+      MODEL_NAME: ${MODEL_NAME:-ViT-B-32}
+      MODEL_PRETRAINED: ${MODEL_PRETRAINED:-laion2b_s34b_b79k}
+    volumes:
+      # Several hundred megabytes of weights, downloaded once rather than on every
+      # container recreation.
+      - inference_models:/cache
+    deploy:
+      resources:
+        limits:
+          # A real ceiling, not a hope. Without it a runaway batch takes the host down
+          # instead of the container. `docker stats` showing `/ 31GiB` means this did
+          # not apply.
+          memory: 4G
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s     # first boot downloads weights
 
   nginx:
     restart: unless-stopped
@@ -68,3 +115,4 @@ services:
 
 volumes:
   postgres_data:
+  inference_models:

@@ -1,0 +1,24 @@
+# Development override: build the images from this checkout instead of pulling them.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml \
+#     --profile inference up -d --build inference
+#
+# It lives in a separate file because docker-compose.yml is a *release artifact* —
+# release.yml substitutes ${GHCR_OWNER} and ${VERSION} into it and attaches it to the
+# GitHub release. A `build:` key there would ship a reference to a source directory
+# self-hosters do not have, and Compose builds rather than pulls whenever `build:` is
+# present and the image is not already local. So the released file stays pull-only and
+# this file is the one nobody downloads.
+services:
+  inference:
+    build:
+      context: sidecar
+      args:
+        SIDECAR_VERSION: dev
+    image: gallery-inference:dev
+    # Published only here. In the released compose file the sidecar has no `ports:` at
+    # all — it is internal, reachable on the compose network by the api and worker and
+    # by nothing else. Exposing it is a development affordance for curl, the validation
+    # steps and benchmark.py, not part of the deployed shape.
+    ports:
+      - "8000:8000"
