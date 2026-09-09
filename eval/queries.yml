@@ -1,0 +1,273 @@
+# Golden set for the retrieval eval (08). Written by hand; see
+# ~/Documents/docs/gallery/ai-feature/08b-corpus-setup.md §5.
+#
+# CONTRACT
+#   - Photos are referenced as `group/filename` so a judgement is human-checkable
+#     without opening a database.
+#   - Queries are Spanish, matching the corpus and the multilingual checkpoint
+#     (xlm-roberta-base-ViT-B-32 / laion5b_s13b_b90k).
+#   - `relevant:` is filled in by JUDGING THE TOP 10 of a run, not by scanning the
+#     corpus (§6 pooling). It grows over time; when it does, old runs get re-scored
+#     against the new key from their stored raw output.
+#   - GROUPS ARE NOT THE ANSWER KEY. A photo lives in exactly one group directory
+#     (Image belongs_to :album, album_id null: false — one album per image, no join
+#     table), but it may be relevant to queries from any group. A building
+#     photographed on a trip is filed once and listed under both the buildings and
+#     the tourism queries. Never duplicate a file to express that: two copies are two
+#     Image rows with identical vectors but different titles, so lexical matches one
+#     and semantic matches both, biasing the exact comparison this eval exists for.
+#     The `group:` field below is a balance tag for spreading the 24 descriptive
+#     queries evenly, not a restriction on what may appear in `relevant:`.
+#
+# WRITING THE `query:` LINES — the one rule that matters
+#   Write each query from WHAT IS IN THE PHOTO, never from its filename. A query that
+#   echoes a descriptive filename hands the lexical baseline a free win and makes the
+#   whole comparison meaningless. If you find yourself looking at the filename to
+#   write the query, close the file listing and open the photo instead.
+#   The `lexical` block below is the deliberate exception: those queries ARE filenames.
+#
+# VERSIONING
+#   `version` tracks the JUDGEMENT STANDARD, not the size of the answer key. Growing
+#   `relevant:` from pooling is normal and stays at the same version. Bump only if the
+#   relevance criteria themselves change, and copy to queries-v2.yml rather than
+#   editing this file, so old result files stay meaningful.
+
+version: 1
+judged_by: "Fernando"          # who made the relevance calls (08: record the judge)
+judged_at: ""          # YYYY-MM-DD of the judging pass
+corpus_sha: "4db305ef4a8f185639ebe10d3f03c526f46dc93d082a34ecb0bb2e1264825810"         # filled by `rake eval:corpus_sha` once filenames are frozen
+
+queries:
+
+  # ---------------------------------------------------------------------------
+  # descriptive — 24, four per group. The main event: what the feature exists for.
+  # Describe a scene in your own words. At least 3-5 other photos in the same group
+  # should be plausibly the answer, or the query tests whether CLIP knows what a
+  # wedding is rather than whether retrieval works (§3).
+  # ---------------------------------------------------------------------------
+
+  - id: q01
+    query: "ramo de flores"
+    kind: descriptive
+    group: wedding
+    relevant: []
+
+  - id: q02
+    query: "vestido"
+    kind: descriptive
+    group: wedding
+    relevant: []
+
+  - id: q03
+    query: "disfraz de fiesta"
+    kind: descriptive
+    group: wedding
+    relevant: []
+
+  - id: q04
+    query: "invitados en altar"
+    kind: descriptive
+    group: wedding
+    relevant: []
+
+  - id: q05
+    query: "animal disecado en un museo"
+    kind: descriptive
+    group: tourism
+    relevant: []
+
+  - id: q06
+    query: "hombre usando fuente publica"
+    kind: descriptive
+    group: tourism
+    relevant: []
+
+  - id: q07
+    query: "edificios historicos"
+    kind: descriptive
+    group: tourism
+    relevant: []
+
+  - id: q08
+    query: "dia soleado"
+    kind: descriptive
+    group: tourism
+    relevant: []
+
+  - id: q09
+    query: "edificio en mal estado"
+    kind: descriptive
+    group: buildings
+    relevant: []
+
+  - id: q10
+    query: "edificio moderno"
+    kind: descriptive
+    group: buildings
+    relevant: []
+
+  - id: q11
+    query: "edificios con naturaleza"
+    kind: descriptive
+    group: buildings
+    relevant: []
+
+  - id: q12
+    query: "tanques de concreto"
+    kind: descriptive
+    group: buildings
+    relevant: []
+
+  - id: q13
+    query: "cachorros en la naturaleza"
+    kind: descriptive
+    group: pets
+    relevant: []
+
+  - id: q14
+    query: "gato dentro del departamento"
+    kind: descriptive
+    group: pets
+    relevant: []
+
+  - id: q15
+    query: "cachorro y mujer"
+    kind: descriptive
+    group: pets
+    relevant: []
+
+  - id: q16
+    query: "animal comiendo"
+    kind: descriptive
+    group: pets
+    relevant: []
+
+  - id: q17
+    query: "persona con lentes"
+    kind: descriptive
+    group: family
+    relevant: []
+
+  - id: q18
+    query: "jovenes reunidos"
+    kind: descriptive
+    group: family
+    relevant: []
+
+  - id: q19
+    query: "adultos jugando"
+    kind: descriptive
+    group: family
+    relevant: []
+
+  - id: q20
+    query: "reunion con comida"
+    kind: descriptive
+    group: family
+    relevant: []
+
+  - id: q21
+    query: "planta en maceta"
+    kind: descriptive
+    group: garden
+    relevant: []
+
+  - id: q22
+    query: "rosas de muchos colores"
+    kind: descriptive
+    group: garden
+    relevant: []
+
+  - id: q23
+    query: "arboles grandes frente a edificio antiguo"
+    kind: descriptive
+    group: garden
+    relevant: []
+
+  - id: q24
+    query: "lugar abandonado con pasto alto"
+    kind: descriptive
+    group: garden
+    relevant: []
+
+  # ---------------------------------------------------------------------------
+  # broad — 5. Many relevant answers, deliberately. These are where recall@5 hits
+  # its 5/|relevant| ceiling, which is the caveat 08 raises: report these per-query
+  # rather than averaged in. Think "fotos de perros", "gente en la playa".
+  # ---------------------------------------------------------------------------
+
+  - id: q25
+    query: "gato"
+    kind: broad
+    relevant: []
+
+  - id: q26
+    query: "reunion de personas"
+    kind: broad
+    relevant: []
+
+  - id: q27
+    query: "hojas verdes"
+    kind: broad
+    relevant: []
+
+  - id: q28
+    query: "vestidos de gala"
+    kind: broad
+    relevant: []
+
+  - id: q29
+    query: "corbata"
+    kind: broad
+    relevant: []
+
+  # ---------------------------------------------------------------------------
+  # lexical — 4. Filled in already: the query IS the filename, so the answer key is
+  # known without judging. These prove the hybrid did not regress exact-match search,
+  # and semantic retrieval cannot possibly win them.
+  #
+  # Each stem below was checked to be a substring of exactly one title in the corpus,
+  # so `title ILIKE '%q%'` returns precisely one row. Four naming styles on purpose.
+  # If any of these files is renamed, these four entries must be updated with it.
+  # ---------------------------------------------------------------------------
+
+  - id: q30
+    query: "DSC_0014"
+    kind: lexical
+    relevant:
+      - buildings/DSC_0014.JPG
+
+  - id: q31
+    query: "IMG_20240116_102306"
+    kind: lexical
+    relevant:
+      - buildings/IMG_20240116_102306.jpg
+
+  - id: q32
+    query: "IMG-20250421-WA0001"
+    kind: lexical
+    relevant:
+      - buildings/IMG-20250421-WA0001.jpg
+
+  - id: q33
+    query: "AyK (278 de 715)"
+    kind: lexical
+    relevant:
+      - family/AyK (278 de 715).jpg
+
+  # ---------------------------------------------------------------------------
+  # compositional — 2. Expected to score BADLY, and that is the point: CLIP is weak
+  # at binding attributes to objects and at relations between them. A results table
+  # where everything succeeds teaches nothing.
+  # Shape: "un perro adentro de un auto", "la mujer de rojo, no la de azul".
+  # ---------------------------------------------------------------------------
+
+  - id: q34
+    query: "urbanismo sin naturaleza"
+    kind: compositional
+    relevant: []
+
+  - id: q35
+    query: "un gato escondido entre las hojas de las plantas"
+    kind: compositional
+    relevant: []
