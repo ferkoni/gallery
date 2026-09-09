@@ -17,7 +17,7 @@ outside this repo). Consumer: `gallery-api/app/services/inference/local.rb`.
 ```
 POST /embed/image   { "images": ["<base64>", ...] }
 POST /embed/text    { "texts": ["a sunset over the beach", ...] }
-  → { "model_id": "clip-vit-b-32/laion2b_s34b_b79k/v1", "dimensions": 512,
+  → { "model_id": "clip-xlm-roberta-base-vit-b-32/laion5b_s13b_b90k/v1", "dimensions": 512,
       "embeddings": [[0.013, -0.44, ...], ...] }
 
 GET  /health
@@ -67,6 +67,27 @@ That is why this service accepts **raw image bytes** and owns the entire pipelin
 Rails resized and the sidecar normalized, the contract would span two languages and two
 repositories and would break silently.
 
+### The text tower is multilingual; the vision tower is not new
+
+The default is `xlm-roberta-base-ViT-B-32` / `laion5b_s13b_b90k`, because the libraries
+this serves are captioned and queried in Spanish and the English `laion2b` checkpoint's
+text encoder handles it poorly.
+
+What this changes is narrower than it looks. open_clip's config for this architecture
+declares the same vision tower as plain `ViT-B-32` — 224px input, patch size 32, 12
+layers — and the same `embed_dim: 512`. So image preprocessing is untouched, vectors stay
+512-d, the `vector(512)` column needs no migration and Rails' boot-time dimension
+assertion needs no change. Only the text side moves, to an HF `xlm-roberta-base` with a
+mean pooler, which is why `transformers` is now a dependency.
+
+It is nonetheless a **new vector space**. `model_id` changes with `MODEL_NAME`, so every
+existing row is selected by `Image.needing_embedding` and the backfill re-embeds the
+library. That is the derivation working, not a problem to route around.
+
+Context length stays 77 — the architecture config declares no `context_length`, so
+open_clip's default applies — but the tokenizer is now SentencePiece rather than CLIP's
+BPE, so the same sentence consumes a different number of tokens.
+
 For the same reason, `requirements.txt` is pinned exactly. An unpinned `open_clip_torch`
 or `torch` is a silent re-embed waiting to happen: a preprocessing change upstream moves
 the vector space without moving `model_id`.
@@ -98,8 +119,8 @@ ViT-B/16 is the right model to test with precisely because it is **also 512-d**:
 column type, the boot assertion and the per-row `dimensions` all agree while every row
 would be wrong. Nothing downstream can make this check for you.
 
-Still reading `clip-vit-b-32/...` means the identity has become a constant. Revert the
-variable afterwards and re-embed anything written during the test.
+Still reading `clip-xlm-roberta-base-vit-b-32/...` means the identity has become a
+constant. Revert the variable afterwards and re-embed anything written during the test.
 
 `version` covers the case identity derivation cannot: an older `gallery-inference` image
 pinned against a newer Rails reports a well-formed `model_id` from its own older
@@ -145,8 +166,8 @@ Rails side. Nothing in the Rails codebase distinguishes the two setups.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `MODEL_NAME` | `ViT-B-32` | changing it changes `model_id`, which invalidates existing rows |
-| `MODEL_PRETRAINED` | `laion2b_s34b_b79k` | same |
+| `MODEL_NAME` | `xlm-roberta-base-ViT-B-32` | changing it changes `model_id`, which invalidates existing rows |
+| `MODEL_PRETRAINED` | `laion5b_s13b_b90k` | same; the only tag open_clip ships for this architecture |
 | `INFERENCE_DEVICE` | auto | `cpu` forces CPU; used for the CPU half of the benchmark |
 | `MAX_BATCH_SIZE` | `64` | rejected as 413 rather than discovered at allocation time |
 | `MAX_IMAGE_BYTES` | `26214400` | decoded size; CLIP resizes to 224x224 regardless |

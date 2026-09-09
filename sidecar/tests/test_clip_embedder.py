@@ -28,7 +28,7 @@ def solid(colour) -> bytes:
 
 @pytest.fixture(scope="module")
 def embedder():
-    return ClipEmbedder(model_name="ViT-B-32", pretrained="laion2b_s34b_b79k")
+    return ClipEmbedder(model_name="xlm-roberta-base-ViT-B-32", pretrained="laion5b_s13b_b90k")
 
 
 def test_model_id_tracks_the_architecture_it_was_built_from():
@@ -38,11 +38,21 @@ def test_model_id_tracks_the_architecture_it_was_built_from():
     # labelled with a model that did not produce it.
     assert derive_model_id("ViT-B-32", "laion2b_s34b_b79k") == "clip-vit-b-32/laion2b_s34b_b79k/v1"
     assert derive_model_id("ViT-B-16", "laion2b_s34b_b88k") == "clip-vit-b-16/laion2b_s34b_b88k/v1"
+    # The shipped default. Same 512-d vision tower as plain ViT-B-32, so nothing but
+    # this string distinguishes the two spaces downstream.
+    assert (
+        derive_model_id("xlm-roberta-base-ViT-B-32", "laion5b_s13b_b90k")
+        == "clip-xlm-roberta-base-vit-b-32/laion5b_s13b_b90k/v1"
+    )
 
 
 @pytest.mark.model
 def test_identity_comes_from_the_loaded_model(embedder):
-    assert embedder.model_id == "clip-vit-b-32/laion2b_s34b_b79k/v1"
+    assert embedder.model_id == "clip-xlm-roberta-base-vit-b-32/laion5b_s13b_b90k/v1"
+    # 512, same as the English ViT-B-32 it replaced: the vision tower is identical and
+    # `dimensions` is read off it. That is exactly the same-width swap the model_id
+    # derivation exists to make visible — the column type and the boot assertion cannot
+    # tell these two apart, and only the identity string can.
     assert embedder.dimensions == 512
 
 

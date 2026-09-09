@@ -79,8 +79,8 @@ services:
       # The single source of this service's identity: the model is built from these
       # two and model_id is derived from them, so editing one here cannot produce a
       # sidecar that misreports what it loaded.
-      MODEL_NAME: ${MODEL_NAME:-ViT-B-32}
-      MODEL_PRETRAINED: ${MODEL_PRETRAINED:-laion2b_s34b_b79k}
+      MODEL_NAME: ${MODEL_NAME:-xlm-roberta-base-ViT-B-32}
+      MODEL_PRETRAINED: ${MODEL_PRETRAINED:-laion5b_s13b_b90k}
     volumes:
       # Several hundred megabytes of weights, downloaded once rather than on every
       # container recreation.

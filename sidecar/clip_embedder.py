@@ -61,14 +61,26 @@ class ClipEmbedder:
     @classmethod
     def from_env(cls) -> "ClipEmbedder":
         return cls(
-            model_name=os.environ.get("MODEL_NAME", "ViT-B-32"),
-            # laion2b rather than openai. The openai tag needs the `-quickgelu`
-            # architecture (see _reject_activation_mismatch), and its weights ship as a
-            # TorchScript archive that only loads with weights_only=False — executing
-            # code from a CDN on first boot, in a product whose whole premise is
-            # self-hosting. These weights are safetensors, load under weights_only=True,
-            # and score better on retrieval.
-            pretrained=os.environ.get("MODEL_PRETRAINED", "laion2b_s34b_b79k"),
+            # A multilingual text tower, because the library this serves is captioned
+            # and queried in Spanish. The vision tower is unchanged from ViT-B-32 —
+            # same 224px input, same patch size, same 512-d output — so image
+            # preprocessing, the vector width and the pgvector column all stay put.
+            # Only the text side moves, from English-only to XLM-R.
+            #
+            # The English laion2b checkpoint scores better on English retrieval. It was
+            # the right default until the corpus stopped being English.
+            model_name=os.environ.get("MODEL_NAME", "xlm-roberta-base-ViT-B-32"),
+            # The only pretrained tag open_clip ships for this architecture.
+            #
+            # Note what changed against the English checkpoint: that one is safetensors,
+            # this hub repo publishes only `open_clip_pytorch_model.bin`. That is still
+            # not the openai situation — openai's tag is a TorchScript ARCHIVE that
+            # cannot load without weights_only=False, i.e. executing code from a CDN on
+            # first boot. A plain state-dict pickle loads fine under weights_only=True,
+            # which is open_clip's default (factory.py load_state_dict), so no flag is
+            # relaxed here and nothing untrusted is executed. It is a weaker file format
+            # than safetensors, not an open door.
+            pretrained=os.environ.get("MODEL_PRETRAINED", "laion5b_s13b_b90k"),
             device=os.environ.get("INFERENCE_DEVICE") or None,
         )
 
