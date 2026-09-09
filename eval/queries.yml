@@ -34,7 +34,7 @@
 
 version: 1
 judged_by: "Fernando"          # who made the relevance calls (08: record the judge)
-judged_at: "2026-09-09"          # YYYY-MM-DD of the judging pass
+judged_at: ""          # YYYY-MM-DD of the judging pass
 corpus_sha: "4db305ef4a8f185639ebe10d3f03c526f46dc93d082a34ecb0bb2e1264825810"         # filled by `rake eval:corpus_sha` once filenames are frozen
 
 queries:
