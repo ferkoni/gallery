@@ -3,3 +3,6 @@
 *.swp
 .idea/
 .vscode/
+
+# Eval corpus — private photo library, never published. Harness inputs/outputs are tracked.
+/eval/corpus/
