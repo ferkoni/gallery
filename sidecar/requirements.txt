@@ -5,5 +5,17 @@ fastapi==0.141.1
 uvicorn==0.52.3
 open_clip_torch==3.3.0
 pillow==12.3.0
+# open_clip does NOT depend on transformers outside its `training` extra, but the
+# multilingual text tower is an HF model (xlm-roberta-base), so hf_model.py imports it
+# and the tokenizer is an AutoTokenizer. Without this the service builds a model fine
+# and then fails constructing the text encoder.
+#
+# The [sentencepiece] extra matches what open_clip itself pairs it with. XLM-R is a
+# SentencePiece model; the hub repo ships a tokenizer.json so the fast tokenizer covers
+# it, and the extra removes the fallback path failing instead.
+#
+# 4.x, not 5.x: transformers 5.0 (Jan 2026) is a major release, and open_clip 3.3.0
+# predates it. Nothing here needs 5.x.
+transformers[sentencepiece]==4.57.6
 torch==2.13.0
 torchvision==0.28.0
