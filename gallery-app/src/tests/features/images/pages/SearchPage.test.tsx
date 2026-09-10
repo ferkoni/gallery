@@ -83,7 +83,7 @@ describe('SearchPage', () => {
   it('pre-populates the q input from the URL param', () => {
     mockUseSearchImages.mockReturnValue({ data: images, isPending: false, isError: false });
     renderSearchPage('?q=sunset');
-    expect(screen.getByPlaceholderText('Title or tag…')).toHaveValue('sunset');
+    expect(screen.getByPlaceholderText('Search your photos…')).toHaveValue('sunset');
   });
 
   it('renders album options in the dropdown', () => {
@@ -94,11 +94,15 @@ describe('SearchPage', () => {
   });
 
   describe('useMemo client-side filtering', () => {
-    it('filters loaded results by live q for instant feedback', () => {
+    // The regression that made semantic search look broken: `q` used to be re-applied
+    // here as a substring match on title and tags, which discards every result the
+    // server matched by meaning. A photo of a woman is a correct answer for `mujer`
+    // with that word nowhere in its metadata.
+    it('shows every result the server returned for q, whatever the titles say', () => {
       mockUseSearchImages.mockReturnValue({ data: images, isPending: false, isError: false });
-      renderSearchPage('?q=sunset');
+      renderSearchPage('?q=mujer');
       expect(screen.getByTestId('image-card-1')).toBeInTheDocument();
-      expect(screen.queryByTestId('image-card-2')).not.toBeInTheDocument();
+      expect(screen.getByTestId('image-card-2')).toBeInTheDocument();
     });
 
     it('filters loaded results by live title', () => {
@@ -117,7 +121,15 @@ describe('SearchPage', () => {
 
     it('shows empty state when useMemo filters out all results', () => {
       mockUseSearchImages.mockReturnValue({ data: images, isPending: false, isError: false });
-      renderSearchPage('?q=nomatch');
+      renderSearchPage('?title=nomatch');
+      expect(screen.getByTestId('search-empty')).toBeInTheDocument();
+    });
+
+    // The server decides emptiness for q now, so an empty response is the only way the
+    // empty state can be reached from a global search.
+    it('shows empty state for q only when the server returned nothing', () => {
+      mockUseSearchImages.mockReturnValue({ data: [], isPending: false, isError: false });
+      renderSearchPage('?q=elefante');
       expect(screen.getByTestId('search-empty')).toBeInTheDocument();
     });
   });

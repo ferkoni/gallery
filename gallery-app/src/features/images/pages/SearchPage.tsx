@@ -61,17 +61,27 @@ export function SearchPage() {
     albumId: debouncedAlbumId,
   });
 
+  // Narrows the already-loaded results while the debounce settles, so typing feels
+  // instant instead of waiting a round trip.
+  //
+  // `q` is deliberately NOT narrowed here, and used to be. It is a substring match on
+  // the client and, since semantic search shipped, is answered by meaning on the
+  // server: a photo of a woman is a correct result for `mujer` with that word nowhere
+  // in its title or tags. Re-applying the old rule discarded every semantic result and
+  // rendered "No images match your filters" while the API was returning the right
+  // photos — the search looked broken and the failure was entirely in this function.
+  //
+  // `title` and `tag` stay, because those two ARE substring filters by definition and
+  // the client agrees with the server about what they mean.
   const filtered = useMemo(() => {
     return images.filter(img => {
-      const lq = debouncedQ.toLowerCase();
       const lt = debouncedTitle.toLowerCase();
       const ltag = debouncedTag.toLowerCase();
-      if (debouncedQ && !img.title.toLowerCase().includes(lq) && !img.tags.some(t => t.toLowerCase().includes(lq))) return false;
       if (debouncedTitle && !img.title.toLowerCase().includes(lt)) return false;
       if (debouncedTag && !img.tags.some(t => t.toLowerCase().includes(ltag))) return false;
       return true;
     });
-  }, [images, debouncedQ, debouncedTitle, debouncedTag]);
+  }, [images, debouncedTitle, debouncedTag]);
 
   const hasAnyFilter = q || title || tag || from || albumId !== undefined;
 
@@ -84,7 +94,7 @@ export function SearchPage() {
           <label className="text-xs font-medium text-gray-500">Global search</label>
           <input
             type="text"
-            placeholder="Title or tag…"
+            placeholder="Search your photos…"
             value={q}
             onChange={e => setQ(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
