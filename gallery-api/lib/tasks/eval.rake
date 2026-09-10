@@ -55,6 +55,37 @@ namespace :eval do
     puts "lexical baseline needs (title ILIKE). Semantic runs will need real objects."
   end
 
+  desc "Embed the corpus by reading it off local disk (no S3)"
+  task embed: :environment do
+    %w[corpus ingest embed].each { |f| require Rails.root.join("lib/eval/#{f}") }
+
+    email = ENV.fetch("EVAL_USER") { abort "set EVAL_USER=<email>" }
+    user = User.find_by(email: email) || abort("no user #{email}")
+
+    adapter = Inference.adapter
+    unless adapter.available?
+      abort "inference is not available (INFERENCE_MODE=#{Inference.config.mode}). " \
+            "Start the sidecar and point INFERENCE_ENDPOINT at it."
+    end
+
+    corpus = Eval::Corpus.default
+    abort "no corpus at #{corpus.dir}" unless corpus.dir.directory?
+
+    counts = Eval::Embed.new(user: user, corpus: corpus, adapter: adapter).call
+
+    if counts[:total].zero?
+      puts "Nothing to do: every corpus image already has an embedding for #{counts[:model_id]}."
+      next
+    end
+
+    puts
+    puts "embedded: #{counts[:embedded]}  skipped: #{counts[:skipped]}  missing on disk: #{counts[:missing]}"
+    puts "model_id: #{counts[:model_id]}"
+    puts
+    puts "Re-runnable: which images still need embedding is derived from the absence of"
+    puts "a row for this model_id, so a second run does only what is left."
+  end
+
   desc "Run the golden set against EVAL_STRATEGY (default lexical) and write a result file"
   task retrieval: :environment do
     %w[corpus golden_set metrics runner].each { |f| require Rails.root.join("lib/eval/#{f}") }
