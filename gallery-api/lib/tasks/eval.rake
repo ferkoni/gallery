@@ -88,7 +88,7 @@ namespace :eval do
 
   desc "Run the golden set against EVAL_STRATEGY (default lexical) and write a result file"
   task retrieval: :environment do
-    %w[corpus golden_set metrics runner].each { |f| require Rails.root.join("lib/eval/#{f}") }
+    %w[corpus ingest golden_set metrics runner].each { |f| require Rails.root.join("lib/eval/#{f}") }
 
     email = ENV.fetch("EVAL_USER") { abort "set EVAL_USER=<email>" }
     user = User.find_by(email: email) || abort("no user #{email}")
@@ -119,6 +119,69 @@ namespace :eval do
     puts "wrote #{path}"
     puts "Raw per-query rankings are stored, so this run can be re-scored when the"
     puts "answer key grows. Commit it."
+  end
+
+  desc "Multi-user recall case: split the corpus 95/5 and measure what an ANN index costs the minority user"
+  task multi_user: :environment do
+    %w[corpus ingest golden_set metrics multi_user].each { |f| require Rails.root.join("lib/eval/#{f}") }
+
+    email = ENV.fetch("EVAL_USER") { abort "set EVAL_USER=<email>" }
+    user = User.find_by(email: email) || abort("no user #{email}")
+
+    adapter = Inference.adapter
+    unless adapter.available?
+      abort "inference is not available (INFERENCE_MODE=#{Inference.config.mode}). " \
+            "This case is about the vector path; there is nothing to measure without it."
+    end
+
+    corpus = Eval::Corpus.default
+    set = Eval::GoldenSet.load
+
+    embedded = ImageEmbedding.where(model_id: adapter.model_id, image_id: Image.with_user(user).select(:id)).count
+    unless embedded == corpus.photo_count
+      abort "#{embedded} of #{corpus.photo_count} corpus images have an embedding for " \
+            "#{adapter.model_id}. Run eval:embed first — a partly embedded corpus makes " \
+            "'the index lost rows' and 'the rows were never there' indistinguishable."
+    end
+
+    # Big enough that an ANN index is a decision somebody might actually make, and that
+    # its graph has neighbours to get lost among. 235 vectors is neither.
+    pad = Integer(ENV.fetch("EVAL_PAD", "20000"))
+
+    result = Eval::MultiUser.new(user: user, corpus: corpus, set: set, pad: pad, adapter: adapter).call
+
+    dir = Eval::Corpus.root.join("results")
+    dir.mkpath
+    path = dir.join("#{Date.current.iso8601}-multi-user-#{corpus.fingerprint[0, 8]}.yml")
+    path.write(result.to_yaml)
+
+    split = result["split"]
+    puts
+    puts "split:      #{split["minority_photos"]} minority / #{split["majority_photos"]} majority " \
+         "(+#{split["synthetic_padding"]} synthetic)"
+    puts "pgvector:   #{result["pgvector"]}   ef_search: #{result["ef_search"]}   k: #{result["k"]}"
+    puts
+
+    [ [ "product path (Images::Search)", "product_path" ], [ "forced onto the index", "forced_ann" ] ].each do |label, key|
+      puts label
+      Eval::MultiUser::REGIMES.each do |regime|
+        row = result[key][regime]
+        puts format("  %-15s index used: %-5s  identical to exact: %2d/%-2d  short of k: %2d  mean recall vs exact: %s",
+                    regime, row["index_scan"], row["queries_identical_to_exact"], result["queries"],
+                    row["queries_short_of_k"], row["mean_recall_vs_exact"]&.round(3) || "n/a")
+      end
+      puts
+    end
+
+    puts "wrote #{path}"
+    puts
+    puts "Read it in this order. The product path must be identical to exact under every"
+    puts "regime — that is the correctness claim. The forced section must NOT be: if it"
+    puts "stops dropping under `hnsw`, the case has stopped exercising filtered ANN and"
+    puts "the line above it means nothing."
+    puts
+    puts "Nothing was kept. The split, the padding and the index all lived inside one"
+    puts "transaction, which was rolled back."
   end
 
   desc "Check queries.yml against the corpus without running anything"

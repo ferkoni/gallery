@@ -128,7 +128,7 @@ module Eval
         .call(scope: Image.with_user(user), query: text, strategy: strategy)
         .limit(POOL_DEPTH)
         .pluck(:s3_key)
-        .map { |key| key.delete_prefix("eval-corpus/") }
+        .map { |key| Ingest.path_for(key) }
     end
 
     def model_id

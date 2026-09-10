@@ -22,7 +22,13 @@ module Eval
     # A real upload later assigns its own key (albums/<id>/<uuid>/<filename>) and this
     # value is overwritten at that point. Nothing reads it before then: no byte-fetching
     # code path runs during a lexical run.
-    def self.s3_key_for(path) = "eval-corpus/#{path}"
+    PREFIX = "eval-corpus/".freeze
+
+    def self.s3_key_for(path) = "#{PREFIX}#{path}"
+
+    # The inverse, so a result file can name a photo the way the corpus and the answer
+    # key do — `pets/gato-teclado.jpg` — rather than by a key nobody can look up.
+    def self.path_for(s3_key) = s3_key.delete_prefix(PREFIX)
 
     attr_reader :user, :corpus
 
