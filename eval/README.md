@@ -51,15 +51,15 @@ grows. A run that kept only its score could not be.
 
 ## The numbers
 
-Judged 2026-09-10 by Fernando: 34 of 35 queries, 195 relevance judgements, pooled from all
+Judged 2026-09-10 by Fernando: all 35 queries, 195 relevance judgements, pooled from the
 four recorded runs. Same corpus, same model, same day — the only thing that differs between
 these three rows is the retrieval strategy.
 
 | | P@5 | MRR | R-precision |
 |---|---|---|---|
-| Lexical (`title ILIKE`, what shipped before) | 0.053 | 0.147 | 0.130 |
-| Semantic (CLIP, cosine) | 0.618 | 0.837 | 0.648 |
-| **Hybrid (RRF, what ships now)** | **0.641** | **0.954** | **0.768** |
+| Lexical (`title ILIKE`, what shipped before) | 0.051 | 0.143 | 0.130 |
+| Semantic (CLIP, cosine) | 0.600 | 0.813 | 0.648 |
+| **Hybrid (RRF, what ships now)** | **0.623** | **0.927** | **0.768** |
 
 By query kind, which is where the shape of it shows:
 
@@ -68,7 +68,7 @@ By query kind, which is where the shape of it shows:
 | descriptive | 0.000 | 0.675 | 0.675 | 24 |
 | broad | 0.200 | 0.920 | 0.920 | 5 |
 | **lexical (`DSC_0014`)** | **0.200** | **0.000** | **0.200** | 4 |
-| compositional | 0.000 | 0.200 | 0.200 | 1 |
+| compositional | 0.000 | 0.100 | 0.100 | 2 |
 
 **Hybrid did not land between the two, and that is the result worth having.** It matches
 semantic everywhere semantic is good, and it recovers every filename query that pure
@@ -77,12 +77,20 @@ at rank 1. Fusion that averaged would have scored halfway on both halves. This i
 four `lexical` queries were put in the golden set to catch, and it is the difference between
 shipping AI search and shipping AI search that can no longer find `IMG_4471`.
 
-**Read P@5 with its ceiling in mind.** 14 of the 34 judged queries have fewer than five
-relevant photos in the whole corpus, and a query with one relevant photo caps at P@5 = 0.2
-however perfectly it is answered. The mean achievable P@5 here is **0.765**, so hybrid's
-0.641 is **84% of the maximum the answer key allows** — and 12 of 34 queries were answered
-perfectly. R-precision (precision at |relevant|, which has no such cap) is the fairer single
-number: 0.768.
+**Read P@5 with its ceiling in mind.** 15 of the 35 queries have fewer than five relevant
+photos in the whole corpus, and a query with one relevant photo caps at P@5 = 0.2 however
+perfectly it is answered. The mean achievable P@5 here is **0.743**, so hybrid's 0.623 is
+**84% of the maximum the answer key allows** — and 12 of 35 queries were answered perfectly.
+R-precision (precision at |relevant|, which has no such cap) is the fairer single number:
+0.768.
+
+**The compositional queries did what they were put there to do.** `q34`
+(`urbanismo sin naturaleza`) scores **0.0 across all three strategies**: its pool held photos
+of urbanism and photos of nature, and nothing that was urbanism *without* nature. CLIP has no
+negation — `sin` is a token like any other, and the query vector lands between the two
+concepts it names rather than subtracting one from the other. `q35` fares better only because
+its relevant photo happens to be the nearest neighbour anyway (MRR 1.0, P@5 capped at 0.2 by a
+single-photo answer key).
 
 **The lexical baseline is a floor, not a rival.** It returns nothing at all for 30 of 35
 queries: `title ILIKE '%q%'` matches the whole query as one literal substring against a
@@ -108,7 +116,9 @@ eval/judging/q01-ramo-de-flores/
 ```
 
 **Judging is deleting.** Remove the photos that are not relevant; whatever survives is
-that query's answer key. `eval:judgements` reads the folders back and writes `relevant:`
+that query's answer key. If nothing in a folder is relevant, delete everything — that is a
+judgement too, and it is written as `judged: true` with an empty list so the query scores
+zero instead of being read as unjudged. `eval:judgements` reads the folders back and writes `relevant:`
 into `queries.yml` — a dry run by default, `EVAL_APPLY=1` to write. The rewrite is
 textual and touches only `relevant:` and `judged_at`, so `git diff` shows exactly what
 changed and every comment in the file survives.
@@ -173,19 +183,19 @@ specifically because hybrid search fuses on rank *position*.
 
 Worth naming, and worth taking seriously before quoting any number from this directory.
 
-- **34 of 35 queries are judged.** `q34` (`urbanismo sin naturaleza`, compositional) had no
-  relevant photo anywhere in its pool, which this harness stores as `relevant: []` and reads
-  as *unjudged* — so it is excluded from the averages rather than scored zero. The headline
-  number therefore omits the one query CLIP handled worst, which flatters it slightly.
+- **All 35 queries are judged**, including one — `q34` — judged to have no relevant photo
+  in its pool at all. It carries `judged: true` beside an empty list and scores zero, rather
+  than dropping out of the average: an empty answer key means *unjudged* everywhere else in
+  this harness, and the two are opposites.
 - **Judgements come from a pool, so recall is a lower bound.** A photo no run ever
   returned is never judged, and therefore never counted as relevant — the standard TREC
   compromise. It makes the numbers comparable between runs; it does not make them
   absolute.
 - **35 queries is a small sample**, and individual P@5 values will move a lot on one
   judgement. Report the count next to the metric, always.
-- **P@5 is capped by the answer key, not by retrieval.** 14 queries have fewer than five
-  relevant photos, so their best possible P@5 is below 1.0 — the mean ceiling is 0.765.
-  Quoting 0.641 against an implied 1.0 understates the result; quoting it without the
+- **P@5 is capped by the answer key, not by retrieval.** 15 queries have fewer than five
+  relevant photos, so their best possible P@5 is below 1.0 — the mean ceiling is 0.743.
+  Quoting 0.623 against an implied 1.0 understates the result; quoting it without the
   ceiling misleads in the other direction.
 - **One judge, binary relevance.** No second annotator, no inter-annotator agreement, no
   graded relevance — so "relevant" means whatever one person meant by it on one afternoon.

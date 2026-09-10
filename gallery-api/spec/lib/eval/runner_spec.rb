@@ -70,6 +70,24 @@ RSpec.describe Eval::Runner do
       expect(result["per_query"].last["p_at_5"]).to be_nil
     end
 
+    # The other half of the rule above, and the reason `judged:` exists in queries.yml: a
+    # query somebody judged and found no answer for scored zero, and dropping it would
+    # remove the retriever's worst case from its own average.
+    it "scores a judged query with no relevant photo as zero, and counts it" do
+      ingest
+      set = golden_set([
+        { "id" => "q01", "query" => "torta", "kind" => "descriptive", "relevant" => [ "wedding/torta.jpg" ] },
+        { "id" => "q02", "query" => "gato sin bigotes", "kind" => "compositional",
+          "judged" => true, "relevant" => [] }
+      ])
+      result = run(set)
+
+      expect(result["queries_scored"]).to eq(2)
+      expect(result["per_query"].last["p_at_5"]).to eq(0.0)
+      expect(result["per_query"].last["mrr"]).to eq(0.0)
+      expect(result["p_at_5"]).to eq((1.0 / 5) / 2)
+    end
+
     it "reports nil rather than zero when nothing is judged at all" do
       ingest
       set = golden_set([ { "id" => "q01", "query" => "gato", "kind" => "broad", "relevant" => [] } ])

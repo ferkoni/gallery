@@ -63,9 +63,22 @@ module Eval
         # below belongs to a query being rewritten or one being left alone.
         current = Regexp.last_match(1) if line =~ /^\s*-\s+id:\s*(\S+)/
 
+        # Dropped and re-emitted rather than left alone, so the marker tracks the folder:
+        # a query that gains a judgement on a later pass loses it again.
+        if line =~ /^\s+judged:\s/ && by_id.key?(current)
+          index += 1
+          next
+        end
+
         if line =~ /^(\s*)relevant:/ && by_id.key?(current)
           indent = Regexp.last_match(1)
-          output << render(indent, by_id.fetch(current))
+          relevant = by_id.fetch(current)
+
+          # "Judged, and nothing was relevant" said out loud. Without it an empty list
+          # reads as *unjudged*, and the query the retriever did worst on silently leaves
+          # the average — flattering the result by dropping its hardest case.
+          output << "#{indent}judged: true\n" if relevant.empty?
+          output << render(indent, relevant)
           index = skip_existing_list(lines, index + 1, indent)
           next
         end

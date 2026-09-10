@@ -9,11 +9,19 @@ module Eval
 
     KINDS = %w[descriptive broad lexical compositional].freeze
 
-    Query = Data.define(:id, :query, :kind, :group, :relevant) do
+    Query = Data.define(:id, :query, :kind, :group, :relevant, :judged) do
       # A query with no judgements has not been judged — it has not scored zero.
       # Averaging it in as 0.0 would report a measurement of the answer key's
       # emptiness and label it retrieval quality.
-      def judged? = relevant.any?
+      #
+      # `judged: true` is how the third case says its name: judged, and NOTHING in the
+      # pool was relevant. That is a real measurement and it scores zero — the query the
+      # retriever failed hardest on is exactly the one an empty-key-means-unjudged rule
+      # would drop out of the average. It exists because q34 (`urbanismo sin naturaleza`)
+      # pooled photos of urbanism and photos of nature and not one of urbanism WITHOUT
+      # nature: CLIP has no negation, which is what the compositional queries are in this
+      # file to demonstrate.
+      def judged? = relevant.any? || judged
     end
 
     def self.load(path = Corpus.root.join("queries.yml"))
@@ -34,7 +42,8 @@ module Eval
           query:    q["query"].to_s.strip,
           kind:     q["kind"],
           group:    q["group"],
-          relevant: Array(q["relevant"])
+          relevant: Array(q["relevant"]),
+          judged:   q["judged"] == true
         )
       end
       validate!

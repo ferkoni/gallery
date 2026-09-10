@@ -18,6 +18,11 @@
 #     and semantic matches both, biasing the exact comparison this eval exists for.
 #     The `group:` field below is a balance tag for spreading the 24 descriptive
 #     queries evenly, not a restriction on what may appear in `relevant:`.
+#   - `relevant: []` means NOT JUDGED, and is excluded from the averages. A query that
+#     was judged and had no relevant photo in its pool carries `judged: true` beside
+#     the empty list, and scores zero like any other miss. The two are opposites and an
+#     empty list alone cannot tell them apart — which matters because the query the
+#     retriever failed hardest on is the one that would quietly leave the average.
 #
 # WRITING THE `query:` LINES — the one rule that matters
 #   Write each query from WHAT IS IN THE PHOTO, never from its filename. A query that
@@ -459,6 +464,7 @@ queries:
   - id: q34
     query: "urbanismo sin naturaleza"
     kind: compositional
+    judged: true
     relevant: []
 
   - id: q35

@@ -240,10 +240,34 @@ RSpec.describe Eval::JudgingKit do
       expect(queries_file.read).to include("  - id: q04\n    query: \"perro\"\n")
     end
 
-    it "writes an empty key as `[]`, which this harness reads as unjudged" do
-      apply([ { id: "q01", relevant: [] } ])
+    # The distinction that decides whether the hardest query counts.
+    describe "a folder that was judged and kept nothing" do
+      it "says so, so the query scores zero instead of leaving the average" do
+        apply([ { id: "q01", relevant: [] } ])
 
-      expect(queries_file.read).to include("    relevant: []\n")
+        expect(queries_file.read).to include("    judged: true\n    relevant: []\n")
+        expect(Eval::GoldenSet.load(queries_file).queries.find { |q| q.id == "q01" }).to be_judged
+      end
+
+      it "drops the marker again if the query later gains a judgement" do
+        apply([ { id: "q01", relevant: [] } ])
+        apply([ { id: "q01", relevant: [ "wedding/torta.jpg" ] } ])
+
+        expect(queries_file.read).not_to include("judged: true")
+        expect(queries_file.read).to include("    relevant:\n      - \"wedding/torta.jpg\"\n")
+      end
+
+      it "is idempotent, rather than stacking a marker per run" do
+        3.times { apply([ { id: "q01", relevant: [] } ]) }
+
+        expect(queries_file.read.scan("judged: true").size).to eq(1)
+      end
+    end
+
+    it "leaves an untouched query reading as unjudged" do
+      apply([ { id: "q01", relevant: [ "wedding/torta.jpg" ] } ])
+
+      expect(Eval::GoldenSet.load(queries_file).queries.find { |q| q.id == "q02" }).not_to be_judged
     end
 
     it "stamps judged_at without eating the comment beside it" do
