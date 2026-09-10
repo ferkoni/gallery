@@ -32,7 +32,19 @@ class Image < ApplicationRecord
     SQL
   }
 
+  # The entry point the controller reaches through BaseApi#apply_filters. Which
+  # strategy answers it is decided by adapter availability inside the service, never
+  # by a request parameter: the client sends the same ?q= whether or not this install
+  # has AI, so INFERENCE_MODE=none behaves exactly as it did before 07.
   def self.global_search(q)
+    Images::Search.call(scope: all, query: q)
+  end
+
+  # The lexical half, on its own so the search service can rank it independently of
+  # the semantic half. `tags` is unpopulated on every row today, so in practice this
+  # is a substring match over titles — which is why it answers almost no
+  # natural-language query at all (see 08's baseline).
+  def self.lexical_search(q)
     search_by_title(q).or(search_by_tag(q))
   end
 

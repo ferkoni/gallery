@@ -37,11 +37,11 @@ module Inference
   # Named so the error message can distinguish "not built yet" from "you typed it wrong".
   UNBUILT_MODES = %i[remote].freeze
 
-  Config = Struct.new(:mode, :endpoint, :timeout, keyword_init: true)
+  Config = Struct.new(:mode, :endpoint, :timeout, :prompt_template, keyword_init: true)
 
   class << self
     def config
-      @config ||= Config.new(mode: :none, endpoint: nil, timeout: 10)
+      @config ||= Config.new(mode: :none, endpoint: nil, timeout: 10, prompt_template: nil)
     end
 
     # Yields the config, then validates eagerly. Validation happens here rather

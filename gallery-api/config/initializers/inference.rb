@@ -14,6 +14,9 @@ Rails.application.config.to_prepare do
     c.mode     = ENV.fetch("INFERENCE_MODE", "none").to_sym
     c.endpoint = ENV["INFERENCE_ENDPOINT"]
     c.timeout  = ENV.fetch("INFERENCE_TIMEOUT", "10").to_i
+    # Applied to search queries only, never to stored image embeddings. Blank means a
+    # bare query; `{query}` is the placeholder, e.g. INFERENCE_PROMPT_TEMPLATE="una foto de {query}".
+    c.prompt_template = ENV["INFERENCE_PROMPT_TEMPLATE"].presence
   end
 end
 

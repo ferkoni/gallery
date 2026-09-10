@@ -1,0 +1,346 @@
+---
+run_at: '2026-09-10T00:09:18Z'
+strategy: lexical
+corpus_sha: 4db305ef4a8f185639ebe10d3f03c526f46dc93d082a34ecb0bb2e1264825810
+photo_count: 235
+model_id:
+prompt_template:
+ranking: none — title ILIKE has no relevance score; ordered by id for reproducibility
+index: exact
+golden_set_version: 1
+judged_by: Fernando
+judged_at:
+queries_total: 35
+queries_scored: 4
+p_at_5: 0.2
+mrr: 1.0
+per_query:
+- id: q01
+  query: ramo de flores
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q02
+  query: vestido
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q03
+  query: disfraz de fiesta
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q04
+  query: invitados en altar
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q05
+  query: animal disecado en un museo
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q06
+  query: hombre usando fuente publica
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q07
+  query: edificios historicos
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q08
+  query: dia soleado
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q09
+  query: edificio en mal estado
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q10
+  query: edificio moderno
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q11
+  query: edificios con naturaleza
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q12
+  query: tanques de concreto
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q13
+  query: cachorros en la naturaleza
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q14
+  query: gato dentro del departamento
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q15
+  query: cachorro y mujer
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q16
+  query: animal comiendo
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q17
+  query: persona con lentes
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q18
+  query: jovenes reunidos
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q19
+  query: adultos jugando
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q20
+  query: reunion con comida
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q21
+  query: planta en maceta
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q22
+  query: rosas de muchos colores
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q23
+  query: arboles grandes frente a edificio antiguo
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q24
+  query: lugar abandonado con pasto alto
+  kind: descriptive
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q25
+  query: gato
+  kind: broad
+  returned: 6
+  judged: false
+  ranked:
+  - pets/gato-balcon-vista.jpg
+  - pets/gato-casa-de-campo.jpg
+  - pets/gato-departamento-noche.jpg
+  - pets/gato-escritorio-trabajo.jpg
+  - pets/gato-teclado.jpg
+  - pets/gato-transportadora-veterinaria.jpg
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q26
+  query: reunion de personas
+  kind: broad
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q27
+  query: hojas verdes
+  kind: broad
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q28
+  query: vestidos de gala
+  kind: broad
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q29
+  query: corbata
+  kind: broad
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q30
+  query: DSC_0014
+  kind: lexical
+  returned: 1
+  judged: true
+  ranked:
+  - buildings/DSC_0014.JPG
+  p_at_5: 0.2
+  recall_at_5: 1.0
+  relevant_count: 1
+  mrr: 1.0
+- id: q31
+  query: IMG_20240116_102306
+  kind: lexical
+  returned: 1
+  judged: true
+  ranked:
+  - buildings/IMG_20240116_102306.jpg
+  p_at_5: 0.2
+  recall_at_5: 1.0
+  relevant_count: 1
+  mrr: 1.0
+- id: q32
+  query: IMG-20250421-WA0001
+  kind: lexical
+  returned: 1
+  judged: true
+  ranked:
+  - buildings/IMG-20250421-WA0001.jpg
+  p_at_5: 0.2
+  recall_at_5: 1.0
+  relevant_count: 1
+  mrr: 1.0
+- id: q33
+  query: AyK (278 de 715)
+  kind: lexical
+  returned: 1
+  judged: true
+  ranked:
+  - family/AyK (278 de 715).jpg
+  p_at_5: 0.2
+  recall_at_5: 1.0
+  relevant_count: 1
+  mrr: 1.0
+- id: q34
+  query: urbanismo sin naturaleza
+  kind: compositional
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
+- id: q35
+  query: un gato escondido entre las hojas de las plantas
+  kind: compositional
+  returned: 0
+  judged: false
+  ranked: []
+  p_at_5:
+  recall_at_5:
+  mrr:
