@@ -1,5 +1,5 @@
 ---
-run_at: '2026-09-10T00:09:27Z'
+run_at: '2026-09-10T14:35:08Z'
 strategy: hybrid
 corpus_sha: 4db305ef4a8f185639ebe10d3f03c526f46dc93d082a34ecb0bb2e1264825810
 photo_count: 235
@@ -9,17 +9,17 @@ ranking: RRF k=60 over lexical and semantic, capped at 200 each
 index: exact
 golden_set_version: 1
 judged_by: Fernando
-judged_at:
+judged_at: '2026-09-10'
 queries_total: 35
-queries_scored: 4
-p_at_5: 0.2
-mrr: 1.0
+queries_scored: 35
+p_at_5: 0.6228571428571429
+mrr: 0.9271428571428573
 per_query:
 - id: q01
   query: ramo de flores
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - family/IMG_20230902_222804.jpg
   - garden/IMG-20230313-WA0008.jpg
@@ -31,14 +31,15 @@ per_query:
   - garden/IMG_20250413_114939.jpg
   - garden/flores-praga.jpg
   - garden/IMG_20260424_163300.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5
+  relevant_count: 10
+  mrr: 1.0
 - id: q02
   query: vestido
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - pets/IMG_20250315_194036.jpg
   - pets/IMG-20230613-WA0001.jpg
@@ -50,14 +51,15 @@ per_query:
   - garden/IMG-20230313-WA0008.jpg
   - garden/arbol-rosa-praga.jpg
   - wedding/novia-padres-caminando.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.2
+  recall_at_5: 0.3333333333333333
+  relevant_count: 3
+  mrr: 0.25
 - id: q03
   query: disfraz de fiesta
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - wedding/AyK (499 de 715).jpg
   - family/cumple-fabri-amiguitos.jpg
@@ -69,14 +71,15 @@ per_query:
   - family/IMG_20240622_181804.jpg
   - family/despedida-soltera-fiesta.jpg
   - tourism/bar-congelado.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.6
+  recall_at_5: 0.6
+  relevant_count: 5
+  mrr: 1.0
 - id: q04
   query: invitados en altar
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - wedding/AyK (85 de 715).jpg
   - wedding/AyK (124 de 715).jpg
@@ -88,14 +91,15 @@ per_query:
   - wedding/AyK (317 de 715).jpg
   - wedding/AyK (135 de 715).jpg
   - wedding/AyK (206 de 715).jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5555555555555556
+  relevant_count: 9
+  mrr: 1.0
 - id: q05
   query: animal disecado en un museo
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - tourism/IMG-20250421-WA0044.jpg
   - tourism/IMG-20250421-WA0042(1).jpg
@@ -107,14 +111,15 @@ per_query:
   - pets/mellizos.jpg
   - pets/IMG-20231227-WA0006.jpg
   - tourism/IMG_20240116_102825.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.8
+  recall_at_5: 0.8
+  relevant_count: 5
+  mrr: 1.0
 - id: q06
   query: hombre usando fuente publica
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - tourism/paseo-agua-roma.jpg
   - tourism/IMG-20251216-WA0018.jpg
@@ -126,14 +131,15 @@ per_query:
   - buildings/fuente-roma.jpg
   - garden/IMG_20250413_114939.jpg
   - tourism/IMG-20250505-WA0006.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.4
+  recall_at_5: 0.6666666666666666
+  relevant_count: 3
+  mrr: 1.0
 - id: q07
   query: edificios historicos
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - buildings/IMG-20250427-WA0045.jpg
   - buildings/plaza-madrid.jpg
@@ -145,14 +151,15 @@ per_query:
   - buildings/IMG-20250421-WA0062.jpg
   - buildings/DSC_0014.JPG
   - buildings/IMG-20250421-WA0003.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5
+  relevant_count: 10
+  mrr: 1.0
 - id: q08
   query: dia soleado
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - garden/IMG-20230313-WA0008.jpg
   - tourism/IMG_20260424_170149.jpg
@@ -164,14 +171,15 @@ per_query:
   - garden/casa-nao-entrada.jpg
   - tourism/IMG_20250419_124935.jpg
   - tourism/IMG_20260424_162712.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5
+  relevant_count: 10
+  mrr: 1.0
 - id: q09
   query: edificio en mal estado
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - buildings/IMG-20250427-WA0045.jpg
   - buildings/IMG-20251015-WA0029.jpg
@@ -183,14 +191,15 @@ per_query:
   - garden/IMG-20230412-WA0003.jpg
   - buildings/IMG-20250720-WA0008.jpg
   - buildings/IMG-20250424-WA0006.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.2
+  recall_at_5: 0.25
+  relevant_count: 4
+  mrr: 0.2
 - id: q10
   query: edificio moderno
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - buildings/IMG-20251015-WA0029.jpg
   - buildings/IMG-20250427-WA0045.jpg
@@ -202,14 +211,15 @@ per_query:
   - garden/IMG_20260715_143142.jpg
   - buildings/IMG-20250424-WA0006.jpg
   - tourism/IMG-20250427-WA0051.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.4
+  recall_at_5: 0.5
+  relevant_count: 4
+  mrr: 1.0
 - id: q11
   query: edificios con naturaleza
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - buildings/IMG-20251015-WA0029.jpg
   - garden/casa-nao-entrada.jpg
@@ -221,14 +231,15 @@ per_query:
   - buildings/IMG-20250424-WA0006.jpg
   - buildings/IMG-20250421-WA0068.jpg
   - garden/IMG_20260715_143142.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.8
+  recall_at_5: 0.5
+  relevant_count: 8
+  mrr: 1.0
 - id: q12
   query: tanques de concreto
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - buildings/tanques-viñedo.jpg
   - buildings/IMG-20250720-WA0008.jpg
@@ -240,14 +251,15 @@ per_query:
   - tourism/visita-viñedo.jpg
   - garden/patio-frontal-entrada.jpg
   - pets/gato-casa-de-campo.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.2
+  recall_at_5: 0.5
+  relevant_count: 2
+  mrr: 1.0
 - id: q13
   query: cachorros en la naturaleza
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - pets/cachorros-patio.jpg
   - pets/IMG-20230909-WA0001.jpg
@@ -259,14 +271,15 @@ per_query:
   - pets/IMG_20250315_194036.jpg
   - pets/IMG-20241101-WA0024.jpg
   - garden/IMG_20250203_183456.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.2
+  recall_at_5: 1.0
+  relevant_count: 1
+  mrr: 1.0
 - id: q14
   query: gato dentro del departamento
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - pets/gato-departamento-noche.jpg
   - pets/IMG-20250621-WA0004.jpeg
@@ -278,14 +291,15 @@ per_query:
   - pets/gato-casa-de-campo.jpg
   - pets/IMG-20251012-WA0017.jpg
   - pets/IMG-20241101-WA0031.jpeg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5555555555555556
+  relevant_count: 9
+  mrr: 1.0
 - id: q15
   query: cachorro y mujer
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - pets/IMG-20230909-WA0001.jpg
   - pets/IMG_20250315_194036.jpg
@@ -297,14 +311,15 @@ per_query:
   - pets/IMG-20241101-WA0024.jpg
   - pets/IMG-20250621-WA0004.jpeg
   - pets/perro-mirada.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.625
+  relevant_count: 8
+  mrr: 1.0
 - id: q16
   query: animal comiendo
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - pets/IMG-20241101-WA0031.jpeg
   - pets/IMG-20230407-WA0005.jpg
@@ -316,14 +331,15 @@ per_query:
   - pets/IMG-20240906-WA0015.jpg
   - pets/gato-casa-de-campo.jpg
   - pets/IMG-20241101-WA0024.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.6
+  recall_at_5: 1.0
+  relevant_count: 3
+  mrr: 1.0
 - id: q17
   query: persona con lentes
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - tourism/IMG-20260422-WA0010.jpg
   - pets/IMG-20250621-WA0004.jpeg
@@ -335,14 +351,15 @@ per_query:
   - pets/IMG_20240701_135719.jpg
   - tourism/IMG_20250501_161007.jpg
   - tourism/IMG-20250424-WA0028.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.6
+  recall_at_5: 0.42857142857142855
+  relevant_count: 7
+  mrr: 1.0
 - id: q18
   query: jovenes reunidos
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - family/fiesta-hallowen.jpg
   - family/cumple-elena.jpg
@@ -354,14 +371,15 @@ per_query:
   - family/vuelta-viaje.jpg
   - wedding/altar-juez.jpg
   - tourism/paseo-plaza.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5
+  relevant_count: 10
+  mrr: 1.0
 - id: q19
   query: adultos jugando
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - family/IMG-20240630-WA0006.jpg
   - family/IMG-20250727-WA0002.jpg
@@ -373,14 +391,15 @@ per_query:
   - family/fiesta-hallowen.jpg
   - tourism/IMG_20250501_161007.jpg
   - family/IMG-20241126-WA0023.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.2
+  recall_at_5: 0.5
+  relevant_count: 2
+  mrr: 1.0
 - id: q20
   query: reunion con comida
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - family/cena-fin-año.jpg
   - family/IMG_20240622_174017.jpg
@@ -392,14 +411,15 @@ per_query:
   - pets/IMG-20241101-WA0031.jpeg
   - wedding/AyK (206 de 715).jpg
   - family/IMG-20241126-WA0023.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.4
+  recall_at_5: 0.6666666666666666
+  relevant_count: 3
+  mrr: 1.0
 - id: q21
   query: planta en maceta
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - garden/IMG_20240825_095732.jpg
   - garden/IMG_20251015_095359.jpg
@@ -411,14 +431,15 @@ per_query:
   - garden/casa-nao-entrada.jpg
   - tourism/IMG_20260424_170149.jpg
   - garden/IMG-20230313-WA0008.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5555555555555556
+  relevant_count: 9
+  mrr: 1.0
 - id: q22
   query: rosas de muchos colores
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - garden/parque-praga.jpg
   - tourism/fotografia-parque-rosa.jpg
@@ -430,14 +451,15 @@ per_query:
   - family/IMG_20230902_222804.jpg
   - garden/IMG_20250413_114939.jpg
   - wedding/torta.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5
+  relevant_count: 10
+  mrr: 1.0
 - id: q23
   query: arboles grandes frente a edificio antiguo
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - garden/palmeras-quinta.jpg
   - buildings/IMG-20250427-WA0045.jpg
@@ -449,14 +471,15 @@ per_query:
   - buildings/ruinas-patio.JPG
   - buildings/IMG-20250421-WA0068.jpg
   - buildings/IMG-20250421-WA0003.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.8
+  recall_at_5: 0.8
+  relevant_count: 5
+  mrr: 1.0
 - id: q24
   query: lugar abandonado con pasto alto
   kind: descriptive
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - garden/IMG_20250203_191252.jpg
   - garden/terreno-valdio.jpg
@@ -468,14 +491,15 @@ per_query:
   - buildings/DSC_0014.JPG
   - garden/IMG-20241202-WA0004.jpg
   - garden/IMG_20251015_095359.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.8
+  recall_at_5: 0.5714285714285714
+  relevant_count: 7
+  mrr: 1.0
 - id: q25
   query: gato
   kind: broad
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - pets/gato-casa-de-campo.jpg
   - pets/gato-departamento-noche.jpg
@@ -487,14 +511,15 @@ per_query:
   - pets/IMG_20250629_201348.jpg
   - pets/IMG-20250628-WA0007.jpg
   - pets/IMG_20260402_201701.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.35714285714285715
+  relevant_count: 14
+  mrr: 1.0
 - id: q26
   query: reunion de personas
   kind: broad
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - family/fiesta-hallowen.jpg
   - wedding/altar-juez.jpg
@@ -506,14 +531,15 @@ per_query:
   - family/cumple-fer-pile.jpg
   - family/IMG-20241126-WA0023.jpg
   - family/IMG_20240622_181804.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.8
+  recall_at_5: 0.4444444444444444
+  relevant_count: 9
+  mrr: 1.0
 - id: q27
   query: hojas verdes
   kind: broad
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - garden/IMG-20230412-WA0003.jpg
   - garden/IMG_20251015_095359.jpg
@@ -525,14 +551,15 @@ per_query:
   - garden/IMG_20250203_183456.jpg
   - garden/IMG-20250414-WA0008.jpeg
   - garden/IMG-20230622-WA0025.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5
+  relevant_count: 10
+  mrr: 1.0
 - id: q28
   query: vestidos de gala
   kind: broad
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - wedding/invitados-novia.jpg
   - family/AyK (282 de 715).jpg
@@ -544,14 +571,15 @@ per_query:
   - wedding/novia-abuela.jpg
   - pets/IMG_20250315_194036.jpg
   - wedding/AyK (85 de 715).jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.5555555555555556
+  relevant_count: 9
+  mrr: 1.0
 - id: q29
   query: corbata
   kind: broad
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - wedding/IMG-20250417-WA0004.jpg
   - family/IMG-20180708-WA0013.jpg
@@ -563,9 +591,10 @@ per_query:
   - wedding/AyK (72 de 715).jpg
   - pets/IMG-20230613-WA0001.jpg
   - wedding/IMG_20250412_200159.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.8
+  recall_at_5: 0.8
+  relevant_count: 5
+  mrr: 1.0
 - id: q30
   query: DSC_0014
   kind: lexical
@@ -650,7 +679,7 @@ per_query:
   query: urbanismo sin naturaleza
   kind: compositional
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - garden/IMG_20260424_163300.jpg
   - garden/IMG_20250203_191252.jpg
@@ -662,14 +691,15 @@ per_query:
   - garden/terreno-valdio.jpg
   - buildings/IMG-20251015-WA0029.jpg
   - garden/parque-praga.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 0
+  mrr: 0.0
 - id: q35
   query: un gato escondido entre las hojas de las plantas
   kind: compositional
   returned: 10
-  judged: false
+  judged: true
   ranked:
   - garden/IMG_20241004_081342.jpg
   - garden/patio-terreno.jpg
@@ -681,6 +711,7 @@ per_query:
   - garden/casa-nao-entrada.jpg
   - pets/IMG-20251012-WA0017.jpg
   - pets/IMG-20241101-WA0029.jpeg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.2
+  recall_at_5: 1.0
+  relevant_count: 1
+  mrr: 1.0

@@ -18,6 +18,11 @@
 #     and semantic matches both, biasing the exact comparison this eval exists for.
 #     The `group:` field below is a balance tag for spreading the 24 descriptive
 #     queries evenly, not a restriction on what may appear in `relevant:`.
+#   - `relevant: []` means NOT JUDGED, and is excluded from the averages. A query that
+#     was judged and had no relevant photo in its pool carries `judged: true` beside
+#     the empty list, and scores zero like any other miss. The two are opposites and an
+#     empty list alone cannot tell them apart — which matters because the query the
+#     retriever failed hardest on is the one that would quietly leave the average.
 #
 # WRITING THE `query:` LINES — the one rule that matters
 #   Write each query from WHAT IS IN THE PHOTO, never from its filename. A query that
@@ -34,7 +39,7 @@
 
 version: 1
 judged_by: "Fernando"          # who made the relevance calls (08: record the judge)
-judged_at: ""          # YYYY-MM-DD of the judging pass
+judged_at: "2026-09-10"          # YYYY-MM-DD of the judging pass
 corpus_sha: "4db305ef4a8f185639ebe10d3f03c526f46dc93d082a34ecb0bb2e1264825810"         # filled by `rake eval:corpus_sha` once filenames are frozen
 
 queries:
@@ -50,145 +55,292 @@ queries:
     query: "ramo de flores"
     kind: descriptive
     group: wedding
-    relevant: []
+    relevant:
+      - "family/IMG_20230902_222804.jpg"
+      - "garden/IMG-20230313-WA0008.jpg"
+      - "garden/IMG_20250413_114939.jpg"
+      - "garden/IMG_20251015_095359.jpg"
+      - "garden/IMG_20260424_163300.jpg"
+      - "garden/arbol-rosa-praga.jpg"
+      - "garden/flores-praga.jpg"
+      - "tourism/fotografia-parque-rosa.jpg"
+      - "wedding/AyK (270 de 715).jpg"
+      - "wedding/AyK (85 de 715).jpg"
 
   - id: q02
     query: "vestido"
     kind: descriptive
     group: wedding
-    relevant: []
+    relevant:
+      - "wedding/AyK (85 de 715).jpg"
+      - "wedding/invitados-novia.jpg"
+      - "wedding/novia-padres-caminando.jpg"
 
   - id: q03
     query: "disfraz de fiesta"
     kind: descriptive
     group: wedding
-    relevant: []
+    relevant:
+      - "family/despedida-soltera-fiesta.jpg"
+      - "family/fiesta-hallowen.jpg"
+      - "tourism/bar-congelado.jpg"
+      - "wedding/AyK (499 de 715).jpg"
+      - "wedding/fiesta-accesorios.jpg"
 
   - id: q04
     query: "invitados en altar"
     kind: descriptive
     group: wedding
-    relevant: []
+    relevant:
+      - "family/AyK (282 de 715).jpg"
+      - "wedding/AyK (10 de 715).jpg"
+      - "wedding/AyK (124 de 715).jpg"
+      - "wedding/AyK (135 de 715).jpg"
+      - "wedding/AyK (206 de 715).jpg"
+      - "wedding/AyK (208 de 715).jpg"
+      - "wedding/AyK (270 de 715).jpg"
+      - "wedding/AyK (317 de 715).jpg"
+      - "wedding/AyK (85 de 715).jpg"
 
   - id: q05
     query: "animal disecado en un museo"
     kind: descriptive
     group: tourism
-    relevant: []
+    relevant:
+      - "tourism/IMG-20250421-WA0038.jpg"
+      - "tourism/IMG-20250421-WA0042(1).jpg"
+      - "tourism/IMG-20250421-WA0044.jpg"
+      - "tourism/museo-huesos-ballena-gigante.jpg"
+      - "tourism/museo.jpg"
 
   - id: q06
     query: "hombre usando fuente publica"
     kind: descriptive
     group: tourism
-    relevant: []
+    relevant:
+      - "buildings/IMG-20250429-WA0013.jpg"
+      - "buildings/fuente-roma.jpg"
+      - "tourism/paseo-agua-roma.jpg"
 
   - id: q07
     query: "edificios historicos"
     kind: descriptive
     group: tourism
-    relevant: []
+    relevant:
+      - "buildings/DSC_0014.JPG"
+      - "buildings/IMG-20250421-WA0001.jpg"
+      - "buildings/IMG-20250421-WA0003.jpg"
+      - "buildings/IMG-20250421-WA0062.jpg"
+      - "buildings/IMG-20250424-WA0006.jpg"
+      - "buildings/IMG-20250427-WA0045.jpg"
+      - "buildings/iglesia.jpg"
+      - "buildings/plaza-madrid.jpg"
+      - "buildings/reloj-praga.jpg"
+      - "buildings/ruinas-patio.JPG"
 
   - id: q08
     query: "dia soleado"
     kind: descriptive
     group: tourism
-    relevant: []
+    relevant:
+      - "garden/IMG-20230313-WA0008.jpg"
+      - "garden/IMG_20250413_114939.jpg"
+      - "garden/IMG_20260424_163300.jpg"
+      - "garden/IMG_20260424_172055.jpg"
+      - "garden/casa-nao-entrada.jpg"
+      - "garden/palmeras-quinta.jpg"
+      - "garden/rosedal-mendoza.jpg"
+      - "tourism/IMG_20250419_124935.jpg"
+      - "tourism/IMG_20260424_162712.jpg"
+      - "tourism/IMG_20260424_170149.jpg"
 
   - id: q09
     query: "edificio en mal estado"
     kind: descriptive
     group: buildings
-    relevant: []
+    relevant:
+      - "buildings/DSC_0014.JPG"
+      - "buildings/IMG-20250424-WA0006.jpg"
+      - "buildings/IMG-20250720-WA0008.jpg"
+      - "buildings/arco-ruinas-jesuitas.JPG"
 
   - id: q10
     query: "edificio moderno"
     kind: descriptive
     group: buildings
-    relevant: []
+    relevant:
+      - "buildings/IMG-20251015-WA0029.jpg"
+      - "buildings/IMG_20240116_102306.jpg"
+      - "buildings/IMG_20240116_103153.jpg"
+      - "garden/IMG_20260715_143142.jpg"
 
   - id: q11
     query: "edificios con naturaleza"
     kind: descriptive
     group: buildings
-    relevant: []
+    relevant:
+      - "buildings/IMG-20250421-WA0068.jpg"
+      - "buildings/IMG-20250505-WA0017.jpg"
+      - "buildings/IMG-20251015-WA0029.jpg"
+      - "garden/IMG-20230412-WA0003.jpg"
+      - "garden/IMG_20260715_143142.jpg"
+      - "garden/casa-nao-entrada.jpg"
+      - "garden/jardin-tenerife.jpg"
+      - "garden/palmeras-quinta.jpg"
 
   - id: q12
     query: "tanques de concreto"
     kind: descriptive
     group: buildings
-    relevant: []
+    relevant:
+      - "buildings/tanques-viñedo.jpg"
+      - "tourism/visita-viñedo.jpg"
 
   - id: q13
     query: "cachorros en la naturaleza"
     kind: descriptive
     group: pets
-    relevant: []
+    relevant:
+      - "pets/cachorros-patio.jpg"
 
   - id: q14
     query: "gato dentro del departamento"
     kind: descriptive
     group: pets
-    relevant: []
+    relevant:
+      - "pets/IMG-20231227-WA0006.jpg"
+      - "pets/IMG-20241101-WA0029.jpeg"
+      - "pets/IMG-20241101-WA0031.jpeg"
+      - "pets/IMG-20250621-WA0004.jpeg"
+      - "pets/IMG-20251012-WA0017.jpg"
+      - "pets/IMG_20251017_185618.jpg"
+      - "pets/IMG_20260402_201701.jpg"
+      - "pets/gato-balcon-vista.jpg"
+      - "pets/gato-departamento-noche.jpg"
 
   - id: q15
     query: "cachorro y mujer"
     kind: descriptive
     group: pets
-    relevant: []
+    relevant:
+      - "pets/IMG-20230909-WA0001.jpg"
+      - "pets/IMG-20240906-WA0015.jpg"
+      - "pets/IMG-20241101-WA0024.jpg"
+      - "pets/IMG_20240701_135719.jpg"
+      - "pets/IMG_20250315_194036.jpg"
+      - "pets/cachorro.jpg"
+      - "pets/gato-escritorio-trabajo.jpg"
+      - "pets/popi-sofa.jpg"
 
   - id: q16
     query: "animal comiendo"
     kind: descriptive
     group: pets
-    relevant: []
+    relevant:
+      - "pets/IMG-20230407-WA0005.jpg"
+      - "pets/IMG-20241101-WA0031.jpeg"
+      - "pets/perro-patio-entrada.jpg"
 
   - id: q17
     query: "persona con lentes"
     kind: descriptive
     group: family
-    relevant: []
+    relevant:
+      - "family/fer-mama.jpg"
+      - "pets/IMG_20240701_135719.jpg"
+      - "tourism/IMG-20250424-WA0028.jpg"
+      - "tourism/IMG-20260422-WA0010.jpg"
+      - "tourism/IMG_20250423_105929.jpg"
+      - "tourism/IMG_20250501_161007.jpg"
+      - "wedding/AyK (499 de 715).jpg"
 
   - id: q18
     query: "jovenes reunidos"
     kind: descriptive
     group: family
-    relevant: []
+    relevant:
+      - "family/IMG-20180708-WA0013.jpg"
+      - "family/IMG-20250103-WA0000.jpg"
+      - "family/IMG_20240622_181804.jpg"
+      - "family/cena-fin-año.jpg"
+      - "family/cumple-elena.jpg"
+      - "family/fiesta-hallowen.jpg"
+      - "family/vuelta-viaje.jpg"
+      - "tourism/paseo-plaza.jpg"
+      - "tourism/visita-viñedo.jpg"
+      - "wedding/altar-juez.jpg"
 
   - id: q19
     query: "adultos jugando"
     kind: descriptive
     group: family
-    relevant: []
+    relevant:
+      - "family/IMG-20240630-WA0006.jpg"
+      - "family/IMG_20240622_192721.jpg"
 
   - id: q20
     query: "reunion con comida"
     kind: descriptive
     group: family
-    relevant: []
+    relevant:
+      - "family/IMG-20250723-WA0008.jpg"
+      - "family/cena-fin-año.jpg"
+      - "family/cumple-fabri-amiguitos.jpg"
 
   - id: q21
     query: "planta en maceta"
     kind: descriptive
     group: garden
-    relevant: []
+    relevant:
+      - "garden/IMG-20230313-WA0008.jpg"
+      - "garden/IMG-20230412-WA0003.jpg"
+      - "garden/IMG-20230622-WA0025.jpg"
+      - "garden/IMG-20250414-WA0008.jpeg"
+      - "garden/IMG_20240825_095732.jpg"
+      - "garden/IMG_20241004_081342.jpg"
+      - "garden/IMG_20251015_095359.jpg"
+      - "garden/arreglando-planteras.jpg"
+      - "garden/casa-nao-entrada.jpg"
 
   - id: q22
     query: "rosas de muchos colores"
     kind: descriptive
     group: garden
-    relevant: []
+    relevant:
+      - "family/IMG_20230902_222804.jpg"
+      - "garden/IMG-20230313-WA0008.jpg"
+      - "garden/IMG-20230412-WA0003.jpg"
+      - "garden/IMG_20250413_114939.jpg"
+      - "garden/IMG_20260424_163300.jpg"
+      - "garden/IMG_20260424_172055.jpg"
+      - "garden/flores-praga.jpg"
+      - "garden/parque-praga.jpg"
+      - "tourism/fotografia-parque-rosa.jpg"
+      - "wedding/torta.jpg"
 
   - id: q23
     query: "arboles grandes frente a edificio antiguo"
     kind: descriptive
     group: garden
-    relevant: []
+    relevant:
+      - "buildings/IMG-20250505-WA0017.jpg"
+      - "garden/IMG_20250203_183456.jpg"
+      - "garden/casa-nao-entrada.jpg"
+      - "garden/jardin-tenerife.jpg"
+      - "garden/palmeras-quinta.jpg"
 
   - id: q24
     query: "lugar abandonado con pasto alto"
     kind: descriptive
     group: garden
-    relevant: []
+    relevant:
+      - "buildings/DSC_0014.JPG"
+      - "garden/IMG-20241202-WA0004.jpg"
+      - "garden/IMG_20250203_183456.jpg"
+      - "garden/IMG_20250203_191252.jpg"
+      - "garden/casa-nao-entrada.jpg"
+      - "garden/patio-terreno.jpg"
+      - "garden/terreno-valdio.jpg"
 
   # ---------------------------------------------------------------------------
   # broad — 5. Many relevant answers, deliberately. These are where recall@5 hits
@@ -199,27 +351,74 @@ queries:
   - id: q25
     query: "gato"
     kind: broad
-    relevant: []
+    relevant:
+      - "pets/IMG-20230823-WA0017.jpg"
+      - "pets/IMG-20231227-WA0006.jpg"
+      - "pets/IMG-20241101-WA0029.jpeg"
+      - "pets/IMG-20250621-WA0004.jpeg"
+      - "pets/IMG-20250628-WA0007.jpg"
+      - "pets/IMG-20251012-WA0017.jpg"
+      - "pets/IMG_20250629_201348.jpg"
+      - "pets/IMG_20260402_201701.jpg"
+      - "pets/gato-balcon-vista.jpg"
+      - "pets/gato-casa-de-campo.jpg"
+      - "pets/gato-departamento-noche.jpg"
+      - "pets/gato-escritorio-trabajo.jpg"
+      - "pets/gato-teclado.jpg"
+      - "pets/gato-transportadora-veterinaria.jpg"
 
   - id: q26
     query: "reunion de personas"
     kind: broad
-    relevant: []
+    relevant:
+      - "family/IMG-20241126-WA0023.jpg"
+      - "family/IMG_20240622_181804.jpg"
+      - "family/cena-fin-año.jpg"
+      - "family/cumple-fer-pile.jpg"
+      - "family/fiesta-hallowen.jpg"
+      - "wedding/AyK (206 de 715).jpg"
+      - "wedding/IMG_20250412_200443.jpg"
+      - "wedding/IMG_20250412_201308.jpg"
+      - "wedding/altar-juez.jpg"
 
   - id: q27
     query: "hojas verdes"
     kind: broad
-    relevant: []
+    relevant:
+      - "garden/IMG-20230412-WA0003.jpg"
+      - "garden/IMG-20230622-WA0025.jpg"
+      - "garden/IMG-20250414-WA0008.jpeg"
+      - "garden/IMG_20240825_095732.jpg"
+      - "garden/IMG_20241004_081342.jpg"
+      - "garden/IMG_20250203_183456.jpg"
+      - "garden/IMG_20251015_095359.jpg"
+      - "garden/casa-nao-entrada.jpg"
+      - "garden/palmeras-quinta.jpg"
+      - "garden/patio-terreno.jpg"
 
   - id: q28
     query: "vestidos de gala"
     kind: broad
-    relevant: []
+    relevant:
+      - "family/AyK (278 de 715).jpg"
+      - "family/AyK (282 de 715).jpg"
+      - "family/IMG-20241224-WA0017.jpg"
+      - "wedding/AyK (208 de 715).jpg"
+      - "wedding/AyK (270 de 715).jpg"
+      - "wedding/AyK (289 de 715).jpg"
+      - "wedding/AyK (85 de 715).jpg"
+      - "wedding/invitados-novia.jpg"
+      - "wedding/novia-abuela.jpg"
 
   - id: q29
     query: "corbata"
     kind: broad
-    relevant: []
+    relevant:
+      - "family/IMG-20180708-WA0013.jpg"
+      - "family/expo-fabri-colegio.jpg"
+      - "wedding/AyK (206 de 715).jpg"
+      - "wedding/IMG-20250417-WA0004.jpg"
+      - "wedding/invitados-novia.jpg"
 
   # ---------------------------------------------------------------------------
   # lexical — 4. Filled in already: the query IS the filename, so the answer key is
@@ -265,9 +464,11 @@ queries:
   - id: q34
     query: "urbanismo sin naturaleza"
     kind: compositional
+    judged: true
     relevant: []
 
   - id: q35
     query: "un gato escondido entre las hojas de las plantas"
     kind: compositional
-    relevant: []
+    relevant:
+      - "garden/IMG_20241004_081342.jpg"

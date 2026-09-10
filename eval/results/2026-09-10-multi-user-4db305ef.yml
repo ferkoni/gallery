@@ -1,0 +1,2828 @@
+---
+run_at: '2026-09-10T13:42:50Z'
+case: multi-user recall (filtered ANN)
+corpus_sha: 4db305ef4a8f185639ebe10d3f03c526f46dc93d082a34ecb0bb2e1264825810
+photo_count: 235
+model_id: clip-xlm-roberta-base-vit-b-32/laion5b_s13b_b90k/v1
+prompt_template:
+golden_set_version: 1
+queries: 35
+k: 10
+ef_search: 40
+pgvector: 0.8.6
+split:
+  minority_photos: 12
+  majority_photos: 223
+  synthetic_padding: 20000
+product_path:
+  exact:
+    index_scan: false
+    queries_identical_to_exact: 35
+    queries_short_of_k: 0
+    mean_recall_vs_exact: 1.0
+    per_query:
+    - id: q01
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - garden/casa-nao-entrada.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/termales-mendoza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q02
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - wedding/IMG-20250417-WA0004.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q03
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - pets/mellizos.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/IMG-20250427-WA0021.jpg
+      - buildings/monumento-plaza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q04
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      - garden/casa-nao-entrada.jpg
+      - pets/mellizos.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q05
+      ranked:
+      - pets/mellizos.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/casa-nao-entrada.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q06
+      ranked:
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/termales-mendoza.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - garden/casa-nao-entrada.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q07
+      ranked:
+      - buildings/DSC_0014.JPG
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q08
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q09
+      ranked:
+      - buildings/DSC_0014.JPG
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/mellizos.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q10
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/termales-mendoza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q11
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q12
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/mellizos.jpg
+      - buildings/DSC_0014.JPG
+      - family/IMG_20230902_222804.jpg
+      - tourism/termales-mendoza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q13
+      ranked:
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - garden/IMG-20230622-WA0025.jpg
+      - buildings/monumento-plaza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q14
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - garden/casa-nao-entrada.jpg
+      - family/IMG_20230902_222804.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/monumento-plaza.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - tourism/IMG_20250501_161007.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q15
+      ranked:
+      - pets/mellizos.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q16
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - garden/IMG-20230622-WA0025.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/termales-mendoza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q17
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q18
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/casa-nao-entrada.jpg
+      - pets/mellizos.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q19
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - buildings/monumento-plaza.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q20
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q21
+      ranked:
+      - garden/IMG-20230622-WA0025.jpg
+      - garden/casa-nao-entrada.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q22
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - buildings/monumento-plaza.jpg
+      - garden/casa-nao-entrada.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/termales-mendoza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q23
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q24
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - family/IMG_20230902_222804.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q25
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q26
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/termales-mendoza.jpg
+      - pets/mellizos.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q27
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - tourism/termales-mendoza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q28
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q29
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q30
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q31
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q32
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - garden/casa-nao-entrada.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - buildings/monumento-plaza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q33
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q34
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/mellizos.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q35
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/termales-mendoza.jpg
+      - buildings/monumento-plaza.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+  hnsw:
+    index_scan: false
+    queries_identical_to_exact: 35
+    queries_short_of_k: 0
+    mean_recall_vs_exact: 1.0
+    per_query:
+    - id: q01
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q02
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q03
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q04
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q05
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q06
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q07
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q08
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q09
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q10
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q11
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q12
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q13
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q14
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q15
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q16
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q17
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q18
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q19
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q20
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q21
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q22
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q23
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q24
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q25
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q26
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q27
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q28
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q29
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q30
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q31
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q32
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q33
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q34
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q35
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+  hnsw_iterative:
+    index_scan: false
+    queries_identical_to_exact: 35
+    queries_short_of_k: 0
+    mean_recall_vs_exact: 1.0
+    per_query:
+    - id: q01
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q02
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q03
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q04
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q05
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q06
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q07
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q08
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q09
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q10
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q11
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q12
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q13
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q14
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q15
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q16
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q17
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q18
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q19
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q20
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q21
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q22
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q23
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q24
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q25
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q26
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q27
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q28
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q29
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q30
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q31
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q32
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q33
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q34
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q35
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+  hnsw_strict:
+    index_scan: false
+    queries_identical_to_exact: 35
+    queries_short_of_k: 0
+    mean_recall_vs_exact: 1.0
+    per_query:
+    - id: q01
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q02
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q03
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q04
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q05
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q06
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q07
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q08
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q09
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q10
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q11
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q12
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q13
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q14
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q15
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q16
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q17
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q18
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q19
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q20
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q21
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q22
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q23
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q24
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q25
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q26
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q27
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q28
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q29
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q30
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q31
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q32
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q33
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q34
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q35
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+forced_ann:
+  exact:
+    index_scan: false
+    queries_identical_to_exact: 35
+    queries_short_of_k: 0
+    mean_recall_vs_exact: 1.0
+    per_query:
+    - id: q01
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - garden/casa-nao-entrada.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/termales-mendoza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q02
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - wedding/IMG-20250417-WA0004.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q03
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - pets/mellizos.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/IMG-20250427-WA0021.jpg
+      - buildings/monumento-plaza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q04
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      - garden/casa-nao-entrada.jpg
+      - pets/mellizos.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q05
+      ranked:
+      - pets/mellizos.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/casa-nao-entrada.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q06
+      ranked:
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/termales-mendoza.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - garden/casa-nao-entrada.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q07
+      ranked:
+      - buildings/DSC_0014.JPG
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q08
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q09
+      ranked:
+      - buildings/DSC_0014.JPG
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/mellizos.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q10
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/termales-mendoza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q11
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q12
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/mellizos.jpg
+      - buildings/DSC_0014.JPG
+      - family/IMG_20230902_222804.jpg
+      - tourism/termales-mendoza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q13
+      ranked:
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - garden/IMG-20230622-WA0025.jpg
+      - buildings/monumento-plaza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q14
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - garden/casa-nao-entrada.jpg
+      - family/IMG_20230902_222804.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/monumento-plaza.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - tourism/IMG_20250501_161007.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q15
+      ranked:
+      - pets/mellizos.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q16
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - garden/IMG-20230622-WA0025.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/termales-mendoza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q17
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q18
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/casa-nao-entrada.jpg
+      - pets/mellizos.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q19
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - buildings/monumento-plaza.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q20
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q21
+      ranked:
+      - garden/IMG-20230622-WA0025.jpg
+      - garden/casa-nao-entrada.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q22
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - buildings/monumento-plaza.jpg
+      - garden/casa-nao-entrada.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/termales-mendoza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q23
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q24
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - family/IMG_20230902_222804.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q25
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q26
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/termales-mendoza.jpg
+      - pets/mellizos.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q27
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - tourism/termales-mendoza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q28
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q29
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q30
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/mellizos.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q31
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q32
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - garden/casa-nao-entrada.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - buildings/monumento-plaza.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q33
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q34
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/mellizos.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q35
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/termales-mendoza.jpg
+      - buildings/monumento-plaza.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: false
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+  hnsw:
+    index_scan: true
+    queries_identical_to_exact: 0
+    queries_short_of_k: 35
+    mean_recall_vs_exact: 0.22857142857142856
+    per_query:
+    - id: q01
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - garden/casa-nao-entrada.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q02
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - garden/casa-nao-entrada.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q03
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q04
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q05
+      ranked:
+      - pets/mellizos.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/monumento-plaza.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q06
+      ranked:
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q07
+      ranked:
+      - buildings/DSC_0014.JPG
+      - buildings/monumento-plaza.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q08
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q09
+      ranked:
+      - buildings/DSC_0014.JPG
+      - garden/casa-nao-entrada.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q10
+      ranked: []
+      index_scan: true
+      returned: 0
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.0
+    - id: q11
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q12
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/mellizos.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q13
+      ranked:
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/casa-nao-entrada.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q14
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q15
+      ranked:
+      - pets/mellizos.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q16
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q17
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q18
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      index_scan: true
+      returned: 4
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.4
+    - id: q19
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q20
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      index_scan: true
+      returned: 1
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.1
+    - id: q21
+      ranked:
+      - garden/IMG-20230622-WA0025.jpg
+      - garden/casa-nao-entrada.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q22
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - buildings/monumento-plaza.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q23
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q24
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q25
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - garden/casa-nao-entrada.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q26
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q27
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q28
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q29
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: true
+      returned: 1
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.1
+    - id: q30
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - garden/casa-nao-entrada.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q31
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q32
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - garden/casa-nao-entrada.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q33
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+    - id: q34
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG_20250501_161007.jpg
+      index_scan: true
+      returned: 2
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.2
+    - id: q35
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      index_scan: true
+      returned: 3
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.3
+  hnsw_iterative:
+    index_scan: true
+    queries_identical_to_exact: 30
+    queries_short_of_k: 0
+    mean_recall_vs_exact: 1.0
+    per_query:
+    - id: q01
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q02
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - garden/casa-nao-entrada.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG-20250502-WA0034.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/mellizos.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 1.0
+    - id: q03
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q04
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q05
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q06
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q07
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q08
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 1.0
+    - id: q09
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q10
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q11
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q12
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q13
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q14
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q15
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q16
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q17
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 1.0
+    - id: q18
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q19
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q20
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 1.0
+    - id: q21
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q22
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q23
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q24
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q25
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q26
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q27
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q28
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - pets/mellizos.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 1.0
+    - id: q29
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q30
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q31
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q32
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q33
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q34
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q35
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+  hnsw_strict:
+    index_scan: true
+    queries_identical_to_exact: 22
+    queries_short_of_k: 1
+    mean_recall_vs_exact: 0.9485714285714286
+    per_query:
+    - id: q01
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q02
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.8
+    - id: q03
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - pets/mellizos.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/IMG-20250427-WA0021.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/termales-mendoza.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.9
+    - id: q04
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q05
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q06
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q07
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q08
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.9
+    - id: q09
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q10
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - pets/mellizos.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.8
+    - id: q11
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q12
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - pets/mellizos.jpg
+      - buildings/DSC_0014.JPG
+      - tourism/termales-mendoza.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - buildings/monumento-plaza.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.9
+    - id: q13
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q14
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q15
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q16
+      ranked:
+      - pets/IMG-20241101-WA0029.jpeg
+      - pets/mellizos.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - garden/IMG-20230622-WA0025.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.9
+    - id: q17
+      ranked:
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/monumento-plaza.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.9
+    - id: q18
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q19
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q20
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/IMG_20250501_161007.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/casa-nao-entrada.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/IMG-20250427-WA0021.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.8
+    - id: q21
+      ranked:
+      - garden/IMG-20230622-WA0025.jpg
+      - garden/casa-nao-entrada.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/DSC_0014.JPG
+      - pets/mellizos.jpg
+      - buildings/monumento-plaza.jpg
+      - tourism/termales-mendoza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.9
+    - id: q22
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - buildings/monumento-plaza.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/IMG-20250427-WA0021.jpg
+      - pets/IMG-20241101-WA0029.jpeg
+      - tourism/termales-mendoza.jpg
+      - buildings/DSC_0014.JPG
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.9
+    - id: q23
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q24
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q25
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q26
+      ranked:
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - garden/casa-nao-entrada.jpg
+      - tourism/termales-mendoza.jpg
+      - pets/mellizos.jpg
+      - buildings/DSC_0014.JPG
+      - pets/IMG-20241101-WA0029.jpeg
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.9
+    - id: q27
+      ranked:
+      - garden/casa-nao-entrada.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - tourism/termales-mendoza.jpg
+      - family/IMG_20230902_222804.jpg
+      - wedding/IMG-20250417-WA0004.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - buildings/monumento-plaza.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/IMG-20250427-WA0021.jpg
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.9
+    - id: q28
+      ranked:
+      - wedding/IMG-20250417-WA0004.jpg
+      - family/IMG_20230902_222804.jpg
+      - tourism/IMG-20250502-WA0034.jpg
+      - buildings/DSC_0014.JPG
+      - buildings/monumento-plaza.jpg
+      - tourism/IMG_20250501_161007.jpg
+      - pets/mellizos.jpg
+      - tourism/termales-mendoza.jpg
+      - garden/IMG-20230622-WA0025.jpg
+      index_scan: true
+      returned: 9
+      expected: 10
+      identical: false
+      recall_vs_exact: 0.7
+    - id: q29
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q30
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q31
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q32
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q33
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q34
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0
+    - id: q35
+      index_scan: true
+      returned: 10
+      expected: 10
+      identical: true
+      recall_vs_exact: 1.0

@@ -1,5 +1,5 @@
 ---
-run_at: '2026-09-10T00:09:18Z'
+run_at: '2026-09-10T14:35:00Z'
 strategy: lexical
 corpus_sha: 4db305ef4a8f185639ebe10d3f03c526f46dc93d082a34ecb0bb2e1264825810
 photo_count: 235
@@ -9,233 +9,257 @@ ranking: none — title ILIKE has no relevance score; ordered by id for reproduc
 index: exact
 golden_set_version: 1
 judged_by: Fernando
-judged_at:
+judged_at: '2026-09-10'
 queries_total: 35
-queries_scored: 4
-p_at_5: 0.2
-mrr: 1.0
+queries_scored: 35
+p_at_5: 0.05142857142857143
+mrr: 0.14285714285714285
 per_query:
 - id: q01
   query: ramo de flores
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 10
+  mrr: 0.0
 - id: q02
   query: vestido
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 3
+  mrr: 0.0
 - id: q03
   query: disfraz de fiesta
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 5
+  mrr: 0.0
 - id: q04
   query: invitados en altar
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 9
+  mrr: 0.0
 - id: q05
   query: animal disecado en un museo
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 5
+  mrr: 0.0
 - id: q06
   query: hombre usando fuente publica
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 3
+  mrr: 0.0
 - id: q07
   query: edificios historicos
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 10
+  mrr: 0.0
 - id: q08
   query: dia soleado
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 10
+  mrr: 0.0
 - id: q09
   query: edificio en mal estado
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 4
+  mrr: 0.0
 - id: q10
   query: edificio moderno
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 4
+  mrr: 0.0
 - id: q11
   query: edificios con naturaleza
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 8
+  mrr: 0.0
 - id: q12
   query: tanques de concreto
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 2
+  mrr: 0.0
 - id: q13
   query: cachorros en la naturaleza
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 1
+  mrr: 0.0
 - id: q14
   query: gato dentro del departamento
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 9
+  mrr: 0.0
 - id: q15
   query: cachorro y mujer
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 8
+  mrr: 0.0
 - id: q16
   query: animal comiendo
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 3
+  mrr: 0.0
 - id: q17
   query: persona con lentes
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 7
+  mrr: 0.0
 - id: q18
   query: jovenes reunidos
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 10
+  mrr: 0.0
 - id: q19
   query: adultos jugando
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 2
+  mrr: 0.0
 - id: q20
   query: reunion con comida
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 3
+  mrr: 0.0
 - id: q21
   query: planta en maceta
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 9
+  mrr: 0.0
 - id: q22
   query: rosas de muchos colores
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 10
+  mrr: 0.0
 - id: q23
   query: arboles grandes frente a edificio antiguo
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 5
+  mrr: 0.0
 - id: q24
   query: lugar abandonado con pasto alto
   kind: descriptive
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 7
+  mrr: 0.0
 - id: q25
   query: gato
   kind: broad
   returned: 6
-  judged: false
+  judged: true
   ranked:
   - pets/gato-balcon-vista.jpg
   - pets/gato-casa-de-campo.jpg
@@ -243,45 +267,50 @@ per_query:
   - pets/gato-escritorio-trabajo.jpg
   - pets/gato-teclado.jpg
   - pets/gato-transportadora-veterinaria.jpg
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 1.0
+  recall_at_5: 0.35714285714285715
+  relevant_count: 14
+  mrr: 1.0
 - id: q26
   query: reunion de personas
   kind: broad
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 9
+  mrr: 0.0
 - id: q27
   query: hojas verdes
   kind: broad
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 10
+  mrr: 0.0
 - id: q28
   query: vestidos de gala
   kind: broad
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 9
+  mrr: 0.0
 - id: q29
   query: corbata
   kind: broad
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 5
+  mrr: 0.0
 - id: q30
   query: DSC_0014
   kind: lexical
@@ -330,17 +359,19 @@ per_query:
   query: urbanismo sin naturaleza
   kind: compositional
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 0
+  mrr: 0.0
 - id: q35
   query: un gato escondido entre las hojas de las plantas
   kind: compositional
   returned: 0
-  judged: false
+  judged: true
   ranked: []
-  p_at_5:
-  recall_at_5:
-  mrr:
+  p_at_5: 0.0
+  recall_at_5: 0.0
+  relevant_count: 1
+  mrr: 0.0

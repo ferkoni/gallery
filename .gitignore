@@ -6,3 +6,7 @@
 
 # Eval corpus — private photo library, never published. Harness inputs/outputs are tracked.
 /eval/corpus/
+
+# The judging kit: copies of corpus photos, laid out one folder per query. Same photos,
+# same rule — and it is rebuilt from the result files whenever it is needed.
+/eval/judging/
