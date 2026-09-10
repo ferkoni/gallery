@@ -108,12 +108,50 @@ RSpec.describe Eval::Runner do
       expect { run(set) }.to raise_error(/owns 4 image\(s\) but the corpus has 3/)
     end
 
-    it "refuses semantic until the search endpoint from 07 exists" do
+    it "rejects a strategy that does not exist" do
       ingest
       set = golden_set([ { "id" => "q01", "query" => "gato", "kind" => "broad", "relevant" => [] } ])
-      runner = described_class.new(set: set, corpus: corpus, user: user, strategy: "semantic")
+      runner = described_class.new(set: set, corpus: corpus, user: user, strategy: "vibes")
 
-      expect { runner.call }.to raise_error(described_class::UnbuiltStrategy, /not merged/)
+      expect { runner.call }.to raise_error(ArgumentError, /unknown strategy/)
+    end
+  end
+
+  describe "strategies" do
+    # The eval must be able to measure each half independently — that comparison is
+    # the deliverable — so a forced strategy has to bypass adapter auto-selection.
+    it "runs semantic against stored vectors, finding a photo whose title says nothing" do
+      ingest
+      target = Image.find_by(s3_key: Eval::Ingest.s3_key_for("wedding/torta.jpg"))
+      width = ImageEmbedding.column_dimensions
+      vector = Array.new(width) { 1.0 / Math.sqrt(width) }
+      create(:image_embedding, image: target, model_id: "clip-vit-b-32/openai/v1", embedding: vector)
+
+      adapter = instance_double(Inference::Local, available?: true, model_id: "clip-vit-b-32/openai/v1",
+                                embed_text: Inference::Embedding.new(vector: vector,
+                                                                     model_id: "clip-vit-b-32/openai/v1",
+                                                                     dimensions: width))
+      allow(Inference).to receive(:adapter).and_return(adapter)
+
+      set = golden_set([ { "id" => "q01", "query" => "un pastel de bodas", "kind" => "descriptive", "relevant" => [] } ])
+      result = described_class.new(set: set, corpus: corpus, user: user, strategy: "semantic").call
+
+      expect(result["per_query"].first["ranked"]).to eq([ "wedding/torta.jpg" ])
+      expect(result["ranking"]).to eq("cosine")
+      expect(result["model_id"]).to eq("clip-vit-b-32/openai/v1")
+    end
+
+    it "records the prompt template, which changes results without changing any row" do
+      ingest
+      allow(Inference.config).to receive(:prompt_template).and_return("una foto de {query}")
+      adapter = instance_double(Inference::Local, available?: true, model_id: "clip-vit-b-32/openai/v1")
+      allow(adapter).to receive(:embed_text).and_raise(Inference::Unavailable, "down")
+      allow(Inference).to receive(:adapter).and_return(adapter)
+
+      set = golden_set([ { "id" => "q01", "query" => "gato", "kind" => "broad", "relevant" => [] } ])
+      result = described_class.new(set: set, corpus: corpus, user: user, strategy: "hybrid").call
+
+      expect(result["prompt_template"]).to eq("una foto de {query}")
     end
   end
 end

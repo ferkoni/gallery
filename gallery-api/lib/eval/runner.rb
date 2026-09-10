@@ -17,17 +17,6 @@ module Eval
     P_AT_K = :"p_at_#{K}"
     RECALL_AT_K = :"recall_at_#{K}"
 
-    # `title ILIKE '%q%'` has no relevance score, and nothing in the search path adds
-    # an ORDER BY (Image.global_search, BaseApi#apply_filters). Postgres is therefore
-    # free to return matching rows in any order it likes, which means the "rank" in a
-    # lexical run is an artefact of the query plan.
-    #
-    # Ordering by id makes a run reproducible — without it two runs over an unchanged
-    # corpus could disagree, and every comparison downstream would be noise. It does
-    # NOT make the order meaningful, so the result file records the ranking as `none`
-    # rather than letting a later reader assume MRR meant something here.
-    LEXICAL_ORDER = "images.id ASC".freeze
-
     attr_reader :set, :corpus, :user, :strategy
 
     def initialize(set:, corpus:, user:, strategy: "lexical")
@@ -52,6 +41,7 @@ module Eval
         "corpus_sha" => corpus.fingerprint,
         "photo_count" => corpus.photo_count,
         "model_id" => model_id,
+        "prompt_template" => prompt_template,
         "ranking" => ranking_description,
         "index" => "exact",
         "golden_set_version" => set.version,
@@ -127,24 +117,18 @@ module Eval
       )
     end
 
+    # Goes through Images::Search — the same class the controller reaches — rather than
+    # rebuilding retrieval here. An eval that reimplements the thing it measures
+    # eventually measures the reimplementation.
     def search(text)
-      case strategy
-      when "lexical"
-        Image.with_user(user)
-             .global_search(text)
-             .order(Arel.sql(LEXICAL_ORDER))
-             .limit(POOL_DEPTH)
-             .pluck(:s3_key)
-             .map { |key| key.delete_prefix("eval-corpus/") }
-      when "semantic", "hybrid"
-        raise UnbuiltStrategy,
-              "EVAL_STRATEGY=#{strategy} needs the search endpoint from 07, which is " \
-              "not merged. Only `lexical` can run today — and it is the one that has " \
-              "to run first, because it is the measurement that becomes unobtainable " \
-              "once semantic search is live."
-      else
-        raise ArgumentError, "unknown strategy #{strategy.inspect}. One of: #{STRATEGIES.join(", ")}"
-      end
+      raise ArgumentError, "unknown strategy #{strategy.inspect}. One of: #{STRATEGIES.join(", ")}" unless
+        STRATEGIES.include?(strategy)
+
+      Images::Search
+        .call(scope: Image.with_user(user), query: text, strategy: strategy)
+        .limit(POOL_DEPTH)
+        .pluck(:s3_key)
+        .map { |key| key.delete_prefix("eval-corpus/") }
     end
 
     def model_id
@@ -153,10 +137,21 @@ module Eval
       Inference.adapter.model_id
     end
 
-    def ranking_description
-      return "none — title ILIKE has no relevance score; ordered by id for reproducibility" if strategy == "lexical"
+    # Recorded on every run, because it changes results without changing a single
+    # stored row: it is applied to the query only. A result file that did not name it
+    # would be incomparable to one run under a different wording.
+    def prompt_template
+      return nil if strategy == "lexical"
 
-      "cosine"
+      Inference.config.prompt_template
+    end
+
+    def ranking_description
+      case strategy
+      when "lexical" then "none — title ILIKE has no relevance score; ordered by id for reproducibility"
+      when "semantic" then "cosine"
+      when "hybrid" then "RRF k=#{Images::Search::RRF_K} over lexical and semantic, capped at #{Images::Search::CANDIDATE_LIMIT} each"
+      end
     end
   end
 end
