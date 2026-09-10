@@ -1,0 +1,67 @@
+# The sidecar had no CI at all until this existed. Both other workflows are filtered
+# to gallery-api/** and gallery-app/**, so a pull request touching only sidecar/**
+# matched neither and triggered nothing — GitHub reported "mergeable" because there
+# was nothing to report. The multilingual model swap (#32) merged that way, changing
+# clip_embedder.py and requirements.txt with zero automated verification.
+name: Sidecar CI
+
+on:
+  pull_request:
+    paths:
+      - 'sidecar/**'
+  push:
+    branches: [main]
+    paths:
+      - 'sidecar/**'
+
+defaults:
+  run:
+    working-directory: sidecar
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          # 3.12, matching what ubuntu:24.04 ships in the sidecar image. A different
+          # minor here would test a different interpreter than the one that runs.
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: sidecar/requirements-dev.txt
+
+      - name: Install torch from the CPU wheel channel
+        # The image builds against cu130 because it serves a GPU. CI has no GPU, and
+        # the CUDA wheels are several gigabytes of driver payload that nothing here
+        # would execute. Same pinned versions, CPU build.
+        #
+        # Installed in its own step, from --index-url rather than --extra-index-url,
+        # because with an extra index pip is free to prefer PyPI's default build —
+        # which is the CUDA one, and the whole point of this step is to not download it.
+        run: |
+          pip install --index-url https://download.pytorch.org/whl/cpu \
+            torch==2.13.0 torchvision==0.28.0
+
+      - name: Install dependencies
+        # This step is itself a test. open_clip does not declare transformers outside
+        # its `training` extra, but hf_model.py imports it unconditionally for the
+        # multilingual text tower — so a requirements.txt missing it produces a service
+        # that builds a model and then fails constructing the encoder. A resolution
+        # failure here is the cheapest place to find that.
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        # pyproject.toml carries `addopts = -m 'not model'`, so the weights-dependent
+        # tests are deselected by default and this needs no GPU and no download.
+        #
+        # What that leaves uncovered is worth naming rather than implying: the `model`
+        # tests are the only ones that can see wrong preprocessing constants, which
+        # produce perfectly shaped, unit-norm, quietly wrong vectors that every
+        # assertion below still passes. Run them locally with `pytest -m model` after
+        # any change to the model, its weights, or the preprocessing pipeline.
+        run: pytest -q
