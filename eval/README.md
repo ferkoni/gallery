@@ -49,26 +49,45 @@ which is what makes a late judging pass survivable: scoring is a pure function o
 (ranked output, answer key), so every run recorded so far can be re-scored when the key
 grows. A run that kept only its score could not be.
 
-## What the numbers say so far
+## The numbers
 
-**The lexical baseline was captured before semantic search shipped**, on 2026-09-09 — the one
-measurement in this project that becomes permanently unobtainable if skipped.
+Judged 2026-09-10 by Fernando: 34 of 35 queries, 195 relevance judgements, pooled from all
+four recorded runs. Same corpus, same model, same day — the only thing that differs between
+these three rows is the retrieval strategy.
 
-It returns **nothing at all for 30 of 35 queries**. Not a weak score: zero rows. The lexical
-path is `title ILIKE '%q%'`, matching the whole query as one literal substring against a
-filename, so `ramo de flores` finds nothing while `flores` finds one. Semantic and hybrid
-answer all 35.
+| | P@5 | MRR | R-precision |
+|---|---|---|---|
+| Lexical (`title ILIKE`, what shipped before) | 0.053 | 0.147 | 0.130 |
+| Semantic (CLIP, cosine) | 0.618 | 0.837 | 0.648 |
+| **Hybrid (RRF, what ships now)** | **0.641** | **0.954** | **0.768** |
 
-So the honest claim today is a **coverage** one — *semantic answers 35 of 35 queries where
-lexical answered 5* — and not a quality one. Quality needs the answer key. Of the four judged
-queries (the `lexical` kind, filenames like `IMG_4471`, which are pre-filled by construction)
-lexical and hybrid both score P@5 0.2 / MRR 1.0 and pure semantic scores 0.0: fusion kept the
-exact-match win that keyword search already had, which is the regression those queries exist
-to catch.
+By query kind, which is where the shape of it shows:
 
-**Unjudged queries score `nil`, not `0.0`,** and are excluded from the averages. With 31 of 35
-unjudged, averaging them in as zeros would report the emptiness of the answer key as retrieval
-quality.
+| P@5 | lexical | semantic | hybrid | n |
+|---|---|---|---|---|
+| descriptive | 0.000 | 0.675 | 0.675 | 24 |
+| broad | 0.200 | 0.920 | 0.920 | 5 |
+| **lexical (`DSC_0014`)** | **0.200** | **0.000** | **0.200** | 4 |
+| compositional | 0.000 | 0.200 | 0.200 | 1 |
+
+**Hybrid did not land between the two, and that is the result worth having.** It matches
+semantic everywhere semantic is good, and it recovers every filename query that pure
+semantic lost — MRR on those goes 0.000 → 1.000, meaning the exact-match photo comes back
+at rank 1. Fusion that averaged would have scored halfway on both halves. This is what the
+four `lexical` queries were put in the golden set to catch, and it is the difference between
+shipping AI search and shipping AI search that can no longer find `IMG_4471`.
+
+**Read P@5 with its ceiling in mind.** 14 of the 34 judged queries have fewer than five
+relevant photos in the whole corpus, and a query with one relevant photo caps at P@5 = 0.2
+however perfectly it is answered. The mean achievable P@5 here is **0.765**, so hybrid's
+0.641 is **84% of the maximum the answer key allows** — and 12 of 34 queries were answered
+perfectly. R-precision (precision at |relevant|, which has no such cap) is the fairer single
+number: 0.768.
+
+**The lexical baseline is a floor, not a rival.** It returns nothing at all for 30 of 35
+queries: `title ILIKE '%q%'` matches the whole query as one literal substring against a
+filename, so `ramo de flores` finds nothing while `flores` finds one. Its 0.147 MRR is
+carried entirely by the four filename queries.
 
 ## Judging
 
@@ -154,15 +173,20 @@ specifically because hybrid search fuses on rank *position*.
 
 Worth naming, and worth taking seriously before quoting any number from this directory.
 
-- **The answer key is 4 of 35 queries.** Every P@5 and MRR in `results/` is computed over
-  those four. There is no descriptive retrieval number yet, and any claim of one would be
-  invented.
+- **34 of 35 queries are judged.** `q34` (`urbanismo sin naturaleza`, compositional) had no
+  relevant photo anywhere in its pool, which this harness stores as `relevant: []` and reads
+  as *unjudged* — so it is excluded from the averages rather than scored zero. The headline
+  number therefore omits the one query CLIP handled worst, which flatters it slightly.
 - **Judgements come from a pool, so recall is a lower bound.** A photo no run ever
   returned is never judged, and therefore never counted as relevant — the standard TREC
   compromise. It makes the numbers comparable between runs; it does not make them
   absolute.
 - **35 queries is a small sample**, and individual P@5 values will move a lot on one
   judgement. Report the count next to the metric, always.
+- **P@5 is capped by the answer key, not by retrieval.** 14 queries have fewer than five
+  relevant photos, so their best possible P@5 is below 1.0 — the mean ceiling is 0.765.
+  Quoting 0.641 against an implied 1.0 understates the result; quoting it without the
+  ceiling misleads in the other direction.
 - **One judge, binary relevance.** No second annotator, no inter-annotator agreement, no
   graded relevance — so "relevant" means whatever one person meant by it on one afternoon.
 - **The corpus is one person's photo library**, hand-assembled, and its character decides the
