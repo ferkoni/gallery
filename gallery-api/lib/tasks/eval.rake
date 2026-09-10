@@ -121,6 +121,101 @@ namespace :eval do
     puts "answer key grows. Commit it."
   end
 
+  desc "Lay the pooled results out as one folder of photos per query, for judging by hand"
+  task :judging_kit do
+    %w[corpus golden_set judging_kit].each { |f| require Rails.root.join("lib/eval/#{f}") }
+
+    corpus = Eval::Corpus.default
+    abort "no corpus at #{corpus.dir}" unless corpus.dir.directory?
+
+    set = Eval::GoldenSet.load
+    results = Eval::JudgingKit.poolable(Eval::Corpus.root.join("results"), corpus.fingerprint)
+
+    if results.empty?
+      abort "no result files recorded against corpus_sha #{corpus.fingerprint[0, 8]}. " \
+            "Run eval:retrieval first — the pool is built from what the runs returned, " \
+            "not from the corpus."
+    end
+
+    summary = begin
+      Eval::JudgingKit.new(corpus: corpus, set: set, results: results,
+                           force: ENV["EVAL_REBUILD"].present?).call
+    rescue Eval::JudgingKit::Incomplete => e
+      abort e.message
+    end
+
+    puts "pooled from:  #{summary[:sources].join(", ")}"
+    puts "folders:      #{summary[:queries]} (#{summary[:skipped]} already judged, skipped)"
+    puts "photos:       #{summary[:photos]} copies, #{(summary[:bytes] / 1024.0**2).round} MB"
+    puts "at:           #{summary[:dir]}"
+
+    if summary[:empty].any?
+      puts
+      warn "no run returned anything for: #{summary[:empty].join(", ")} — those folders are " \
+           "empty, and an empty pool cannot be judged into an answer key"
+    end
+
+    puts
+    puts "Judge by deleting: in each folder, remove the photos that are NOT relevant."
+    puts "Read #{summary[:dir]}/README.md first, then `bin/rails eval:judgements`."
+  end
+
+  desc "Read a judged kit back into queries.yml (dry run unless EVAL_APPLY=1)"
+  task :judgements do
+    %w[corpus golden_set judging_kit judgements].each { |f| require Rails.root.join("lib/eval/#{f}") }
+
+    corpus = Eval::Corpus.default
+    set = Eval::GoldenSet.load
+    judgements = Eval::Judgements.new(set: set, corpus: corpus)
+
+    rows = begin
+      judgements.read
+    rescue Eval::Judgements::Invalid => e
+      abort e.message
+    end
+
+    abort "no query folders found — run eval:judging_kit first" if rows.empty?
+
+    rows.each do |row|
+      flag = if row[:empty] then "  ← nothing kept"
+      elsif row[:untouched] then "  ← nothing deleted"
+      end
+      puts format("  %-5s %-42s %2d of %2d kept%s", row[:id], row[:query][0, 42], row[:kept], row[:pooled], flag)
+    end
+
+    untouched = rows.select { |row| row[:untouched] }
+    empty = rows.select { |row| row[:empty] }
+
+    puts
+    puts "folders: #{rows.size}   judgements: #{rows.sum { |row| row[:kept] }} photo(s)"
+
+    if untouched.any?
+      warn "#{untouched.size} folder(s) still hold every photo they were built with: " \
+           "#{untouched.map { |row| row[:id] }.join(", ")}. That is what an unjudged folder " \
+           "looks like, and also what a query whose pool was entirely relevant looks like. " \
+           "Only you can tell the two apart."
+    end
+
+    if empty.any?
+      warn "#{empty.size} folder(s) have nothing left: #{empty.map { |row| row[:id] }.join(", ")}. " \
+           "They will be written as `relevant: []`, which means UNJUDGED to this harness — " \
+           "a query with no relevant photo is excluded from the averages, not scored zero."
+    end
+
+    unless ENV["EVAL_APPLY"].present?
+      puts
+      puts "Dry run. Nothing written. Re-run with EVAL_APPLY=1 to write these into"
+      puts "#{Eval::Corpus.root.join("queries.yml")}, then check `git diff` — the rewrite"
+      puts "touches `relevant:` and `judged_at` and nothing else."
+      next
+    end
+
+    written = judgements.apply(rows)
+    puts
+    puts "wrote #{written} answer key(s) and stamped judged_at."
+    puts "Now re-run the strategies: their P@5 and MRR are computed against this file."
+  end
+
   desc "Multi-user recall case: split the corpus 95/5 and measure what an ANN index costs the minority user"
   task multi_user: :environment do
     %w[corpus ingest golden_set metrics multi_user].each { |f| require Rails.root.join("lib/eval/#{f}") }

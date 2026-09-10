@@ -35,6 +35,9 @@ EVAL_USER=<email> bin/rails eval:embed     # embeds from local disk, no S3
 
 EVAL_USER=<email> EVAL_STRATEGY=hybrid bin/rails eval:retrieval
 EVAL_USER=<email> bin/rails eval:multi_user
+
+bin/rails eval:judging_kit   # lay the pool out as folders of photos, to judge by hand
+bin/rails eval:judgements    # read the judged folders back into queries.yml
 ```
 
 `EVAL_STRATEGY` is `lexical` (the default; needs no sidecar), `semantic`, or `hybrid`. The
@@ -66,6 +69,44 @@ to catch.
 **Unjudged queries score `nil`, not `0.0`,** and are excluded from the averages. With 31 of 35
 unjudged, averaging them in as zeros would report the emptiness of the answer key as retrieval
 quality.
+
+## Judging
+
+The answer key is written by judging a **pool**: for each query, the union of what every
+recorded run returned. Not by scanning all 235 photos — that is what pooling exists to
+avoid — and not from the group directories, which are a filing decision rather than an
+answer key.
+
+`eval:judging_kit` lays that pool out on disk, one folder per unjudged query, under
+`eval/judging/` (gitignored):
+
+```
+eval/judging/q01-ramo-de-flores/
+    _query.txt                          the query, its kind, and how many photos pooled
+    garden__flores-praga.jpg            copies, not originals
+    wedding__AyK (270 de 715).jpg
+    ...
+```
+
+**Judging is deleting.** Remove the photos that are not relevant; whatever survives is
+that query's answer key. `eval:judgements` reads the folders back and writes `relevant:`
+into `queries.yml` — a dry run by default, `EVAL_APPLY=1` to write. The rewrite is
+textual and touches only `relevant:` and `judged_at`, so `git diff` shows exactly what
+changed and every comment in the file survives.
+
+Three details that are deliberate:
+
+- **No rank in the filenames, and no strategy labels.** A pool judged in rank order gets
+  judged more generously at the top, which inflates the very metric the ranking is being
+  measured by. Alphabetical order says nothing about which run liked a photo.
+- **A folder nothing was deleted from is flagged**, because that is indistinguishable
+  from a folder nobody has judged yet. The task says so and leaves the call to you.
+- **Rebuilding refuses to overwrite a judged folder** unless you pass `EVAL_REBUILD=1`.
+  Picking up a new run and throwing away an afternoon of judging are the same operation
+  otherwise.
+
+Then re-run the strategies: P@5 and MRR are computed against `queries.yml`, so the
+numbers only become real after this.
 
 ## The multi-user recall case
 
@@ -116,6 +157,10 @@ Worth naming, and worth taking seriously before quoting any number from this dir
 - **The answer key is 4 of 35 queries.** Every P@5 and MRR in `results/` is computed over
   those four. There is no descriptive retrieval number yet, and any claim of one would be
   invented.
+- **Judgements come from a pool, so recall is a lower bound.** A photo no run ever
+  returned is never judged, and therefore never counted as relevant — the standard TREC
+  compromise. It makes the numbers comparable between runs; it does not make them
+  absolute.
 - **35 queries is a small sample**, and individual P@5 values will move a lot on one
   judgement. Report the count next to the metric, always.
 - **One judge, binary relevance.** No second annotator, no inter-annotator agreement, no
