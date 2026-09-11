@@ -194,6 +194,21 @@ describe("images", () => {
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
+    // The twin of the PATCH case above: create and update apply the same guard to the
+    // same parameter, so a stranger's album is a 404 from both. Before this existed,
+    // POST accepted it and answered 201 — the image was filed into an album its owner
+    // could not see and would delete out from under it.
+    it("answers 404 when creating an image in another user's album", async () => {
+      const response = await post("/api/images", {
+        token: tokenFor("owner"),
+        form: imageForm({
+          file: { bytes: GIF_BYTES, name: "tiny.gif", type: "image/gif" },
+          album_id: 3,
+        }),
+      });
+      expect(snapshotOf(response)).toMatchSnapshot();
+    });
+
     it("rejects a disallowed content type", async () => {
       const response = await post("/api/images", {
         token: tokenFor("owner"),

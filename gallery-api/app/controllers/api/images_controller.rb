@@ -9,6 +9,20 @@ class Api::ImagesController < ApplicationController
   #   image[title]     — display name (optional, defaults to filename)
   #   image[album_id]  — which album to file it under
   def create
+    # The same guard #update applies to the same parameter. Without it an album_id is
+    # only checked for existence (Image belongs_to :album), so an image could be filed
+    # into another user's album: invisible to that user, but swept up by
+    # Images::AlbumDestroy when they delete the album — which cascades away the OWNER's
+    # row while the S3 delete runs against the wrong bucket and silently does nothing.
+    #
+    # Album.with_user raises RecordNotFound → 404 via BaseApi, which also declines to
+    # confirm that somebody else's album exists.
+    #
+    # Here rather than inside Images::Upload because that service uploads the bytes
+    # before it saves the row: rejecting at the controller means a bad request writes
+    # nothing to S3 at all, rather than writing and rolling back.
+    Album.with_user(current_user).find(params.dig(:image, :album_id))
+
     result = Images::Upload.call(
       user: current_user,
       storage: S3::Storage.for(current_user.s3_credential),
