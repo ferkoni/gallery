@@ -319,6 +319,33 @@ RSpec.describe Api::ImagesController, type: :controller do
       end
     end
 
+    # The create/update disagreement that let an image be filed into somebody else's
+    # album: invisible to them, then swept away by their album deletion while the S3
+    # delete ran against the wrong bucket and silently succeeded.
+    context "when the album belongs to another user" do
+      let(:other_album) { create(:album, user: other_user) }
+
+      it "returns http not found, and does not confirm the album exists" do
+        post :create, params: { image: { file: "stub", album_id: other_album.id } }, as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+
+      # The assertion that pins the ORDERING, which is the reason the guard lives in the
+      # controller rather than in the service. A 404 alone passes either way; only this
+      # fails if the check moves below the upload, where the bytes have already made the
+      # trip to S3 and a rollback is quietly undoing them.
+      it "never reaches the upload service, so no bytes are sent to S3" do
+        allow(Images::Upload).to receive(:call)
+        post :create, params: { image: { file: "stub", album_id: other_album.id } }, as: :json
+        expect(Images::Upload).not_to have_received(:call)
+      end
+
+      it "answers the same way for an album that does not exist at all" do
+        post :create, params: { image: { file: "stub", album_id: 999_999 } }, as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
     context "without a token" do
       before { sign_out user }
 

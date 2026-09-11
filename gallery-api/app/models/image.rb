@@ -58,6 +58,8 @@ class Image < ApplicationRecord
 
   validates :title, presence: true
   validates :s3_key, presence: true, uniqueness: true
+
+  validate :album_belongs_to_owner
   validates :user, presence: true
   validates :album, presence: true
 
@@ -72,5 +74,18 @@ class Image < ApplicationRecord
         errors.add(:tags, "each tag must be 25 characters or fewer (got #{tag.length} for #{tag.inspect})")
       end
     end
+  end
+  private
+
+  # The controller guard on #create covers the only path a user can reach. This covers
+  # everything else — a console session, a rake task, a service written later — because
+  # the damage is done by the row existing, not by how it got there.
+  #
+  # Fails as RecordInvalid, which Images::Upload already rescues by deleting the object
+  # it just uploaded, so the S3 rollback needs no changes to stay correct.
+  def album_belongs_to_owner
+    return if album.blank? || user_id.blank?
+
+    errors.add(:album, "does not belong to this user") if album.user_id != user_id
   end
 end

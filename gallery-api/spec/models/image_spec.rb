@@ -14,6 +14,26 @@ RSpec.describe Image, type: :model do
     it { should validate_uniqueness_of(:s3_key) }
     it { should validate_presence_of(:user) }
     it { should validate_presence_of(:album) }
+
+    # The row itself is what does the damage — Images::AlbumDestroy reads
+    # `@album.images` and cascades whatever it finds — so ownership is asserted here
+    # rather than only at the controller, where a console session or a later service
+    # would never pass.
+    describe "the album belongs to the image's owner" do
+      let(:user) { create(:user) }
+
+      it "is valid in an album the same user owns" do
+        image = build(:image, user: user, album: create(:album, user: user))
+        expect(image).to be_valid
+      end
+
+      it "is invalid in an album another user owns" do
+        image = build(:image, user: user, album: create(:album, user: create(:user)))
+
+        expect(image).not_to be_valid
+        expect(image.errors[:album]).to include("does not belong to this user")
+      end
+    end
   end
 
   describe "column defaults" do
