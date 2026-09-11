@@ -20,6 +20,16 @@ cat > .env <<EOF
 # machine (e.g. http://192.168.1.50:8080). Comma-separated for several.
 CORS_ALLOWED_ORIGINS=http://localhost:8080
 
+# AI search. Off by default: keyword matching only, no model downloaded, no GPU
+# needed, no extra container. To search photos by what is in them, set
+# INFERENCE_MODE=local AND uncomment COMPOSE_PROFILES, then run: docker compose up -d
+# The first tells the app to use the AI container; the second starts it. Either
+# one alone does nothing, and says nothing. See "Enabling AI search" in the README.
+INFERENCE_MODE=none
+# COMPOSE_PROFILES=inference
+# No NVIDIA GPU? Uncomment this too, to run it on the CPU (about 3x slower):
+# COMPOSE_FILE=docker-compose.yml:docker-compose.cpu.yml
+
 SECRET_KEY_BASE=$(openssl rand -hex 64)
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 GALLERY_API_DATABASE_PASSWORD=${POSTGRES_PASSWORD}

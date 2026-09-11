@@ -70,7 +70,7 @@ if ! stack_running &&
 fi
 
 mkdir -p "$TEST_DIR"
-cp "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/setup.sh" "$TEST_DIR/"
+cp "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/docker-compose.cpu.yml" "$REPO_ROOT/setup.sh" "$TEST_DIR/"
 
 (cd "$TEST_DIR" && ./setup.sh)
 

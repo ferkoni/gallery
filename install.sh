@@ -18,6 +18,11 @@ fi
 echo "Downloading docker-compose.yml..."
 curl -fsSL "${RELEASE_URL}/docker-compose.yml" -o docker-compose.yml
 
+# Unused unless .env's COMPOSE_FILE names it (AI search without an NVIDIA GPU).
+# Fetched on every run anyway, so an update refreshes it along with the rest.
+echo "Downloading docker-compose.cpu.yml..."
+curl -fsSL "${RELEASE_URL}/docker-compose.cpu.yml" -o docker-compose.cpu.yml
+
 echo "Downloading setup.sh..."
 curl -fsSL "${RELEASE_URL}/setup.sh" -o setup.sh
 chmod +x setup.sh

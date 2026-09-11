@@ -81,6 +81,8 @@ jobs:
           chmod +x /tmp/release/install.sh
           cp setup.sh /tmp/release/setup.sh
           chmod +x /tmp/release/setup.sh
+          # No substitution: the override names no image, only what to change.
+          cp docker-compose.cpu.yml /tmp/release/docker-compose.cpu.yml
 
       - name: Create GitHub Release
         env:
@@ -89,5 +91,6 @@ jobs:
           gh release create "${{ github.ref_name }}" \
             --generate-notes \
             /tmp/release/docker-compose.yml \
+            /tmp/release/docker-compose.cpu.yml \
             /tmp/release/install.sh \
             /tmp/release/setup.sh

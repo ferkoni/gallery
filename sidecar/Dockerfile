@@ -21,7 +21,7 @@ ENV SIDECAR_VERSION=${SIDECAR_VERSION}
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     # Weights land here, and compose mounts a named volume over it. Without that, every
-    # container recreation re-downloads several hundred megabytes — which is also what
+    # container recreation re-downloads about 1.4 GB — which is also what
     # turns the healthcheck's long start_period from a per-restart cost into a
     # first-boot one.
     HF_HOME=/cache/huggingface \

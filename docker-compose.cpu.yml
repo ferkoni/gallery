@@ -1,0 +1,18 @@
+# Runs the AI search sidecar on the CPU, for hosts without an NVIDIA GPU —
+# including hosts with an AMD, Intel or Apple GPU, none of which it can use.
+# Selected by one line in .env, beside COMPOSE_PROFILES=inference:
+#
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.cpu.yml
+#
+# About 3x slower per image (sidecar/README.md benchmarks it), which for a
+# personal library — where each photo is embedded exactly once, ever — is a
+# wait, not a blocker. Not for ARM: the image is published for amd64 only.
+services:
+  inference:
+    environment:
+      INFERENCE_DEVICE: cpu
+    deploy:
+      resources:
+        # Removes the NVIDIA device reservation inherited from docker-compose.yml,
+        # and nothing else: the memory limit beside it still applies.
+        reservations: !reset null
