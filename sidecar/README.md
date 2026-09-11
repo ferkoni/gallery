@@ -174,7 +174,7 @@ Rails side. Nothing in the Rails codebase distinguishes the two setups.
 | `SIDECAR_VERSION` | `dev` | baked from the image tag at build time |
 
 The weights cache lives at `/cache` on a named volume. Without it every container
-recreation re-downloads several hundred megabytes, which is also what would turn the
+recreation re-downloads about 1.4 GB, which is also what would turn the
 healthcheck's 120s `start_period` from a first-boot cost into a per-restart one.
 
 **Long queries are truncated, silently.** CLIP's context is 77 tokens and the tokenizer

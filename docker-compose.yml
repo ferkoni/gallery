@@ -60,15 +60,16 @@ services:
       ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT}
       INFERENCE_MODE: ${INFERENCE_MODE:-none}
       INFERENCE_ENDPOINT: ${INFERENCE_ENDPOINT:-http://inference:8000}
-    # Deliberately no `depends_on: inference`. First boot downloads several hundred
-    # megabytes of weights, and the queue must not wait on that before running unrelated
+    # Deliberately no `depends_on: inference`. First boot downloads about 1.4 GB of
+    # weights, and the queue must not wait on that before running unrelated
     # jobs. The adapter raises Inference::Unavailable and the job retries.
     depends_on:
       api:
         condition: service_healthy
 
-  # The CLIP sidecar. Behind a profile, so `docker compose up` without
-  # `--profile inference` does not create it at all: a fresh install pulls no model,
+  # The CLIP sidecar. Behind a profile, so `docker compose up` without the `inference`
+  # profile — COMPOSE_PROFILES=inference in .env, or `--profile inference` — does not
+  # create it at all: a fresh install pulls no model,
   # allocates no VRAM, and needs no GPU. That is what makes INFERENCE_MODE=none an
   # honest default rather than a switch on a service that is running anyway.
   inference:
@@ -82,7 +83,7 @@ services:
       MODEL_NAME: ${MODEL_NAME:-xlm-roberta-base-ViT-B-32}
       MODEL_PRETRAINED: ${MODEL_PRETRAINED:-laion5b_s13b_b90k}
     volumes:
-      # Several hundred megabytes of weights, downloaded once rather than on every
+      # About 1.4 GB of weights, downloaded once rather than on every
       # container recreation.
       - inference_models:/cache
     deploy:
