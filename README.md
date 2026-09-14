@@ -82,6 +82,13 @@ Everything about the container itself — the model, its API, its settings and b
 
 Re-run the install command. `setup.sh` will not overwrite an existing `.env`, the account prompt is skipped once a user exists, and database migrations run automatically on start. With AI search enabled, this updates `inference` too; there is nothing extra to run.
 
+Photos uploaded before thumbnails existed load at full size in the album grid until they have one. Generate them once after updating — safe to re-run, and it lists any photo it could not process:
+
+```bash
+docker compose exec api bin/rails images:backfill_thumbnails
+docker compose exec api bin/rails images:thumbnail_status   # how many have one
+```
+
 ```bash
 curl -sSL https://github.com/ferkoni/gallery/releases/latest/download/install.sh | bash
 ```

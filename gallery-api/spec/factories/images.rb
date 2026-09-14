@@ -11,5 +11,11 @@ FactoryBot.define do
     #
     # Callers that pass an explicit album keep it; only the default changes.
     album { association :album, user: user }
+
+    # No thumb_key by default: the shape of an image uploaded before thumbnails, which
+    # is the case the fallbacks exist for. Anything uploaded since has one.
+    trait :with_thumbnail do
+      thumb_key { Images::Thumbnail.key_for(s3_key) }
+    end
   end
 end

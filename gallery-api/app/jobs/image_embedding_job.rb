@@ -56,6 +56,11 @@ class ImageEmbeddingJob < ApplicationJob
     # Bytes, never a presigned URL. A presigned URL is a bearer token to a private
     # object in the user's own bucket, and handing one to an inference backend would
     # send the credential rather than the content — see 02.
+    #
+    # And the original, never image.thumb_key. A cropped thumbnail embeds to a
+    # different vector than the full image, so quietly switching would change every row
+    # in the library, match nothing against the corpus the eval measured, and raise
+    # nothing.
     embedding = adapter.embed_image(fetch_bytes(storage, image.s3_key))
 
     ImageEmbedding.create!(

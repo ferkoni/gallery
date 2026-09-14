@@ -9,7 +9,13 @@ class Images::Destroy < Images::Base
     return failure("No S3 credentials on file") unless @storage
 
     # S3 first — if this raises, the DB record is untouched (natural rollback).
-    @storage.delete_object!(@image.s3_key)
+    #
+    # Every key the image owns, not just s3_key: the thumbnail is a second object, and
+    # anything this misses is orphaned for good, since nothing ever lists the bucket.
+    # The thumbnail goes first, so a failure between the two leaves the user's original
+    # rather than a row whose photo is already gone. Retrying the delete finishes the
+    # job, because S3 answers a delete of a missing key with success.
+    @image.s3_keys.reverse_each { |key| @storage.delete_object!(key) }
     @image.destroy!
 
     success

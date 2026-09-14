@@ -53,6 +53,36 @@ RSpec.describe Api::ImagesController, type: :controller do
       expect(url).to eq(presigned_url)
     end
 
+    describe "thumbnail_url" do
+      # A presigner that signs the key it is given, so the key each URL was built from
+      # can be read back — the shared stub answers the same URL for any key.
+      before do
+        allow(presigner).to receive(:presigned_url) { |_, key:, **| "https://my-bucket.s3.amazonaws.com/#{key}?sig=abc" }
+      end
+
+      def attributes
+        JSON.parse(response.body).dig("data", 0, "attributes")
+      end
+
+      it "points at the thumbnail when the image has one, while url stays the original" do
+        image = create(:image, :with_thumbnail, user: user, album: album)
+
+        get :index, as: :json
+
+        expect(attributes["thumbnail_url"]).to include(image.thumb_key)
+        expect(attributes["url"]).to include(image.s3_key)
+        expect(attributes["url"]).not_to include(image.thumb_key)
+      end
+
+      it "falls back to the original for an image from before thumbnails" do
+        image = create(:image, user: user, album: album)
+
+        get :index, as: :json
+
+        expect(attributes["thumbnail_url"]).to include(image.s3_key)
+      end
+    end
+
     it "includes pagination meta" do
       get :index, as: :json
 
@@ -163,6 +193,36 @@ RSpec.describe Api::ImagesController, type: :controller do
 
       ids = JSON.parse(response.body).dig("data").map { |i| i["id"].to_i }
       expect(ids).to eq([ image_in.id ])
+    end
+
+    describe "thumbnail_url" do
+      # A presigner that signs the key it is given, so the key each URL was built from
+      # can be read back — the shared stub answers the same URL for any key.
+      before do
+        allow(presigner).to receive(:presigned_url) { |_, key:, **| "https://my-bucket.s3.amazonaws.com/#{key}?sig=abc" }
+      end
+
+      def attributes
+        JSON.parse(response.body).dig("data", 0, "attributes")
+      end
+
+      it "points at the thumbnail when the image has one, while url stays the original" do
+        image = create(:image, :with_thumbnail, user: user, album: album)
+
+        get :index, as: :json
+
+        expect(attributes["thumbnail_url"]).to include(image.thumb_key)
+        expect(attributes["url"]).to include(image.s3_key)
+        expect(attributes["url"]).not_to include(image.thumb_key)
+      end
+
+      it "falls back to the original for an image from before thumbnails" do
+        image = create(:image, user: user, album: album)
+
+        get :index, as: :json
+
+        expect(attributes["thumbnail_url"]).to include(image.s3_key)
+      end
     end
 
     it "includes pagination meta" do

@@ -32,6 +32,17 @@ class Image < ApplicationRecord
     SQL
   }
 
+  # Which images still need a thumbnail, derived from absence like needing_embedding.
+  # Every upload since thumbnails shipped has one — Images::Upload will not save a row
+  # without it — so in practice this is the library that predates them, plus any image
+  # images:backfill_thumbnails failed on.
+  scope :without_thumbnail, -> { where(thumb_key: nil) }
+
+  # Every object this row owns in S3. The destroy paths delete what this returns, so an
+  # object added here is deleted from the day it exists — and one added anywhere else is
+  # orphaned silently, since nothing ever lists the bucket to notice.
+  def s3_keys = [ s3_key, thumb_key ].compact
+
   # The entry point the controller reaches through BaseApi#apply_filters. Which
   # strategy answers it is decided by adapter availability inside the service, never
   # by a request parameter: the client sends the same ?q= whether or not this install
@@ -58,6 +69,7 @@ class Image < ApplicationRecord
 
   validates :title, presence: true
   validates :s3_key, presence: true, uniqueness: true
+  validates :thumb_key, uniqueness: true, allow_nil: true
 
   validate :album_belongs_to_owner
   validates :user, presence: true
@@ -81,7 +93,7 @@ class Image < ApplicationRecord
   # everything else — a console session, a rake task, a service written later — because
   # the damage is done by the row existing, not by how it got there.
   #
-  # Fails as RecordInvalid, which Images::Upload already rescues by deleting the object
+  # Fails as RecordInvalid, which Images::Upload already rescues by deleting the objects
   # it just uploaded, so the S3 rollback needs no changes to stay correct.
   def album_belongs_to_owner
     return if album.blank? || user_id.blank?

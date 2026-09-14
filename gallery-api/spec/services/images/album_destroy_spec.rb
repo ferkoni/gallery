@@ -28,6 +28,14 @@ RSpec.describe Images::AlbumDestroy, type: :service do
       expect { call }.to change { Album.count }.by(-1)
     end
 
+    it "deletes every thumbnail too, and no nil key for images without one" do
+      thumbnailed = create(:image, :with_thumbnail, user: user, album: album)
+      keys = images.map(&:s3_key) + [ thumbnailed.s3_key, thumbnailed.thumb_key ]
+
+      expect(storage).to receive(:delete_objects!).with(match_array(keys))
+      call
+    end
+
     it "destroys all image DB records via cascade" do
       expect { call }.to change { Image.count }.by(-3)
     end

@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { AxiosError, type AxiosResponse } from 'axios';
 import { useUpload } from '@/features/images/hooks/useUpload';
 import { uploadImage } from '@/features/images/api/imagesApi';
 import { useUploadStore } from '@/features/images/store/uploadStore';
@@ -19,6 +20,7 @@ const image: Image = {
   favorited: false,
   created_at: '2026-01-01T00:00:00.000Z',
   url: 'https://signed-url',
+  thumbnail_url: 'https://signed-thumb-url',
 };
 
 const file = new File(['pixels'], 'photo.jpg', { type: 'image/jpeg' });
@@ -77,7 +79,28 @@ describe('useUpload', () => {
     expect(invalidate).not.toHaveBeenCalled();
   });
 
-  it('sets status to error with message when uploadImage rejects', async () => {
+  // What the API sends when a write to the user's bucket fails, the original's or
+  // the thumbnail's. Before, the queue showed "Request failed with status code 422"
+  // for this and for every other rejected upload.
+  it("shows the API's message when the upload is rejected", async () => {
+    const message = 'Could not save the photo to your S3 bucket. Check your storage settings and try again.';
+    mockUploadImage.mockRejectedValue(
+      new AxiosError('Request failed with status code 422', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 422,
+        data: { errors: message },
+      } as AxiosResponse),
+    );
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useUpload(1), { wrapper });
+    await act(() => result.current.upload(file, 'Beach'));
+
+    const item = useUploadStore.getState().queue[0];
+    expect(item.status).toBe('error');
+    expect(item.error).toBe(message);
+  });
+
+  it('shows a generic message when there is no API message, never an internal one', async () => {
     mockUploadImage.mockRejectedValue(new Error('Network error'));
 
     const { wrapper } = makeWrapper();
@@ -86,6 +109,6 @@ describe('useUpload', () => {
 
     const item = useUploadStore.getState().queue[0];
     expect(item.status).toBe('error');
-    expect(item.error).toBe('Network error');
+    expect(item.error).toBe('Upload failed. Please try again.');
   });
 });

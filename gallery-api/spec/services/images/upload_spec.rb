@@ -21,6 +21,7 @@ RSpec.describe Images::Upload, type: :service do
 
   before do
     allow(storage).to receive(:upload).and_return("albums/#{album.id}/uuid/vacation.jpg")
+    allow(storage).to receive(:put) { |key, *| key }
   end
 
   def call(title: "Vacation", album_id: album.id, upload_file: file)
@@ -46,6 +47,10 @@ RSpec.describe Images::Upload, type: :service do
 
     it "sets the s3_key from the upload" do
       expect(call.record.s3_key).to eq("albums/#{album.id}/uuid/vacation.jpg")
+    end
+
+    it "sets the thumb_key to the thumbnail beside the original" do
+      expect(call.record.thumb_key).to eq("albums/#{album.id}/uuid/vacation.thumb.webp")
     end
 
     it "uses the provided title" do
@@ -182,26 +187,58 @@ RSpec.describe Images::Upload, type: :service do
     end
   end
 
-  describe "rollback on DB failure" do
-    before do
-      allow(storage).to receive(:upload).and_return("albums/1/uuid/vacation.jpg")
-      allow_any_instance_of(Image).to receive(:save!).and_raise(
-        ActiveRecord::RecordInvalid.new(Image.new)
-      )
-    end
+  # A photo is stored with its thumbnail or not at all. Every case below ends in the
+  # same place — no row, and no object left in the bucket — from a different step.
+  describe "the thumbnail" do
+    it "writes it beside the original, as WebP" do
+      expect(storage).to receive(:put).with(
+        "albums/#{album.id}/uuid/vacation.thumb.webp",
+        an_instance_of(StringIO),
+        content_type: "image/webp"
+      ) { |key, *| key }
 
-    it "calls delete_object with the uploaded key" do
-      expect(storage).to receive(:delete_object).with("albums/1/uuid/vacation.jpg")
       call
     end
 
-    it "returns success?: false" do
-      allow(storage).to receive(:delete_object)
-      expect(call.success?).to be(false)
+    it "sends WebP bytes with no GPS to S3" do
+      captured = nil
+      allow(storage).to receive(:put) do |key, body, **|
+        captured = body.read
+        key
+      end
+      call
+
+      thumbnail = Vips::Image.new_from_buffer(captured, "")
+      expect(thumbnail.get("vips-loader")).to start_with("webpload")
+      expect(thumbnail.get_fields.grep(/gps/i)).to be_empty
+    end
+
+    context "when it cannot be generated" do
+      before do
+        allow(Images::Thumbnail).to receive(:generate)
+          .and_raise(Images::Thumbnail::GenerationFailed, "could not generate a thumbnail: out of memory")
+      end
+
+      it "fails the upload" do
+        result = call
+        expect(result.success?).to be(false)
+        expect(result.error).to include("could not be processed")
+      end
+
+      it "writes nothing to S3, because generation runs before the first write" do
+        expect(storage).not_to receive(:upload)
+        expect(storage).not_to receive(:put)
+        expect(storage).not_to receive(:delete_object)
+        call
+      end
+
+      it "saves no row" do
+        expect { call }.not_to change(Image, :count)
+      end
     end
   end
 
-  describe "S3 upload error" do
+  describe "S3 upload error on the original" do
     before do
       allow(storage).to receive(:upload).and_raise(
         Aws::S3::Errors::ServiceError.new(nil, "access denied")
@@ -212,8 +249,82 @@ RSpec.describe Images::Upload, type: :service do
       expect(call.success?).to be(false)
     end
 
-    it "includes the S3 error message" do
-      expect(call.error).to include("S3 upload failed")
+    it "tells the user in plain words, without the AWS message" do
+      error = call.error
+
+      expect(error).to eq(described_class::S3_FAILURE_MESSAGE)
+      expect(error).not_to include("access denied")
+    end
+
+    it "logs the AWS detail for whoever operates the install" do
+      allow(Rails.logger).to receive(:error)
+      call
+
+      expect(Rails.logger).to have_received(:error)
+        .with(a_string_including("user #{user.id}", "Aws::S3::Errors::ServiceError", "access denied"))
+    end
+
+    it "deletes nothing, since nothing was written" do
+      expect(storage).not_to receive(:delete_object)
+      call
+    end
+
+    it "does not attempt the thumbnail" do
+      expect(storage).not_to receive(:put)
+      call
+    end
+  end
+
+  # The case the old rescue got wrong: with two writes, an S3 error can arrive after
+  # the original is already in the bucket. Without the rollback the user sees a
+  # correct error and there is no row, while the original sits in S3 with nothing
+  # pointing at it.
+  describe "S3 upload error on the thumbnail" do
+    before do
+      allow(storage).to receive(:put).and_raise(
+        Aws::S3::Errors::ServiceError.new(nil, "access denied")
+      )
+      allow(storage).to receive(:delete_object)
+    end
+
+    it "fails the upload with the same plain message as a failed original" do
+      result = call
+      expect(result.success?).to be(false)
+      expect(result.error).to eq(described_class::S3_FAILURE_MESSAGE)
+    end
+
+    it "deletes the original it already wrote" do
+      expect(storage).to receive(:delete_object).with("albums/#{album.id}/uuid/vacation.jpg")
+      call
+    end
+
+    it "deletes only the original — never the thumbnail key it failed to write" do
+      expect(storage).not_to receive(:delete_object).with("albums/#{album.id}/uuid/vacation.thumb.webp")
+      call
+    end
+
+    it "saves no row" do
+      expect { call }.not_to change(Image, :count)
+    end
+  end
+
+  describe "rollback on DB failure" do
+    before do
+      allow(storage).to receive(:upload).and_return("albums/1/uuid/vacation.jpg")
+      allow_any_instance_of(Image).to receive(:save!).and_raise(
+        ActiveRecord::RecordInvalid.new(Image.new)
+      )
+    end
+
+    it "deletes both the original and the thumbnail" do
+      expect(storage).to receive(:delete_object).with("albums/1/uuid/vacation.jpg")
+      expect(storage).to receive(:delete_object).with("albums/1/uuid/vacation.thumb.webp")
+      call
+    end
+
+    it "returns success?: false" do
+      allow(storage).to receive(:delete_object)
+      expect(call.success?).to be(false)
     end
   end
 

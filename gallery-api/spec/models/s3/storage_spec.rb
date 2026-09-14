@@ -83,6 +83,29 @@ RSpec.describe S3::Storage, type: :model do
     end
   end
 
+  describe "#put" do
+    let(:body) { StringIO.new("bytes") }
+
+    it "writes to exactly the key it was given" do
+      expect(client).to receive(:put_object).with(
+        bucket: bucket, key: "albums/42/uuid/photo.thumb.webp", body: body, content_type: "image/webp"
+      )
+      storage.put("albums/42/uuid/photo.thumb.webp", body, content_type: "image/webp")
+    end
+
+    it "returns the key" do
+      allow(client).to receive(:put_object)
+      expect(storage.put("albums/42/uuid/photo.thumb.webp", body, content_type: "image/webp"))
+        .to eq("albums/42/uuid/photo.thumb.webp")
+    end
+
+    # The upload service rolls back on this, so it must reach the caller.
+    it "raises when S3 refuses the write" do
+      allow(client).to receive(:put_object).and_raise(Aws::S3::Errors::ServiceError.new(nil, "denied"))
+      expect { storage.put("k", body, content_type: "image/webp") }.to raise_error(Aws::S3::Errors::ServiceError)
+    end
+  end
+
   describe "#delete_object" do
     it "calls delete_object on the S3 client with the given key" do
       expect(client).to receive(:delete_object).with(bucket: bucket, key: "albums/1/uuid/photo.jpg")
