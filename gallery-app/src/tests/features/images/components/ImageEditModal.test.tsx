@@ -20,6 +20,7 @@ const image: Image = {
   favorited: false,
   created_at: '2026-01-01T00:00:00.000Z',
   url: 'https://url1',
+  thumbnail_url: 'https://thumb1',
 };
 
 function makeWrapper() {

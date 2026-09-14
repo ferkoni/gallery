@@ -55,7 +55,7 @@ export const ImageCard = memo(function ImageCard({ image, onClick, onUnfavorite 
         </div>
       ) : (
         <img
-          src={image.url}
+          src={image.thumbnail_url}
           alt={image.title}
           className="w-full h-48 object-cover"
           loading="lazy"

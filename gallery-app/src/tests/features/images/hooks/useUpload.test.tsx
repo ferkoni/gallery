@@ -19,6 +19,7 @@ const image: Image = {
   favorited: false,
   created_at: '2026-01-01T00:00:00.000Z',
   url: 'https://signed-url',
+  thumbnail_url: 'https://signed-thumb-url',
 };
 
 const file = new File(['pixels'], 'photo.jpg', { type: 'image/jpeg' });

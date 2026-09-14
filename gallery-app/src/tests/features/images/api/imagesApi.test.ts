@@ -17,6 +17,7 @@ const image: Image = {
   favorited: false,
   created_at: '2026-01-01T00:00:00.000Z',
   url: 'https://my-bucket.s3.us-east-1.amazonaws.com/albums/1/uuid/photo.jpg?sig=abc',
+  thumbnail_url: 'https://my-bucket.s3.us-east-1.amazonaws.com/albums/1/uuid/photo.thumb.webp?sig=abc',
 };
 
 afterAll(() => mock.restore());

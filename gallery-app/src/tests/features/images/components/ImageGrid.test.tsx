@@ -24,8 +24,8 @@ const mockUseAlbumImages = useAlbumImages as Mock;
 const meta = { current_page: 1, total_pages: 1, total_count: 2, per_page: 25 };
 
 const images: Image[] = [
-  { id: 1, title: 'Beach', description: null, tags: [], s3_key: 'k1', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1' },
-  { id: 2, title: 'Mountain', description: null, tags: [], s3_key: 'k2', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url2' },
+  { id: 1, title: 'Beach', description: null, tags: [], s3_key: 'k1', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1', thumbnail_url: 'https://thumb1' },
+  { id: 2, title: 'Mountain', description: null, tags: [], s3_key: 'k2', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url2', thumbnail_url: 'https://thumb2' },
 ];
 
 const pagedData: PaginatedResponse<Image> = { data: images, meta };

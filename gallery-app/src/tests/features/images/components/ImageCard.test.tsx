@@ -18,6 +18,7 @@ const image: Image = {
   favorited: false,
   created_at: '2026-01-01T00:00:00.000Z',
   url: 'https://my-bucket.s3.amazonaws.com/albums/1/uuid/photo.jpg?sig=abc',
+  thumbnail_url: 'https://my-bucket.s3.amazonaws.com/albums/1/uuid/photo.thumb.webp?sig=abc',
 };
 
 describe('ImageCard', () => {
@@ -26,10 +27,11 @@ describe('ImageCard', () => {
     expect(screen.getByText('Beach')).toBeInTheDocument();
   });
 
-  it('renders an img with the presigned url and alt text', () => {
+  it('renders the thumbnail, not the full-size original, with alt text', () => {
     render(<ImageCard image={image} />);
     const img = screen.getByRole('img');
-    expect(img).toHaveAttribute('src', image.url);
+    expect(img).toHaveAttribute('src', image.thumbnail_url);
+    expect(img).not.toHaveAttribute('src', image.url);
     expect(img).toHaveAttribute('alt', 'Beach');
   });
 

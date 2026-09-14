@@ -15,6 +15,7 @@ const images: Image[] = [
     favorited: false,
     created_at: '2026-01-01T00:00:00.000Z',
     url: 'https://url1',
+    thumbnail_url: 'https://thumb1',
   },
   {
     id: 2,
@@ -26,6 +27,7 @@ const images: Image[] = [
     favorited: false,
     created_at: '2026-06-15T00:00:00.000Z',
     url: 'https://url2',
+    thumbnail_url: 'https://thumb2',
   },
   {
     id: 3,
@@ -37,6 +39,7 @@ const images: Image[] = [
     favorited: false,
     created_at: '2026-03-20T00:00:00.000Z',
     url: 'https://url3',
+    thumbnail_url: 'https://thumb3',
   },
 ];
 
@@ -78,6 +81,13 @@ describe('Lightbox', () => {
   it('renders the initial image', () => {
     renderLightbox(0);
     expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url1');
+  });
+
+  // By decision: the lightbox is where the user sees the file they uploaded, so it
+  // must never be switched to the thumbnail the grid uses.
+  it('shows the original, never the thumbnail', () => {
+    renderLightbox(0);
+    expect(screen.getByTestId('lightbox-image')).not.toHaveAttribute('src', 'https://thumb1');
   });
 
   it('shows the image title and upload date', () => {

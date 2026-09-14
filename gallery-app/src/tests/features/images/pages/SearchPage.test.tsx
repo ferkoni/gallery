@@ -28,8 +28,8 @@ const mockUseSearchImages = useSearchImages as Mock;
 const mockUseListAlbum = useListAlbum as Mock;
 
 const images: Image[] = [
-  { id: 1, title: 'Sunset Beach', description: null, tags: ['beach'], s3_key: 'k1', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1' },
-  { id: 2, title: 'Mountain Trail', description: null, tags: ['nature'], s3_key: 'k2', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url2' },
+  { id: 1, title: 'Sunset Beach', description: null, tags: ['beach'], s3_key: 'k1', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1', thumbnail_url: 'https://thumb1' },
+  { id: 2, title: 'Mountain Trail', description: null, tags: ['nature'], s3_key: 'k2', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url2', thumbnail_url: 'https://thumb2' },
 ];
 
 function renderSearchPage(search = '') {
