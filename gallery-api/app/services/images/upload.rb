@@ -2,6 +2,13 @@ class Images::Upload < Images::Base
   ALLOWED_TYPES = %w[image/jpeg image/png image/webp image/gif].freeze
   MAX_SIZE_BYTES = 25 * 1024 * 1024 # 25 MB
 
+  # What the user reads when either write to their bucket fails. Fixed rather than the
+  # AWS message: that text is written for whoever operates the bucket, not for someone
+  # choosing photos, and it can name the bucket or describe the request signature. The
+  # detail goes to the log instead.
+  S3_FAILURE_MESSAGE = "Could not save the photo to your S3 bucket. " \
+                       "Check your storage settings and try again.".freeze
+
   def initialize(user:, storage:, file:, title:, album_id:)
     @user = user
     @storage = storage
@@ -73,7 +80,8 @@ class Images::Upload < Images::Base
     # thumbnail's, with the original already in S3. roll_back deletes whatever made
     # it, so the two cases are one.
     roll_back
-    failure("S3 upload failed: #{e.message}")
+    Rails.logger.error("Images::Upload: S3 write failed for user #{@user.id}: #{e.class}: #{e.message}")
+    failure(S3_FAILURE_MESSAGE)
   end
 
   private

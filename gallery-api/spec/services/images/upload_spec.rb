@@ -249,8 +249,19 @@ RSpec.describe Images::Upload, type: :service do
       expect(call.success?).to be(false)
     end
 
-    it "includes the S3 error message" do
-      expect(call.error).to include("S3 upload failed")
+    it "tells the user in plain words, without the AWS message" do
+      error = call.error
+
+      expect(error).to eq(described_class::S3_FAILURE_MESSAGE)
+      expect(error).not_to include("access denied")
+    end
+
+    it "logs the AWS detail for whoever operates the install" do
+      allow(Rails.logger).to receive(:error)
+      call
+
+      expect(Rails.logger).to have_received(:error)
+        .with(a_string_including("user #{user.id}", "Aws::S3::Errors::ServiceError", "access denied"))
     end
 
     it "deletes nothing, since nothing was written" do
@@ -276,10 +287,10 @@ RSpec.describe Images::Upload, type: :service do
       allow(storage).to receive(:delete_object)
     end
 
-    it "fails the upload" do
+    it "fails the upload with the same plain message as a failed original" do
       result = call
       expect(result.success?).to be(false)
-      expect(result.error).to include("S3 upload failed")
+      expect(result.error).to eq(described_class::S3_FAILURE_MESSAGE)
     end
 
     it "deletes the original it already wrote" do
