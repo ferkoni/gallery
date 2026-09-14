@@ -55,6 +55,15 @@ module S3
       key
     end
 
+    # Writes bytes to a key the caller chose, and returns it. For an object whose key
+    # derives from another object's — a thumbnail beside its original — where #upload's
+    # generated key would not do. Raises like #upload: the caller decides what to roll
+    # back.
+    def put(key, body, content_type:)
+      s3_client.put_object(bucket: @bucket, key: key, body: body, content_type: content_type)
+      key
+    end
+
     # Returns a presigned GET URL valid for the given duration (default 1 hour).
     # Pass response_content_disposition: to force a download filename in browsers.
     def presigned_get_url(key, expires_in: 3600, **options)

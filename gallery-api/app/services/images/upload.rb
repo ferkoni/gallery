@@ -8,7 +8,7 @@ class Images::Upload < Images::Base
     @file = file
     @title = title
     @album_id = album_id
-    @s3_key = nil
+    @written_keys = []
   end
 
   def call
@@ -29,35 +29,66 @@ class Images::Upload < Images::Base
     #
     # This protects new uploads only. Objects already in the bucket keep their
     # metadata; backfilling them rewrites the user's files and is out of scope.
-    @s3_key = @storage.upload(
-      Exif::Strip.call(@file),
-      album_id: @album_id,
-      filename: @file.original_filename,
-      content_type: @file.content_type
-    )
+    stripped = Exif::Strip.call(@file)
 
-    image = Image.new(title: title, album_id: @album_id, s3_key: @s3_key, user: @user)
+    # Generated before anything is written, from the stripped bytes, so a photo vips
+    # cannot thumbnail costs no S3 round-trip and needs no rollback.
+    #
+    # A thumbnail failure fails the upload, deliberately: a photo is stored with its
+    # thumbnail or not at all, so there is no new photo the grid has to fall back to
+    # the full-size original for.
+    thumbnail = Images::Thumbnail.generate(stripped)
+
+    s3_key = write do
+      @storage.upload(
+        stripped,
+        album_id: @album_id,
+        filename: @file.original_filename,
+        content_type: @file.content_type
+      )
+    end
+    thumb_key = write do
+      @storage.put(Images::Thumbnail.key_for(s3_key), thumbnail, content_type: Images::Thumbnail::CONTENT_TYPE)
+    end
+
+    image = Image.new(title: title, album_id: @album_id, s3_key: s3_key, thumb_key: thumb_key, user: @user)
     image.save!
 
     enqueue_embedding(image)
 
     success(record: image)
-  rescue Exif::Strip::UndecodableImage => e
+  rescue Exif::Strip::UndecodableImage, Images::Thumbnail::GenerationFailed => e
     # Declared an allowed type but the bytes are not decodable — a truncated or
-    # corrupt file. Nothing has been written to S3 yet, so there is nothing to roll
+    # corrupt file. Both run before the first write, so there is nothing to roll
     # back. A user error, so it reports like the other validation failures rather
     # than as a 500.
     failure("File could not be processed: #{e.message}")
   rescue ActiveRecord::RecordInvalid => e
-    # The file is already in S3. Roll back by deleting the object so the
-    # bucket does not accumulate files with no corresponding database record.
-    @storage.delete_object(@s3_key) if @s3_key
+    # Both objects are already in S3. Roll back so the bucket does not accumulate
+    # files with no corresponding database record.
+    roll_back
     failure(e.record.errors.full_messages.to_sentence)
   rescue *S3_ERRORS => e
+    # Reached from the original's write, with nothing to undo, or from the
+    # thumbnail's, with the original already in S3. roll_back deletes whatever made
+    # it, so the two cases are one.
+    roll_back
     failure("S3 upload failed: #{e.message}")
   end
 
   private
+
+  # Records a key only once its write has returned, so roll_back never deletes a key
+  # that was not written by this upload.
+  def write
+    yield.tap { |key| @written_keys << key }
+  end
+
+  # The swallowing delete: a rollback that fails is logged by the gateway and must not
+  # replace the error the user is about to see.
+  def roll_back
+    @written_keys.each { |key| @storage.delete_object(key) }
+  end
 
   # After `image.save!`, never inside a transaction with it: a worker can pick the job
   # up the instant it is enqueued, and if the row is not committed yet the job finds

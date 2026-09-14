@@ -12,6 +12,7 @@ RSpec.describe Image, type: :model do
     it { should validate_presence_of(:title) }
     it { should validate_presence_of(:s3_key) }
     it { should validate_uniqueness_of(:s3_key) }
+    it { should validate_uniqueness_of(:thumb_key).allow_nil }
     it { should validate_presence_of(:user) }
     it { should validate_presence_of(:album) }
 
@@ -132,6 +133,47 @@ RSpec.describe Image, type: :model do
     it "is valid with an empty tags array" do
       image = build(:image, tags: [])
       expect(image).to be_valid
+    end
+  end
+
+  describe ".without_thumbnail" do
+    it "selects an image with no thumbnail, and not one that has one" do
+      without = create(:image)
+      with = create(:image, :with_thumbnail)
+
+      expect(Image.without_thumbnail).to include(without)
+      expect(Image.without_thumbnail).not_to include(with)
+    end
+  end
+
+  describe "#s3_keys" do
+    it "is the original and its thumbnail" do
+      image = build(:image, :with_thumbnail, s3_key: "albums/1/uuid/beach.jpg")
+
+      expect(image.s3_keys).to eq([ "albums/1/uuid/beach.jpg", "albums/1/uuid/beach.thumb.webp" ])
+    end
+
+    # An image from before thumbnails. A nil in the list would reach S3 as a key.
+    it "is only the original when there is no thumbnail" do
+      image = build(:image, s3_key: "albums/1/uuid/beach.jpg")
+
+      expect(image.s3_keys).to eq([ "albums/1/uuid/beach.jpg" ])
+    end
+  end
+
+  describe "thumb_key uniqueness in the database" do
+    # The index, not the validation: a backfill writes with update_all, which skips
+    # validations entirely.
+    it "rejects two rows pointing at one thumbnail" do
+      create(:image, thumb_key: "albums/1/uuid/beach.thumb.webp")
+      other = create(:image)
+
+      expect { other.update_column(:thumb_key, "albums/1/uuid/beach.thumb.webp") }
+        .to raise_error(ActiveRecord::RecordNotUnique)
+    end
+
+    it "allows any number of rows with no thumbnail" do
+      expect { create_list(:image, 2) }.not_to raise_error
     end
   end
 

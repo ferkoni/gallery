@@ -27,6 +27,41 @@ RSpec.describe Images::Destroy, type: :service do
     end
   end
 
+  describe "an image with a thumbnail" do
+    let!(:image) { create(:image, :with_thumbnail, user: user, album: album) }
+
+    before { allow(storage).to receive(:delete_object!) }
+
+    it "deletes the thumbnail as well as the original" do
+      expect(storage).to receive(:delete_object!).with(image.s3_key)
+      expect(storage).to receive(:delete_object!).with(image.thumb_key)
+      call
+    end
+
+    it "deletes the thumbnail first, so a failure on the second leaves the original" do
+      expect(storage).to receive(:delete_object!).with(image.thumb_key).ordered
+      expect(storage).to receive(:delete_object!).with(image.s3_key).ordered
+      call
+    end
+
+    it "keeps the row when the original's delete fails after the thumbnail's succeeded" do
+      allow(storage).to receive(:delete_object!).with(image.s3_key)
+        .and_raise(Aws::S3::Errors::ServiceError.new(nil, "access denied"))
+
+      expect(call.success?).to be(false)
+      expect(Image.exists?(image.id)).to be(true)
+    end
+  end
+
+  describe "an image from before thumbnails" do
+    before { allow(storage).to receive(:delete_object!) }
+
+    it "deletes only the original, never a nil key" do
+      expect(storage).to receive(:delete_object!).once.with(image.s3_key)
+      call
+    end
+  end
+
   describe "missing credentials" do
     it "returns success?: false when credential is nil" do
       result = described_class.call(image: image, storage: nil)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_14_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -56,11 +56,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_210000) do
     t.boolean "favorited", default: false, null: false
     t.string "s3_key", null: false
     t.text "tags", default: [], null: false, array: true
+    t.string "thumb_key"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["album_id"], name: "index_images_on_album_id"
     t.index ["s3_key"], name: "index_images_on_s3_key", unique: true
+    t.index ["thumb_key"], name: "index_images_on_thumb_key", unique: true
     t.index ["user_id", "album_id"], name: "index_images_on_user_id_and_album_id"
     t.index ["user_id"], name: "index_images_on_user_id"
   end

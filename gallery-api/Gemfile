@@ -39,9 +39,9 @@ gem "thruster", require: false
 # scope the search endpoint (07) needs, so it is one gem now rather than two later.
 gem "neighbor", "~> 1.2"
 
-gem "image_processing", "~> 2.0"
-# image_processing does not depend on a backend itself; ImageProcessing::Vips
-# needs this, and Active Storage's default variant_processor is :vips.
+# libvips, driven directly: Exif::Strip strips metadata on upload and Images::Thumbnail
+# makes the grid's thumbnails. No image_processing on top — each is a call or two, and
+# the wrapper had no consumer.
 gem "ruby-vips", "~> 2.0"
 
 group :development, :test do

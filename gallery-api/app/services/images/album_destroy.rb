@@ -5,7 +5,9 @@ class Images::AlbumDestroy < Images::Base
   end
 
   def call
-    keys = @album.images.pluck(:s3_key)
+    # Both columns in one query rather than loading every image for Image#s3_keys. The
+    # compact drops the thumb_key of images that predate thumbnails.
+    keys = @album.images.pluck(:s3_key, :thumb_key).flatten.compact
 
     if keys.any?
       return failure("No S3 credentials on file") unless @storage
