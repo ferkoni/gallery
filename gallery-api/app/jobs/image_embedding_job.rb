@@ -57,7 +57,7 @@ class ImageEmbeddingJob < ApplicationJob
     # object in the user's own bucket, and handing one to an inference backend would
     # send the credential rather than the content — see 02.
     #
-    # And the original, never image.thumb_key. A cropped 400px thumbnail embeds to a
+    # And the original, never image.thumb_key. A cropped thumbnail embeds to a
     # different vector than the full image, so quietly switching would change every row
     # in the library, match nothing against the corpus the eval measured, and raise
     # nothing.
