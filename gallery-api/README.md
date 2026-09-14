@@ -153,7 +153,10 @@ cp .env.example .env
 docker compose up -d       # start PostgreSQL
 rails db:create db:migrate
 rails server               # http://localhost:3000
+bin/rails solid_queue:start   # in a second terminal: runs background jobs
 ```
+
+Development uses Solid Queue, as production does, so album downloads and AI search indexing happen only while `solid_queue:start` is running. Without it nothing fails: the job is queued and waits. To turn on AI search, see "AI search (optional)" in the [root README](../README.md#ai-search-optional).
 
 Verify with:
 
@@ -170,5 +173,7 @@ curl http://localhost:3000/health
 | `POSTGRES_DB` | DB name | `gallery_api_development` |
 | `POSTGRES_HOST` | DB host | `localhost` |
 | `POSTGRES_PORT` | DB port | `5432` |
+| `INFERENCE_MODE` | `none`, or `local` to use the AI search sidecar | `none` |
+| `INFERENCE_ENDPOINT` | Sidecar URL, required when `INFERENCE_MODE=local` — `http://localhost:8000` in development | — |
 
 ---

@@ -161,9 +161,60 @@ cp .env.example .env
 docker compose up -d   # starts PostgreSQL
 rails db:create db:migrate
 rails server           # http://localhost:3000
+bin/rails solid_queue:start   # in a second terminal: runs background jobs
 ```
 
+Development runs jobs through Solid Queue, as production does, so album downloads and AI search indexing happen only while `solid_queue:start` is running. Without it nothing fails: the job is queued and waits.
+
 See [`gallery-api/README.md`](gallery-api/README.md) for full details.
+
+### AI search (optional)
+
+Off in development too, and the rest of the app works without it. Turning it on takes the sidecar, two variables, and the worker above. [Enabling AI search](#enabling-ai-search) describes the feature; this is the same thing outside Docker.
+
+**1. Start the sidecar on port 8000.** With Docker, from the repo root, built from this checkout:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml \
+  --profile inference up -d --build inference
+```
+
+Without an NVIDIA GPU, add `-f docker-compose.cpu.yml` after the other two. The build override is required, not just convenient: it is the only file that publishes port 8000, because the released compose file keeps the sidecar internal. Compose also warns that `GHCR_OWNER`, `SECRET_KEY_BASE` and several others are not set. Those belong to the other services in the file and do not affect this one.
+
+Or without Docker, which is quicker to iterate on (Python 3.12):
+
+```bash
+cd sidecar
+python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+.venv/bin/uvicorn app:app --port 8000
+```
+
+**2. Point the API at it**, in `gallery-api/.env`:
+
+```bash
+INFERENCE_MODE=local
+INFERENCE_ENDPOINT=http://localhost:8000
+```
+
+Then restart `rails server` and `solid_queue:start`, which read both at boot. Unlike the Docker install, `INFERENCE_ENDPOINT` has no default here: `local` without it stops the app at boot with `INFERENCE_MODE=local requires INFERENCE_ENDPOINT`.
+
+**3. Wait for the model, then index.** The first start downloads about 1.4 GB of weights; the sidecar is ready when this answers:
+
+```bash
+curl localhost:8000/health
+```
+
+The API asks the sidecar on every upload and search, so it needs no restart when the sidecar comes up. It does not catch up on its own, though: a photo uploaded while the sidecar was down is stored without being queued for indexing. With the worker running, index everything missing:
+
+```bash
+cd gallery-api
+bin/rails inference:backfill   # queues the work
+bin/rails inference:status     # progress
+```
+
+If the API booted before the sidecar was ready, its log has `inference: dimension check skipped, adapter unavailable`. That check runs once at boot, so the line stays after the sidecar comes up; restart `rails server` to run it again.
+
+Model choice, settings and the sidecar's own tests are in [`sidecar/README.md`](sidecar/README.md).
 
 ### Frontend (`gallery-app/`)
 
