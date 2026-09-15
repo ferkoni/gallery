@@ -74,6 +74,120 @@ RSpec.describe Albums::ZipDownload, type: :service do
     end
   end
 
+  # The entry names are read back out of a real zip rather than recorded from the streamer:
+  # a path is what a zip is, and "Madrid//" instead of "Madrid/" is the kind of mistake only
+  # the real writer makes.
+  describe "a folder with subfolders" do
+    let(:zip_io) { StringIO.new.tap(&:binmode) }
+
+    # album ─┬─ madrid ── day_two
+    #        └─ lisbon (empty)
+    let!(:madrid) { create(:album, user: user, name: "Madrid", parent: album) }
+    let!(:day_two) { create(:album, user: user, name: "Day 2", parent: madrid) }
+    let!(:lisbon) { create(:album, user: user, name: "Lisbon", parent: album) }
+
+    before do
+      allow(storage).to receive(:multipart_put) { |_key, content_type:, &block| block.call(zip_io) }
+      allow(storage).to receive(:stream_object).and_yield("fake bytes")
+    end
+
+    def entry_names
+      call
+      zip_io.rewind
+      ZipKit::FileReader.new.read_zip_structure(io: zip_io).map(&:filename)
+    end
+
+    # A unique key per photo, since s3_key is unique — the basename is what the zip entry
+    # is built from, and two photos may well share one.
+    def photo(album, basename)
+      create(:image, user: user, album: album,
+                     s3_key: "albums/#{album.id}/#{SecureRandom.uuid}/#{basename}")
+    end
+
+    it "files each photo under its own folder's directory" do
+      photo(album, "root.jpg")
+      photo(madrid, "madrid.jpg")
+      photo(day_two, "deep.jpg")
+
+      expect(entry_names).to include("root.jpg", "Madrid/madrid.jpg", "Madrid/Day 2/deep.jpg")
+    end
+
+    it "writes a directory for a subfolder holding no photos at all" do
+      expect(entry_names).to include("Lisbon/")
+    end
+
+    it "leaves the root folder's own photos at the top, as before folders could nest" do
+      photo(album, "root.jpg")
+
+      expect(entry_names).to include("root.jpg")
+    end
+
+    it "does not reach into another user's folders" do
+      trespasser = create(:album, user: create(:user), name: "Theirs")
+      trespasser.update_columns(parent_id: madrid.id)
+
+      expect(entry_names).not_to include(a_string_including("Theirs"))
+    end
+
+    describe "names that are not path segments" do
+      it "neutralises a name that would climb out of the zip" do
+        create(:album, user: user, name: "../../etc", parent: album)
+
+        expect(entry_names).to include("__.._etc/")
+      end
+
+      it "replaces slashes and backslashes, which would invent directories" do
+        create(:album, user: user, name: "a/b\\c", parent: album)
+
+        expect(entry_names).to include("a_b_c/")
+      end
+
+      it "falls back to a placeholder when nothing usable is left" do
+        create(:album, user: user, name: "...", parent: album)
+
+        expect(entry_names).to include("_/")
+      end
+    end
+
+    it "de-duplicates sibling folders that sanitise to the same name" do
+      create(:album, user: user, name: "Madrid", parent: album)
+
+      expect(entry_names.grep(/Madrid/)).to include("Madrid/", "Madrid (1)/")
+    end
+
+    it "leaves the same filename in two directories alone, since the paths differ" do
+      photo(madrid, "photo.jpg")
+      photo(day_two, "photo.jpg")
+
+      expect(entry_names).to include("Madrid/photo.jpg", "Madrid/Day 2/photo.jpg")
+    end
+
+    it "still de-duplicates two photos with the same filename in one directory" do
+      photo(madrid, "photo.jpg")
+      photo(madrid, "photo.jpg")
+
+      expect(entry_names).to include("Madrid/photo.jpg", "Madrid/photo (1).jpg")
+    end
+  end
+
+  describe "a flat folder" do
+    let(:zip_io) { StringIO.new.tap(&:binmode) }
+
+    before do
+      allow(storage).to receive(:multipart_put) { |_key, content_type:, &block| block.call(zip_io) }
+      allow(storage).to receive(:stream_object).and_yield("fake bytes")
+    end
+
+    it "produces exactly the entries it did before folders could nest" do
+      call
+      zip_io.rewind
+      names = ZipKit::FileReader.new.read_zip_structure(io: zip_io).map(&:filename)
+
+      # No directories, and the same per-zip de-duplication of identical basenames.
+      expect(names).to eq([ "photo.jpg", "photo (1).jpg" ])
+    end
+  end
+
   describe "missing credential" do
     it "returns success?: false" do
       result = described_class.call(album: album, user: user, storage: nil, token: token)

@@ -44,6 +44,43 @@ RSpec.describe Api::ImagesController, type: :controller do
       expect(ids).to eq([ image_in.id ])
     end
 
+    # "Search in this folder", so it spans the subtree. The nested route below is "what is
+    # in this folder" and does not. Both set params[:album_id]; only album_scope tells them
+    # apart, which is why each has its own example — a swap would pass every other test in
+    # this file.
+    it "includes images filed in a subfolder" do
+      subfolder = create(:album, user: user, parent: album)
+      here = create(:image, user: user, album: album)
+      below = create(:image, user: user, album: subfolder)
+
+      get :index, params: { album_id: album.id }, as: :json
+
+      ids = JSON.parse(response.body).dig("data").map { |i| i["id"].to_i }
+      expect(ids).to match_array([ here.id, below.id ])
+    end
+
+    it "keeps the subtree when searching inside a folder" do
+      subfolder = create(:album, user: user, parent: album)
+      below = create(:image, user: user, album: subfolder, title: "Sunset over Madrid")
+      create(:image, user: user, album: subfolder, title: "Something else")
+
+      get :index, params: { album_id: album.id, q: "sunset" }, as: :json
+
+      ids = JSON.parse(response.body).dig("data").map { |i| i["id"].to_i }
+      expect(ids).to eq([ below.id ])
+    end
+
+    it "can be narrowed to the folder itself with ?album_scope=direct" do
+      subfolder = create(:album, user: user, parent: album)
+      here = create(:image, user: user, album: album)
+      create(:image, user: user, album: subfolder)
+
+      get :index, params: { album_id: album.id, album_scope: "direct" }, as: :json
+
+      ids = JSON.parse(response.body).dig("data").map { |i| i["id"].to_i }
+      expect(ids).to eq([ here.id ])
+    end
+
     it "includes a presigned url for each image" do
       create(:image, user: user, album: album)
 
@@ -178,6 +215,32 @@ RSpec.describe Api::ImagesController, type: :controller do
 
   describe "GET #index (nested: /albums/:album_id/images)" do
     before { sign_in user }
+
+    # Controller specs bypass routing, so the rest of this block passes album_scope by
+    # hand. This is the example that proves the route supplies it.
+    it "is routed with album_scope: direct" do
+      expect(Rails.application.routes.recognize_path("/api/albums/1/images", method: :get))
+        .to include(album_scope: "direct")
+    end
+
+    it "excludes images filed in a subfolder" do
+      subfolder = create(:album, user: user, parent: album)
+      here = create(:image, user: user, album: album)
+      create(:image, user: user, album: subfolder)
+
+      get :index, params: { album_id: album.id, album_scope: "direct" }, as: :json
+
+      ids = JSON.parse(response.body).dig("data").map { |i| i["id"].to_i }
+      expect(ids).to eq([ here.id ])
+    end
+
+    it "returns 404 for another user's folder" do
+      stranger = create(:album, user: other_user)
+
+      get :index, params: { album_id: stranger.id, album_scope: "direct" }, as: :json
+
+      expect(response).to have_http_status(:not_found)
+    end
 
     it "returns http ok" do
       get :index, params: { album_id: album.id }, as: :json

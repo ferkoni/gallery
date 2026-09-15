@@ -18,8 +18,10 @@ module Albums
     def call
       return failure("No S3 credentials on file") unless @storage
 
-      images = Image.with_user(@user).where(album: @album)
-      zip_key = stream_zip(images)
+      # The whole subtree, with each folder's photos under its own directory.
+      dirs = Albums::ZipPaths.for(@album, Albums::Tree.subtree(@album))
+      images = Image.with_user(@user).where(album_id: dirs.keys).order(:album_id, :id)
+      zip_key = stream_zip(dirs, images)
       url = @storage.presigned_get_url(
         zip_key,
         expires_in: 900,
@@ -37,7 +39,7 @@ module Albums
       @zip_filename ||= "#{@album.name} #{Date.today.strftime('%Y-%m-%d')}.zip"
     end
 
-    def stream_zip(images)
+    def stream_zip(dirs, images)
       # Key is derived from a stable per-download token (the AsyncTask id) rather
       # than a random UUID, so a retry overwrites the same object instead of
       # orphaning a new zip in the bucket. The user-facing, date-stamped filename
@@ -45,9 +47,17 @@ module Albums
       key = "downloads/#{@user.id}/#{@token}/album.zip"
       @storage.multipart_put(key, content_type: "application/zip") do |sink|
         ZipKit::Streamer.open(sink) do |zip|
-          seen = Hash.new(0)
+          # Every subfolder is written as a directory first, so one that holds no photos
+          # still appears when the zip is unpacked. chomp because add_empty_directory
+          # appends the trailing slash itself, and "Madrid//" is not "Madrid/".
+          dirs.each_value { |dir| zip.add_empty_directory(dirname: dir.chomp("/")) if dir.present? }
+
+          # Duplicate filenames are resolved per directory: the same basename in two
+          # folders is not renamed, because the paths already differ.
+          seen = Hash.new { |h, dir| h[dir] = Hash.new(0) }
           images.each do |image|
-            entry_name = unique_name(File.basename(image.s3_key), seen)
+            dir = dirs.fetch(image.album_id)
+            entry_name = dir + unique_name(File.basename(image.s3_key), seen[dir])
             zip.write_stored_file(entry_name) do |entry_sink|
               @storage.stream_object(image.s3_key) do |chunk|
                 entry_sink << chunk

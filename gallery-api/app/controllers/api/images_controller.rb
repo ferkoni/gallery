@@ -72,16 +72,22 @@ class Api::ImagesController < ApplicationController
 
   protected
 
-  # GET /api/images?album_id=&page=
-  # GET /api/albums/:album_id/images?page=
+  # GET /api/images?album_id=&page=          — the album and everything under it
+  # GET /api/albums/:album_id/images?page=   — that album exactly
   # Scoped to the current user; album-filtered when :album_id is present.
   # album raises RecordNotFound (→ 404) if the album doesn't exist or belongs
   # to another user, so no images from other users can ever leak.
   def resources
     scope = Image.with_user(current_user).includes(:album).order(created_at: :desc)
-    scope = scope.where(album_id: album.id) if album
+    scope = scope.where(album_id: album_ids) if album
     scope = scope.where(favorited: true) if params[:favorited] == "true"
     apply_filters(scope).page(params[:page])
+  end
+
+  # The nested route sets album_scope: "direct" as a routing default. A client may send
+  # ?album_scope=direct on the flat route too; that only narrows its own results.
+  def album_ids
+    params[:album_scope] == "direct" ? album.id : Albums::Tree.subtree_ids(album)
   end
 
   def album

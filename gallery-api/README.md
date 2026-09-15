@@ -56,13 +56,13 @@ All endpoints are under `/api`. Every request except login and register requires
 | `POST` | `/api/users` | Register |
 | `POST` | `/api/users/login` | Login — returns JWT |
 | `DELETE` | `/api/users/logout` | Logout — rotates JTI, invalidating the token |
-| `GET` | `/api/albums` | List albums — newest first, paginated, filterable by `q` (name substring) |
+| `GET` | `/api/albums` | List top-level albums — newest first, paginated. `parent_id` lists one album's children; `q` (name substring) searches every album at any depth and ignores `parent_id`; `exclude_subtree` hides an album and its descendants |
 | `POST` | `/api/albums` | Create album |
 | `GET` | `/api/albums/:id` | Get album |
 | `PATCH` | `/api/albums/:id` | Update album |
-| `DELETE` | `/api/albums/:id` | Delete album and all its S3 objects |
-| `GET` | `/api/albums/:id/images` | List images in album (paginated) |
-| `GET` | `/api/images` | List images — filterable by `album_id`, `favorited`, `q` (search) |
+| `DELETE` | `/api/albums/:id` | Delete album, its sub-albums, and all their S3 objects |
+| `GET` | `/api/albums/:id/images` | List images in album exactly, no sub-albums (paginated) |
+| `GET` | `/api/images` | List images — filterable by `album_id` (the album **and its sub-albums**), `favorited`, `q` (search) |
 | `POST` | `/api/images` | Upload image (multipart/form-data) |
 | `GET` | `/api/images/:id` | Get image |
 | `PATCH` | `/api/images/:id` | Update image metadata |
