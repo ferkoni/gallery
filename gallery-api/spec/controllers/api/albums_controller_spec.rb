@@ -5,6 +5,8 @@ RSpec.describe Api::AlbumsController, type: :controller do
   let(:other_user) { create(:user) }
 
   def index_ids = JSON.parse(response.body).fetch("data").map { |a| a["id"].to_i }
+  def attributes = JSON.parse(response.body).fetch("data").fetch("attributes")
+  def row_attributes = JSON.parse(response.body).fetch("data").map { it["attributes"] }
 
   describe "GET #index" do
     before { sign_in user }
@@ -89,6 +91,95 @@ RSpec.describe Api::AlbumsController, type: :controller do
       end
     end
 
+    context "with a tree" do
+      # root ─┬─ madrid ── day_two
+      #       └─ lisbon
+      let!(:root) { create(:album, user: user, name: "Trips") }
+      let!(:madrid) { create(:album, user: user, name: "Madrid", parent: root) }
+      let!(:day_two) { create(:album, user: user, name: "Day 2", parent: madrid) }
+      let!(:lisbon) { create(:album, user: user, name: "Lisbon", parent: root) }
+
+      it "returns top-level folders only" do
+        get :index, as: :json
+
+        expect(index_ids).to eq([ root.id ])
+      end
+
+      it "returns one folder's children with ?parent_id=" do
+        get :index, params: { parent_id: root.id }, as: :json
+
+        expect(index_ids).to eq([ lisbon.id, madrid.id ])
+      end
+
+      it "returns 404 for another user's ?parent_id=" do
+        stranger = create(:album, user: other_user)
+
+        get :index, params: { parent_id: stranger.id }, as: :json
+
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it "carries parent_id on every row" do
+        get :index, params: { parent_id: root.id }, as: :json
+
+        expect(row_attributes.map { it["parent_id"] }).to all(eq(root.id))
+      end
+
+      it "searches the whole forest under ?q=, at any depth" do
+        get :index, params: { q: "day" }, as: :json
+
+        expect(index_ids).to eq([ day_two.id ])
+      end
+
+      it "ignores the level entirely under ?q=, so parent_id does not narrow it" do
+        get :index, params: { q: "day", parent_id: root.id }, as: :json
+
+        expect(index_ids).to eq([ day_two.id ])
+      end
+
+      it "gives each search hit its path, since sibling names may repeat" do
+        get :index, params: { q: "day" }, as: :json
+
+        expect(row_attributes.first["ancestors"]).to eq(
+          [ { "id" => root.id, "name" => "Trips" }, { "id" => madrid.id, "name" => "Madrid" } ]
+        )
+      end
+
+      it "computes the whole page's paths in one query" do
+        queries = count_selects { get :index, params: { q: "i" }, as: :json }
+
+        expect(queries.grep(/WITH RECURSIVE chain/).size).to eq(1)
+      end
+
+      it "leaves ancestors off a plain level listing, which needs no path" do
+        get :index, params: { parent_id: root.id }, as: :json
+
+        expect(row_attributes.first).not_to have_key("ancestors")
+      end
+
+      describe "?exclude_subtree=" do
+        it "hides the folder and everything under it, so the picker cannot offer a cycle" do
+          get :index, params: { q: "i", exclude_subtree: madrid.id }, as: :json
+
+          expect(index_ids).not_to include(madrid.id, day_two.id)
+        end
+
+        it "leaves the folder's ancestors and siblings alone" do
+          get :index, params: { q: "i", exclude_subtree: madrid.id }, as: :json
+
+          expect(index_ids).to include(root.id)
+        end
+
+        it "returns 404 for another user's folder" do
+          stranger = create(:album, user: other_user)
+
+          get :index, params: { exclude_subtree: stranger.id }, as: :json
+
+          expect(response).to have_http_status(:not_found)
+        end
+      end
+    end
+
     context "without a token" do
       before { sign_out user }
 
@@ -113,6 +204,31 @@ RSpec.describe Api::AlbumsController, type: :controller do
       other_album = create(:album, user: other_user)
       get :show, params: { id: other_album.id }, as: :json
       expect(response).to have_http_status(:not_found)
+    end
+
+    # #resources is one level of the tree. If the member actions went through it, every
+    # folder below the top level would answer 404.
+    it "reaches a folder at any depth, not only a top-level one" do
+      nested = create(:album, user: user, parent: create(:album, user: user, parent: album))
+
+      get :show, params: { id: nested.id }, as: :json
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "carries the breadcrumb trail, root first and without the folder itself" do
+      parent = create(:album, user: user, name: "Trips")
+      nested = create(:album, user: user, name: "Madrid", parent: parent)
+
+      get :show, params: { id: nested.id }, as: :json
+
+      expect(attributes["ancestors"]).to eq([ { "id" => parent.id, "name" => "Trips" } ])
+    end
+
+    it "carries an empty trail for a top-level folder" do
+      get :show, params: { id: album.id }, as: :json
+
+      expect(attributes["ancestors"]).to eq([])
     end
 
     context "without a token" do
@@ -144,6 +260,35 @@ RSpec.describe Api::AlbumsController, type: :controller do
       post :create, params: valid_params, as: :json
       json = JSON.parse(response.body)
       expect(json.dig("data", "attributes", "name")).to eq("Vacation")
+    end
+
+    context "with a parent" do
+      it "creates the folder underneath it" do
+        parent = create(:album, user: user)
+
+        post :create, params: { album: { name: "Madrid", parent_id: parent.id } }, as: :json
+
+        expect(attributes["parent_id"]).to eq(parent.id)
+      end
+
+      # 404, not 422: the same answer show gives for a folder that is not theirs, so the
+      # API never confirms a stranger's id exists.
+      it "returns 404 when the parent belongs to somebody else" do
+        stranger = create(:album, user: other_user)
+
+        post :create, params: { album: { name: "Madrid", parent_id: stranger.id } }, as: :json
+
+        expect(response).to have_http_status(:not_found)
+      end
+
+      # A new folder has no descendants, so there is no cycle to check and nothing to
+      # serialise against.
+      it "takes no tree lock" do
+        parent = create(:album, user: user)
+
+        expect(User).not_to receive(:lock)
+        post :create, params: { album: { name: "Madrid", parent_id: parent.id } }, as: :json
+      end
     end
 
     context "with a missing name" do
@@ -188,6 +333,67 @@ RSpec.describe Api::AlbumsController, type: :controller do
       other_album = create(:album, user: other_user)
       patch :update, params: { id: other_album.id, album: { name: "Hacked" } }, as: :json
       expect(response).to have_http_status(:not_found)
+    end
+
+    describe "moving the folder" do
+      let!(:destination) { create(:album, user: user) }
+
+      it "files it under the new parent" do
+        patch :update, params: { id: album.id, album: { parent_id: destination.id } }, as: :json
+
+        expect(album.reload.parent_id).to eq(destination.id)
+      end
+
+      # Strong parameters already tell these two apart: an omitted key is absent from the
+      # permitted hash, an explicit null is present and nil.
+      it "leaves the folder where it is when parent_id is omitted" do
+        album.update!(parent: destination)
+
+        patch :update, params: { id: album.id, album: { name: "Renamed" } }, as: :json
+
+        expect(album.reload.parent_id).to eq(destination.id)
+      end
+
+      it "moves the folder to the top level when parent_id is explicitly null" do
+        album.update!(parent: destination)
+
+        patch :update, params: { id: album.id, album: { parent_id: nil } }, as: :json
+
+        expect(album.reload.parent_id).to be_nil
+      end
+
+      it "returns 404 when the new parent belongs to somebody else" do
+        stranger = create(:album, user: other_user)
+
+        patch :update, params: { id: album.id, album: { parent_id: stranger.id } }, as: :json
+
+        expect(response).to have_http_status(:not_found)
+        expect(album.reload.parent_id).to be_nil
+      end
+
+      it "returns 422 when the new parent is one of the folder's own subfolders" do
+        child = create(:album, user: user, parent: album)
+
+        patch :update, params: { id: album.id, album: { parent_id: child.id } }, as: :json
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(JSON.parse(response.body).dig("errors", "parent_id"))
+          .to include("cannot be the folder itself or one of its subfolders")
+      end
+
+      it "returns 422 when the new parent is the folder itself" do
+        patch :update, params: { id: album.id, album: { parent_id: album.id } }, as: :json
+
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+
+      # The cycle check reads the tree and then writes it, so it has to be serialised
+      # against the same user's other moves.
+      it "runs inside the tree lock" do
+        expect(User).to receive(:lock).and_call_original
+
+        patch :update, params: { id: album.id, album: { parent_id: destination.id } }, as: :json
+      end
     end
 
     context "without a token" do
@@ -235,6 +441,15 @@ RSpec.describe Api::AlbumsController, type: :controller do
       other_album = create(:album, user: other_user)
       delete :destroy, params: { id: other_album.id }, as: :json
       expect(response).to have_http_status(:not_found)
+    end
+
+    # Deliberately not locked: Images::AlbumDestroy calls S3, and holding a transaction
+    # open across that round-trip is what the service's staleness check exists to avoid.
+    it "takes no tree lock" do
+      allow(Images::AlbumDestroy).to receive(:call).and_return(success_result)
+
+      expect(User).not_to receive(:lock)
+      delete :destroy, params: { id: album.id }, as: :json
     end
 
     context "without a token" do

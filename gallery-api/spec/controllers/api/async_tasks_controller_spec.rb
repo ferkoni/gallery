@@ -131,6 +131,26 @@ RSpec.describe Api::AsyncTasksController, type: :controller do
         post :create, params: { async_task: { task_type: "album_download", payload: { album_id: empty_album.id } } }, as: :json
         expect(JSON.parse(response.body)["errors"]).to eq("Album has no images")
       end
+
+      # The zip contains the whole subtree, so a folder holding nothing but subfolders full
+      # of photos is downloadable — the validator used to refuse it on the folder's own
+      # images, and the UI could not even start the download.
+      it "accepts a folder whose only photos are in a subfolder" do
+        subfolder = create(:album, user: user, parent: empty_album)
+        create(:image, user: user, album: subfolder)
+
+        post :create, params: { async_task: { task_type: "album_download", payload: { album_id: empty_album.id } } }, as: :json
+
+        expect(response).to have_http_status(:created)
+      end
+
+      it "still refuses a folder whose whole subtree is empty" do
+        create(:album, user: user, parent: empty_album)
+
+        post :create, params: { async_task: { task_type: "album_download", payload: { album_id: empty_album.id } } }, as: :json
+
+        expect(response).to have_http_status(:unprocessable_content)
+      end
     end
 
     context "when album belongs to another user" do

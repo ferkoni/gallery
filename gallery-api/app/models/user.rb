@@ -1,3 +1,7 @@
+# The users row carries one meaning beyond the user: Api::AlbumsController#with_tree_lock
+# locks it while moving a folder, so that one user's moves are serialised and two of them
+# cannot each pass a cycle check against a tree the other is about to change. Nothing else
+# reads that lock, and it says nothing about the columns here.
 class User < ApplicationRecord
   include Devise::JWT::RevocationStrategies::JTIMatcher
 
