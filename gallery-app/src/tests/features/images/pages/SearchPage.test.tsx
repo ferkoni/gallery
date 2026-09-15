@@ -41,6 +41,8 @@ function stubFolders(albums: Album[]) {
     fetchNextPage: vi.fn(),
     hasNextPage: false,
     isFetchingNextPage: false,
+    isPending: false,
+    isPlaceholderData: false,
   });
 }
 

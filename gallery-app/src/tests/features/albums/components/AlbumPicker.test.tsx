@@ -22,12 +22,33 @@ const album = (id: number, name: string): Album => ({
 
 const fetchNextPage = vi.fn();
 
-function stubPages(pages: Album[][], hasNextPage = false, isFetchingNextPage = false) {
+type QueryState = {
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  // True while the rows on screen still belong to the previous name filter.
+  isPlaceholderData?: boolean;
+};
+
+function stubPages(pages: Album[][], state: QueryState = {}) {
   mockUseInfiniteAlbums.mockReturnValue({
     data: { pages: pages.map(data => ({ data, meta: {} })) },
     fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    hasNextPage: state.hasNextPage ?? false,
+    isFetchingNextPage: state.isFetchingNextPage ?? false,
+    isPending: false,
+    isPlaceholderData: state.isPlaceholderData ?? false,
+  });
+}
+
+// Nothing loaded yet: no data at all, which is what a first open looks like.
+function stubPending() {
+  mockUseInfiniteAlbums.mockReturnValue({
+    data: undefined,
+    fetchNextPage,
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    isPending: true,
+    isPlaceholderData: false,
   });
 }
 
@@ -112,6 +133,40 @@ describe('AlbumPicker', () => {
     expect(screen.getByTestId('album-picker-empty')).toBeInTheDocument();
   });
 
+  // Every keystroke starts a fresh query, which has nothing cached. Showing the previous
+  // filter's rows until the new ones arrive is what keeps typing from blinking.
+  describe('while a new name filter is in flight', () => {
+    it('keeps the folders already on screen instead of emptying the list', async () => {
+      stubPages([[album(1, 'Holidays')]], { isPlaceholderData: true });
+      render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+      expect(screen.getByTestId('album-picker-option-1')).toBeInTheDocument();
+      expect(screen.queryByTestId('album-picker-empty')).not.toBeInTheDocument();
+    });
+
+    it('does not page on from a list that is about to be replaced', async () => {
+      stubPages([[album(1, 'Holidays')]], { hasNextPage: true, isPlaceholderData: true });
+      render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+      intersect();
+
+      expect(fetchNextPage).not.toHaveBeenCalled();
+    });
+  });
+
+  it('says it is still loading rather than that nothing matches, before the first page', async () => {
+    stubPending();
+    render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+
+    await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+    expect(screen.getByTestId('album-picker-loading')).toBeInTheDocument();
+    expect(screen.queryByTestId('album-picker-empty')).not.toBeInTheDocument();
+  });
+
   it('reports the folder that was clicked', async () => {
     const onChange = vi.fn();
     render(<AlbumPicker value={undefined} onChange={onChange} />);
@@ -134,7 +189,7 @@ describe('AlbumPicker', () => {
   });
 
   it('loads the next page when the sentinel scrolls into view', async () => {
-    stubPages([[album(1, 'Holidays')]], true);
+    stubPages([[album(1, 'Holidays')]], { hasNextPage: true });
     render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
@@ -144,7 +199,7 @@ describe('AlbumPicker', () => {
   });
 
   it('waits for the sentinel to actually come into view', async () => {
-    stubPages([[album(1, 'Holidays')]], true);
+    stubPages([[album(1, 'Holidays')]], { hasNextPage: true });
     render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
@@ -164,7 +219,7 @@ describe('AlbumPicker', () => {
   });
 
   it('does not ask for the same page twice while it is still loading', async () => {
-    stubPages([[album(1, 'Holidays')]], true, true);
+    stubPages([[album(1, 'Holidays')]], { hasNextPage: true, isFetchingNextPage: true });
     render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));

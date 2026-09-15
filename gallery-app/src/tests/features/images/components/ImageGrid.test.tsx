@@ -24,6 +24,8 @@ vi.mock('@/features/albums/albums', () => ({
     fetchNextPage: vi.fn(),
     hasNextPage: false,
     isFetchingNextPage: false,
+    isPending: false,
+    isPlaceholderData: false,
   })),
 }));
 

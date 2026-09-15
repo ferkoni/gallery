@@ -18,7 +18,7 @@ export function AlbumPicker({ value, onChange, placeholder, allowClear, id }: Pr
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isPending, isPlaceholderData } =
     useInfiniteAlbums(debouncedQuery || undefined);
   const albums = useMemo(() => data?.pages.flatMap(page => page.data) ?? [], [data]);
 
@@ -57,7 +57,13 @@ export function AlbumPicker({ value, onChange, placeholder, allowClear, id }: Pr
     onSelectedItemChange: ({ selectedItem }) => onChange(selectedItem?.id),
   });
 
-  const sentinelRef = useSentinel(isOpen && hasNextPage && !isFetchingNextPage, fetchNextPage);
+  // Not while showing placeholder data: the sentinel sits under the previous filter's
+  // rows, and paging from there would append the new filter's second page to a list
+  // whose first page is not on screen yet.
+  const sentinelRef = useSentinel(
+    isOpen && hasNextPage && !isFetchingNextPage && !isPlaceholderData,
+    fetchNextPage
+  );
 
   return (
     <div className="relative">
@@ -97,13 +103,22 @@ export function AlbumPicker({ value, onChange, placeholder, allowClear, id }: Pr
           <li
             key={album.id}
             {...getItemProps({ item: album, index })}
-            className={`px-3 py-2 text-sm cursor-pointer ${highlightedIndex === index ? 'bg-blue-50' : ''}`}
+            // Dimmed while the rows belong to the previous filter, so the swap reads as
+            // a refresh rather than a jump.
+            className={`px-3 py-2 text-sm cursor-pointer transition-opacity ${isPlaceholderData ? 'opacity-60' : ''} ${highlightedIndex === index ? 'bg-blue-50' : ''}`}
             data-testid={`album-picker-option-${album.id}`}
           >
             {album.name}
           </li>
         ))}
-        {isOpen && albums.length === 0 && (
+        {/* Nothing loaded yet is not the same as nothing matching, and saying the second
+            while the first is true is the blink this replaces. */}
+        {isOpen && isPending && (
+          <li className="px-3 py-2 text-sm text-gray-400" data-testid="album-picker-loading">
+            Loading folders…
+          </li>
+        )}
+        {isOpen && !isPending && albums.length === 0 && (
           <li className="px-3 py-2 text-sm text-gray-400" data-testid="album-picker-empty">
             No folders match.
           </li>
