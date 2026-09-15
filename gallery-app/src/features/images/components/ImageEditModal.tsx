@@ -160,7 +160,7 @@ export function ImageEditModal({ image, onClose, initialMode = 'edit' }: Props) 
               </div>
 
               <div className="flex flex-col gap-1">
-                <label htmlFor="edit-album" className="text-sm font-medium text-gray-700">Album</label>
+                <label htmlFor="edit-album" className="text-sm font-medium text-gray-700">Folder</label>
                 <select
                   id="edit-album"
                   {...register('album_id')}

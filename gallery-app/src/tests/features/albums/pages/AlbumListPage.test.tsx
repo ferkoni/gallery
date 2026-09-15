@@ -29,13 +29,13 @@ describe("AlbumListPage", () => {
     expect(screen.getByTestId("loading-label")).toBeInTheDocument();
   });
 
-  it('renders Failed to load albums. on error', () => {
+  it('renders Failed to load folders. on error', () => {
     (usePagedListAlbum as Mock).mockReturnValue({ isPending: false, isError: true, data: undefined });
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
     expect(screen.getByTestId("failed-label")).toBeInTheDocument();
   });
 
-  it('renders No albums yet. on empty data', () => {
+  it('renders No folders yet. on empty data', () => {
     (usePagedListAlbum as Mock).mockReturnValue({
       isPending: false,
       isError: false,
@@ -52,7 +52,7 @@ describe("AlbumListPage", () => {
       data: pagedData([{ id: 10, name: 'AlbumTest', description: null, created_at: '' }]),
     });
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
-    expect(screen.getByRole('link', { name: 'AlbumTest' })).toHaveAttribute('href', '/albums/10');
+    expect(screen.getByRole('link', { name: 'AlbumTest' })).toHaveAttribute('href', '/folders/10');
   });
 
   it('renders album cards with items and button', () => {

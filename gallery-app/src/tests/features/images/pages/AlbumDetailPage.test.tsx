@@ -9,7 +9,7 @@ vi.mock('@/features/albums/albums', () => ({ useGetAlbum: vi.fn() }));
 vi.mock('@/features/images/hooks/useImages', () => ({ useAlbumImages: vi.fn() }));
 vi.mock('@/features/downloads/components/DownloadAlbumButton', () => ({
   DownloadAlbumButton: ({ disabled }: { disabled?: boolean }) => (
-    <button data-testid="download-button" disabled={disabled}>Download Album</button>
+    <button data-testid="download-button" disabled={disabled}>Download Folder</button>
   ),
 }));
 
@@ -50,7 +50,7 @@ describe('AlbumDetailPage', () => {
   it('renders error state on fetch failure', () => {
     mockUseGetAlbum.mockReturnValue({ isPending: false, isError: true, data: undefined });
     renderPage();
-    expect(screen.getByText('Failed to load album.')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load folder.')).toBeInTheDocument();
   });
 
   it('renders album name and description', () => {

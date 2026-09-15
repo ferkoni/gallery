@@ -8,14 +8,14 @@ export function AlbumNewPage() {
 
   return (
     <AlbumForm
-      title="New Album"
+      title="New Folder"
       submitLabel="Create"
       pendingLabel="Creating..."
-      errorMessage="Failed to create album."
+      errorMessage="Failed to create folder."
       isPending={createAlbum.isPending}
       isError={createAlbum.isError}
-      onCancel={() => navigate('/albums')}
-      onSubmit={(data) => createAlbum.mutate(data, { onSuccess: () => navigate('/albums') })}
+      onCancel={() => navigate('/folders')}
+      onSubmit={(data) => createAlbum.mutate(data, { onSuccess: () => navigate('/folders') })}
     />
   );
 }

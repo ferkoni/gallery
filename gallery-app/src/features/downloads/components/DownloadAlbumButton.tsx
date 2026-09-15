@@ -17,7 +17,7 @@ export function DownloadAlbumButton({ albumId, albumName, disabled }: Props) {
         data-testid="download-button"
         className="text-sm px-3 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
       >
-        {isLoading ? 'Starting…' : 'Download Album'}
+        {isLoading ? 'Starting…' : 'Download Folder'}
       </button>
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>

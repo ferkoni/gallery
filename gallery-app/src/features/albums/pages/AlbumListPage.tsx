@@ -13,7 +13,7 @@ export function AlbumListPage() {
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
 
   if (isPending) return <p className="p-6 text-gray-500" data-testid="loading-label">Loading...</p>;
-  if (isError) return <p className="p-6 text-red-500" data-testid="failed-label">Failed to load albums.</p>;
+  if (isError) return <p className="p-6 text-red-500" data-testid="failed-label">Failed to load folders.</p>;
 
   const albums = data.data;
   const meta = data.meta;
@@ -22,18 +22,18 @@ export function AlbumListPage() {
     <>
       <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Albums</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Folders</h1>
           <Link
-            to="/albums/new"
+            to="/folders/new"
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
             data-testid="album-new-link"
           >
-            + New Album
+            + New Folder
           </Link>
         </div>
 
         {albums.length === 0 ? (
-          <p className="text-gray-500" data-testid="no-album-label">No albums yet.</p>
+          <p className="text-gray-500" data-testid="no-album-label">No folders yet.</p>
         ) : (
           <ul className="grid grid-cols-2 gap-4">
             {albums.map(album => (
@@ -43,7 +43,7 @@ export function AlbumListPage() {
                 data-testid={`album-card-${album.id}`}
               >
                 <Link
-                  to={`/albums/${album.id}`}
+                  to={`/folders/${album.id}`}
                   className="absolute inset-0 rounded-xl"
                   aria-label={album.name}
                 />
@@ -53,7 +53,7 @@ export function AlbumListPage() {
                 )}
                 <CardEditButton
                   onClick={() => setEditingAlbum(album)}
-                  aria-label="Edit album"
+                  aria-label="Edit folder"
                   data-testid={`edit-album-button-${album.id}`}
                 />
               </li>

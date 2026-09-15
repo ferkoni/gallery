@@ -46,10 +46,10 @@ describe("NavBar", () => {
     expect(screen.queryByText(/logout/i)).not.toBeInTheDocument();
   });
 
-  it("renders Albums, Settings and Logout when logged in", () => {
+  it("renders Folders, Settings and Logout when logged in", () => {
     renderNavBar("token");
 
-    expect(screen.getByRole("link", { name: /albums/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /folders/i })).toBeInTheDocument();
     expect(screen.getByTestId("settings-menu-button")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /logout/i })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /login/i })).not.toBeInTheDocument();
@@ -147,7 +147,7 @@ describe("NavBar", () => {
     });
 
     it("shows an empty input on non-search routes", () => {
-      renderNavBarAtPath("token", "/albums");
+      renderNavBarAtPath("token", "/folders");
       expect(screen.getByPlaceholderText("Search images…")).toHaveValue("");
     });
   });
