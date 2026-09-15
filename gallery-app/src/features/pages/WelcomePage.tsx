@@ -12,10 +12,10 @@ export function WelcomePage() {
       <h1 className="text-4xl font-bold text-gray-800 mb-4">Gallery</h1>
       <p className="text-gray-500 mb-8">Your photos, organized.</p>
       <Link
-        to={token ? '/albums' : '/login'}
+        to={token ? '/folders' : '/login'}
         className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
       >
-        {token ? 'Go to albums' : 'Get started'}
+        {token ? 'Go to folders' : 'Get started'}
       </Link>
     </main>
   );

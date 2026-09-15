@@ -24,7 +24,7 @@ describe('AlbumNewPage', () => {
     (useCreateAlbum as Mock).mockReturnValue({ mutate: vi.fn(), isPending: false, isError: false });
     render(<MemoryRouter><AlbumNewPage /></MemoryRouter>);
 
-    expect(screen.getByText('New Album')).toBeInTheDocument();
+    expect(screen.getByText('New Folder')).toBeInTheDocument();
     expect(screen.getByTestId('submit-button')).toHaveTextContent('Create');
   });
 
@@ -40,7 +40,7 @@ describe('AlbumNewPage', () => {
     (useCreateAlbum as Mock).mockReturnValue({ mutate: vi.fn(), isPending: false, isError: true });
     render(<MemoryRouter><AlbumNewPage /></MemoryRouter>);
 
-    expect(screen.getByTestId('error-label')).toHaveTextContent('Failed to create album.');
+    expect(screen.getByTestId('error-label')).toHaveTextContent('Failed to create folder.');
   });
 
   it('calls mutate with form data and navigates on success', async () => {
@@ -57,7 +57,7 @@ describe('AlbumNewPage', () => {
         { name: 'My Album', description: 'A description' },
         expect.objectContaining({ onSuccess: expect.any(Function) })
       );
-      expect(mockNavigate).toHaveBeenCalledWith('/albums');
+      expect(mockNavigate).toHaveBeenCalledWith('/folders');
     });
   });
 
@@ -67,6 +67,6 @@ describe('AlbumNewPage', () => {
 
     await userEvent.click(screen.getByTestId('cancel-button'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('/albums');
+    expect(mockNavigate).toHaveBeenCalledWith('/folders');
   });
 });

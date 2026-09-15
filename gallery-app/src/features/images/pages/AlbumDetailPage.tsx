@@ -11,9 +11,9 @@ export function AlbumDetailPage() {
   const { data: album, isPending, isError } = useGetAlbum(albumId, { enabled: !!id });
   const { data: imagesData } = useAlbumImages(albumId, 1, undefined, { enabled: !!id });
 
-  if (!id) return <p className="p-6 text-red-500">Invalid album.</p>;
+  if (!id) return <p className="p-6 text-red-500">Invalid folder.</p>;
   if (isPending) return <p className="p-6 text-gray-500">Loading...</p>;
-  if (isError || !album) return <p className="p-6 text-red-500">Failed to load album.</p>;
+  if (isError || !album) return <p className="p-6 text-red-500">Failed to load folder.</p>;
 
   const hasImages = (imagesData?.meta.total_count ?? 0) > 0;
 

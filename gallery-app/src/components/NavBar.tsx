@@ -44,7 +44,7 @@ export function NavBar() {
               onKeyDown={handleSearchKeyDown}
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
-            <Link to="/albums" className="text-gray-600 hover:text-gray-900">Albums</Link>
+            <Link to="/folders" className="text-gray-600 hover:text-gray-900">Folders</Link>
             <Link to="/favorites" className="text-gray-600 hover:text-gray-900">Favorites</Link>
 
             <div ref={settingsRef} className="relative">

@@ -134,13 +134,13 @@ export function SearchPage() {
         </div>
 
         <div className="flex flex-col gap-1 flex-1 min-w-40">
-          <label className="text-xs font-medium text-gray-500">Album</label>
+          <label className="text-xs font-medium text-gray-500">Folder</label>
           <select
             value={albumId ?? ''}
             onChange={e => setAlbumId(e.target.value ? Number(e.target.value) : undefined)}
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
           >
-            <option value="">All albums</option>
+            <option value="">All folders</option>
             {albums.map(album => (
               <option key={album.id} value={album.id}>{album.name}</option>
             ))}

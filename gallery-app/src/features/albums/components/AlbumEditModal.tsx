@@ -52,7 +52,7 @@ export function AlbumEditModal({ album, onClose }: Props) {
           id="album-edit-heading"
           className="text-lg font-semibold text-gray-800 mb-4"
         >
-          Edit album
+          Edit folder
         </h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
