@@ -32,7 +32,7 @@ const mockUseGetAlbum = useGetAlbum as Mock;
 const mockUseInfiniteAlbums = useInfiniteAlbums as Mock;
 
 const folder = (id: number, name: string): Album => ({
-  id, name, description: null, created_at: '2026-01-01T00:00:00.000Z',
+  id, name, description: null, parent_id: null, created_at: '2026-01-01T00:00:00.000Z',
 });
 
 function stubFolders(albums: Album[]) {
@@ -136,6 +136,19 @@ describe('SearchPage', () => {
 
       expect(screen.getByTestId('album-picker-input')).toHaveValue('Archive 2019');
       expect(mockUseSearchImages).toHaveBeenLastCalledWith(expect.objectContaining({ albumId: 40 }));
+    });
+
+    it('names a folder several levels down the same way', () => {
+      mockUseGetAlbum.mockReturnValue({
+        data: {
+          ...folder(40, 'Day 2'),
+          ancestors: [ { id: 1, name: 'Trips' }, { id: 2, name: 'Madrid' } ],
+        },
+      });
+
+      renderSearchPage('?album_id=40');
+
+      expect(screen.getByTestId('album-picker-input')).toHaveValue('Day 2');
     });
 
     it('drops the filter from the search and the URL when cleared', async () => {

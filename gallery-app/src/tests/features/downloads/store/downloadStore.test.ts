@@ -91,4 +91,34 @@ describe('downloadStore', () => {
       expect(useDownloadStore.getState().downloads[2]).toBeDefined();
     });
   });
+
+  // A refusal the server made before it minted a task has no task id, so the store mints
+  // one. Negative, so it can never collide with a real task.
+  describe('enqueueFailed', () => {
+    it('queues the folder as already failed, with the reason', () => {
+      useDownloadStore.getState().enqueueFailed(5, 'Summer 2026', 'Album has no images');
+
+      const item = Object.values(useDownloadStore.getState().downloads)[0];
+      expect(item).toMatchObject({
+        albumId: 5, albumName: 'Summer 2026', status: 'failed', error: 'Album has no images',
+      });
+      expect(item.taskId).toBeLessThan(0);
+    });
+
+    it('mints a distinct id each time, so one refusal never replaces another', () => {
+      useDownloadStore.getState().enqueueFailed(5, 'Summer', 'no images');
+      useDownloadStore.getState().enqueueFailed(6, 'Winter', 'no images');
+
+      expect(Object.keys(useDownloadStore.getState().downloads)).toHaveLength(2);
+    });
+
+    it('can be dismissed like any other item', () => {
+      useDownloadStore.getState().enqueueFailed(5, 'Summer', 'no images');
+      const { taskId } = Object.values(useDownloadStore.getState().downloads)[0];
+
+      useDownloadStore.getState().remove(taskId);
+
+      expect(useDownloadStore.getState().downloads[taskId]).toBeUndefined();
+    });
+  });
 });

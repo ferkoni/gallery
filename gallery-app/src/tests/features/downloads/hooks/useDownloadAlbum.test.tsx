@@ -3,6 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useDownloadAlbum } from '@/features/downloads/hooks/useDownloadAlbum';
 import { createDownloadTask } from '@/features/downloads/api/asyncTasksApi';
 import { useDownloadStore } from '@/features/downloads/store/downloadStore';
+import { AxiosError } from 'axios';
+
+// A 422 shaped the way the API explains a refusal.
+function refusal(message: string) {
+  const err = new AxiosError('Request failed with status code 422');
+  err.response = { status: 422, data: { errors: message } } as never;
+  return err;
+}
 
 vi.mock('@/features/downloads/api/asyncTasksApi');
 const mockCreateDownloadTask = vi.mocked(createDownloadTask);
@@ -76,7 +84,7 @@ describe('useDownloadAlbum', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('sets error and returns false when createDownloadTask throws', async () => {
+  it('returns false when createDownloadTask throws', async () => {
     mockCreateDownloadTask.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useDownloadAlbum());
@@ -84,29 +92,32 @@ describe('useDownloadAlbum', () => {
     await act(async () => { ok = await result.current.downloadAlbum(5, 'Summer 2026'); });
 
     expect(ok).toBe(false);
-    expect(result.current.error).toBe('Failed to start download');
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('clears error on a subsequent successful call', async () => {
-    mockCreateDownloadTask
-      .mockRejectedValueOnce(new Error('first fail'))
-      .mockResolvedValueOnce({ task_id: 99 });
+  // The refusal goes to the download queue rather than beside the button, so that a folder
+  // the server turns down and a download that fails later look the same to the user.
+  describe('a refusal that never became a task', () => {
+    it("queues the folder as failed, carrying the server's own sentence", async () => {
+      mockCreateDownloadTask.mockRejectedValue(refusal('Album has no images'));
 
-    const { result } = renderHook(() => useDownloadAlbum());
-    await act(() => result.current.downloadAlbum(5, 'Summer 2026'));
-    expect(result.current.error).toBe('Failed to start download');
+      const { result } = renderHook(() => useDownloadAlbum());
+      await act(() => result.current.downloadAlbum(5, 'Summer 2026'));
 
-    await act(() => result.current.downloadAlbum(5, 'Summer 2026'));
-    expect(result.current.error).toBeNull();
-  });
+      const item = Object.values(useDownloadStore.getState().downloads)[0];
+      expect(item).toMatchObject({
+        albumId: 5, albumName: 'Summer 2026', status: 'failed', error: 'Album has no images',
+      });
+    });
 
-  it('does not enqueue when createDownloadTask throws', async () => {
-    mockCreateDownloadTask.mockRejectedValue(new Error('Network error'));
+    it('falls back to a fixed sentence when the failure explains nothing', async () => {
+      mockCreateDownloadTask.mockRejectedValue(new Error('Network error'));
 
-    const { result } = renderHook(() => useDownloadAlbum());
-    await act(() => result.current.downloadAlbum(5, 'Summer 2026'));
+      const { result } = renderHook(() => useDownloadAlbum());
+      await act(() => result.current.downloadAlbum(5, 'Summer 2026'));
 
-    expect(Object.keys(useDownloadStore.getState().downloads)).toHaveLength(0);
+      const item = Object.values(useDownloadStore.getState().downloads)[0];
+      expect(item.error).toBe('Failed to start download');
+    });
   });
 });

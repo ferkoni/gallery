@@ -13,7 +13,7 @@ const mockUseDownloadAlbum = vi.mocked(useDownloadAlbum);
 
 beforeEach(() => {
   useDownloadStore.setState({ downloads: {} });
-  mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: vi.fn().mockResolvedValue(true), isLoading: false, error: null });
+  mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: vi.fn().mockResolvedValue(true), isLoading: false });
 });
 
 describe('DownloadQueue', () => {
@@ -38,7 +38,7 @@ describe('DownloadQueue', () => {
 
   it('removes the failed item and re-enqueues when retry succeeds', async () => {
     const mockDownloadAlbum = vi.fn().mockResolvedValue(true);
-    mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: mockDownloadAlbum, isLoading: false, error: null });
+    mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: mockDownloadAlbum, isLoading: false });
 
     useDownloadStore.getState().enqueue(1, 10, 'Summer');
     useDownloadStore.getState().setFailed(1, 'error');
@@ -52,7 +52,7 @@ describe('DownloadQueue', () => {
 
   it('keeps the failed item in the store when retry fails', async () => {
     const mockDownloadAlbum = vi.fn().mockResolvedValue(false);
-    mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: mockDownloadAlbum, isLoading: false, error: null });
+    mockUseDownloadAlbum.mockReturnValue({ downloadAlbum: mockDownloadAlbum, isLoading: false });
 
     useDownloadStore.getState().enqueue(1, 10, 'Summer');
     useDownloadStore.getState().setFailed(1, 'error');

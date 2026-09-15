@@ -25,7 +25,7 @@ const image: Image = {
 };
 
 const folder = (id: number, name: string): Album => ({
-  id, name, description: null, created_at: '2026-01-01T00:00:00.000Z',
+  id, name, description: null, parent_id: null, created_at: '2026-01-01T00:00:00.000Z',
 });
 
 // The folder picker pages through GET /api/albums and resolves the photo's own folder

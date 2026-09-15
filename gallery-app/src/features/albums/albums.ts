@@ -2,6 +2,7 @@ import { useInfiniteQuery, keepPreviousData } from "@tanstack/react-query";
 import { createCrudApi } from "@/lib/api/createCrudApi.ts";
 import { createCrudHooks } from "@/lib/api/createCrudHooks.ts";
 import { fetchAlbumPage } from "@/features/albums/api/albumsApi.ts";
+import type { AlbumPageParams } from "@/features/albums/api/albumsApi.ts";
 import type { Album } from "@/features/albums/types/album.ts";
 
 const albumsApi = createCrudApi<Album>('/api/albums');
@@ -12,12 +13,14 @@ export const {
   useUpdate: useUpdateAlbum,
 } = createCrudHooks<Album>('albums', albumsApi);
 
-// The picker's data: one page at a time, filtered by name server-side. The key sits under
+// One level of the tree at a time, or — under a name filter — matches from the whole of
+// it. Serves both the picker and the detail page's subfolder section. The key sits under
 // the ['albums'] prefix, so useCreateAlbum and useUpdateAlbum already invalidate it.
-export function useInfiniteAlbums(q?: string) {
+export function useInfiniteAlbums(params: AlbumPageParams) {
+  const { q, parentId, excludeSubtree } = params;
   return useInfiniteQuery({
-    queryKey: ['albums', 'infinite', q ?? ''],
-    queryFn: ({ pageParam }) => fetchAlbumPage(pageParam, q),
+    queryKey: ['albums', 'infinite', parentId ?? null, q ?? '', excludeSubtree ?? null],
+    queryFn: ({ pageParam }) => fetchAlbumPage(pageParam, params),
     initialPageParam: 1,
     getNextPageParam: (last) =>
       last.meta.current_page < last.meta.total_pages ? last.meta.current_page + 1 : undefined,

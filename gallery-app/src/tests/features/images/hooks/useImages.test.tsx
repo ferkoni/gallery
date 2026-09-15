@@ -80,6 +80,49 @@ describe('useUpdateImage', () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
   });
+
+  describe('moving a photo between folders', () => {
+    // Refetching only the folder it left leaves the destination's grid without it until
+    // something else happens to invalidate that cache.
+    it('refetches both ends of the move', async () => {
+      const moved: Image = { ...images[0], album_id: 2 };
+      mock.onPatch('/api/images/1').reply(200, { data: { attributes: moved } });
+
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      });
+      const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+
+      const { result } = renderHook(() => useUpdateImage(1), { wrapper });
+      act(() => { result.current.mutate({ id: 1, data: { album_id: 2 } }); });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['albums', 1, 'images'] });
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['albums', 2, 'images'] });
+    });
+
+    it('refetches one folder when the photo did not move', async () => {
+      const renamed: Image = { ...images[0], title: 'New Beach' };
+      mock.onPatch('/api/images/1').reply(200, { data: { attributes: renamed } });
+
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      });
+      const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+
+      const { result } = renderHook(() => useUpdateImage(1), { wrapper });
+      act(() => { result.current.mutate({ id: 1, data: { title: 'New Beach' } }); });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(invalidate).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe('useDeleteImage', () => {
