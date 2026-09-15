@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUpdateImage, useDeleteImage } from '../hooks/useImages';
-import { useListAlbum } from '@/features/albums/albums';
+import { AlbumPicker } from '@/features/albums/components/AlbumPicker';
 import type { Image } from '../types/image';
 
 const schema = z.object({
   title: z.string().min(1, 'Required'),
   description: z.string(),
   tags: z.string(),
-  album_id: z.string(),
+  album_id: z.number(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -25,15 +25,14 @@ export function ImageEditModal({ image, onClose, initialMode = 'edit' }: Props) 
   const [confirmDelete, setConfirmDelete] = useState(initialMode === 'delete');
   const { mutate, isPending, isError } = useUpdateImage(image.album_id);
   const { mutate: deleteImage, isPending: isDeletePending, isError: isDeleteError } = useDeleteImage();
-  const { data: albums = [] } = useListAlbum();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: image.title,
       description: image.description ?? '',
       tags: image.tags.join(', '),
-      album_id: String(image.album_id),
+      album_id: image.album_id,
     },
   });
 
@@ -49,7 +48,7 @@ export function ImageEditModal({ image, onClose, initialMode = 'edit' }: Props) 
           title: values.title,
           description: values.description || undefined,
           tags,
-          album_id: parseInt(values.album_id, 10) || image.album_id,
+          album_id: values.album_id,
         },
       },
       { onSuccess: onClose }
@@ -161,16 +160,17 @@ export function ImageEditModal({ image, onClose, initialMode = 'edit' }: Props) 
 
               <div className="flex flex-col gap-1">
                 <label htmlFor="edit-album" className="text-sm font-medium text-gray-700">Folder</label>
-                <select
-                  id="edit-album"
-                  {...register('album_id')}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  data-testid="edit-album-select"
-                >
-                  {albums.map((album) => (
-                    <option key={album.id} value={String(album.id)}>{album.name}</option>
-                  ))}
-                </select>
+                <Controller
+                  name="album_id"
+                  control={control}
+                  render={({ field }) => (
+                    <AlbumPicker
+                      id="edit-album"
+                      value={field.value}
+                      onChange={(albumId) => field.onChange(albumId)}
+                    />
+                  )}
+                />
               </div>
 
               {isError && (

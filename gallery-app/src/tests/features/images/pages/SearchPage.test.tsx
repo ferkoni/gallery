@@ -1,17 +1,20 @@
 import { render, screen } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router-dom';
 import { SearchPage } from '@/features/images/pages/SearchPage';
 import { useSearchImages } from '@/features/images/hooks/useImages';
-import { useListAlbum } from '@/features/albums/albums';
+import { useGetAlbum, useInfiniteAlbums } from '@/features/albums/albums';
 import type { Image } from '@/features/images/types/image';
+import type { Album } from '@/features/albums/types/album';
 
 vi.mock('@/features/images/hooks/useImages', () => ({
   useSearchImages: vi.fn(),
 }));
 
 vi.mock('@/features/albums/albums', () => ({
-  useListAlbum: vi.fn(() => ({ data: [] })),
+  useGetAlbum: vi.fn(),
+  useInfiniteAlbums: vi.fn(),
 }));
 
 vi.mock('@/hooks/useDebounce', () => ({
@@ -25,18 +28,37 @@ vi.mock('@/features/images/components/ImageCard', () => ({
 }));
 
 const mockUseSearchImages = useSearchImages as Mock;
-const mockUseListAlbum = useListAlbum as Mock;
+const mockUseGetAlbum = useGetAlbum as Mock;
+const mockUseInfiniteAlbums = useInfiniteAlbums as Mock;
+
+const folder = (id: number, name: string): Album => ({
+  id, name, description: null, created_at: '2026-01-01T00:00:00.000Z',
+});
+
+function stubFolders(albums: Album[]) {
+  mockUseInfiniteAlbums.mockReturnValue({
+    data: { pages: [{ data: albums, meta: {} }] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+  });
+}
 
 const images: Image[] = [
   { id: 1, title: 'Sunset Beach', description: null, tags: ['beach'], s3_key: 'k1', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1', thumbnail_url: 'https://thumb1' },
   { id: 2, title: 'Mountain Trail', description: null, tags: ['nature'], s3_key: 'k2', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url2', thumbnail_url: 'https://thumb2' },
 ];
 
+function LocationProbe() {
+  const [searchParams] = useSearchParams();
+  return <span data-testid="location-search">{searchParams.toString()}</span>;
+}
+
 function renderSearchPage(search = '') {
   return render(
     <MemoryRouter initialEntries={[`/search${search}`]}>
       <Routes>
-        <Route path="/search" element={<SearchPage />} />
+        <Route path="/search" element={<><SearchPage /><LocationProbe /></>} />
       </Routes>
     </MemoryRouter>
   );
@@ -45,7 +67,8 @@ function renderSearchPage(search = '') {
 describe('SearchPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseListAlbum.mockReturnValue({ data: [] });
+    mockUseGetAlbum.mockReturnValue({ data: undefined });
+    stubFolders([]);
   });
 
   it('shows a prompt when no filters are set', () => {
@@ -86,11 +109,41 @@ describe('SearchPage', () => {
     expect(screen.getByPlaceholderText('Search your photos…')).toHaveValue('sunset');
   });
 
-  it('renders album options in the dropdown', () => {
+  it('lists the folders the server returned', async () => {
     mockUseSearchImages.mockReturnValue({ data: [], isPending: false, isError: false });
-    mockUseListAlbum.mockReturnValue({ data: [{ id: 1, name: 'Summer 2026', description: null, created_at: '2026-01-01' }] });
+    stubFolders([folder(1, 'Summer 2026')]);
+
     renderSearchPage();
-    expect(screen.getByRole('option', { name: 'Summer 2026' })).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+    expect(screen.getByTestId('album-picker-option-1')).toHaveTextContent('Summer 2026');
+  });
+
+  // The truncated <select> this picker replaced showed "All albums" for a folder outside
+  // the loaded page, so the results were filtered by a folder the page never named — and
+  // picking "All albums" fired no change event, which made the filter unclearable.
+  describe('a folder filter from the URL', () => {
+    beforeEach(() => {
+      mockUseSearchImages.mockReturnValue({ data: [], isPending: false, isError: false });
+      stubFolders([folder(1, 'Summer 2026')]);
+      mockUseGetAlbum.mockReturnValue({ data: folder(40, 'Archive 2019') });
+    });
+
+    it('names the folder it is filtering by, even from no loaded page', () => {
+      renderSearchPage('?album_id=40');
+
+      expect(screen.getByTestId('album-picker-input')).toHaveValue('Archive 2019');
+      expect(mockUseSearchImages).toHaveBeenLastCalledWith(expect.objectContaining({ albumId: 40 }));
+    });
+
+    it('drops the filter from the search and the URL when cleared', async () => {
+      renderSearchPage('?album_id=40');
+
+      await userEvent.click(screen.getByTestId('album-picker-clear'));
+
+      expect(mockUseSearchImages).toHaveBeenLastCalledWith(expect.objectContaining({ albumId: undefined }));
+      expect(screen.getByTestId('location-search')).toHaveTextContent('');
+    });
   });
 
   describe('useMemo client-side filtering', () => {

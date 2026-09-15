@@ -15,8 +15,16 @@ vi.mock('@/features/images/hooks/useImages', () => ({
 
 vi.mock('@/hooks/useOnClickOutside', () => ({ useOnClickOutside: vi.fn() }));
 
+// ImageEditModal's folder picker reaches for these; the grid's own tests care about
+// neither, so an empty forest and no named selection is enough.
 vi.mock('@/features/albums/albums', () => ({
-  useListAlbum: vi.fn(() => ({ data: [] })),
+  useGetAlbum: vi.fn(() => ({ data: undefined })),
+  useInfiniteAlbums: vi.fn(() => ({
+    data: { pages: [{ data: [], meta: {} }] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+  })),
 }));
 
 const mockUseAlbumImages = useAlbumImages as Mock;
