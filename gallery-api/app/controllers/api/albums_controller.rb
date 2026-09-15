@@ -22,8 +22,13 @@ class Api::AlbumsController < ApplicationController
 
   protected
 
+  # Filter, then order, then paginate: a filtered list pages over the matches rather than
+  # over the first page of everything. The order is explicit because without one Postgres
+  # is free to return rows differently per page, so an infinite scroll can skip or repeat
+  # a folder; id breaks ties between folders created in the same instant.
   def resources
-    Album.with_user(current_user).page(params[:page])
+    apply_filters(Album.with_user(current_user).order(created_at: :desc, id: :desc))
+      .page(params[:page])
   end
 
   def resource

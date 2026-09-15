@@ -4,6 +4,8 @@ RSpec.describe Api::AlbumsController, type: :controller do
   let(:user) { create(:user) }
   let(:other_user) { create(:user) }
 
+  def index_ids = JSON.parse(response.body).fetch("data").map { |a| a["id"].to_i }
+
   describe "GET #index" do
     before { sign_in user }
 
@@ -37,6 +39,54 @@ RSpec.describe Api::AlbumsController, type: :controller do
 
       meta = JSON.parse(response.body)["meta"]
       expect(meta["current_page"]).to eq(2)
+    end
+
+    it "returns the newest album first" do
+      older = create(:album, user: user, created_at: 2.days.ago)
+      newer = create(:album, user: user, created_at: 1.day.ago)
+
+      get :index, as: :json
+
+      expect(index_ids).to eq([ newer.id, older.id ])
+    end
+
+    it "breaks a created_at tie on id, descending" do
+      same_moment = 1.day.ago
+      first = create(:album, user: user, created_at: same_moment)
+      second = create(:album, user: user, created_at: same_moment)
+
+      get :index, as: :json
+
+      expect(index_ids).to eq([ second.id, first.id ])
+    end
+
+    context "with ?q=" do
+      it "returns only albums whose name matches, case-insensitively" do
+        match = create(:album, user: user, name: "Summer Holiday")
+        create(:album, user: user, name: "Winter")
+
+        get :index, params: { q: "summer" }, as: :json
+
+        expect(index_ids).to eq([ match.id ])
+      end
+
+      it "never returns another user's matching album" do
+        create(:album, user: other_user, name: "Summer")
+
+        get :index, params: { q: "summer" }, as: :json
+
+        expect(index_ids).to be_empty
+      end
+
+      it "pages over the matches rather than over every album" do
+        allow(Kaminari.config).to receive(:default_per_page).and_return(2)
+        create_list(:album, 3, user: user, name: "Other")
+        matches = create_list(:album, 3, user: user, name: "Summer")
+
+        get :index, params: { q: "summer", page: 2 }, as: :json
+
+        expect(index_ids).to eq([ matches.first.id ])
+      end
     end
 
     context "without a token" do

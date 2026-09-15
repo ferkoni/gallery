@@ -56,7 +56,7 @@ All endpoints are under `/api`. Every request except login and register requires
 | `POST` | `/api/users` | Register |
 | `POST` | `/api/users/login` | Login — returns JWT |
 | `DELETE` | `/api/users/logout` | Logout — rotates JTI, invalidating the token |
-| `GET` | `/api/albums` | List albums (paginated) |
+| `GET` | `/api/albums` | List albums — newest first, paginated, filterable by `q` (name substring) |
 | `POST` | `/api/albums` | Create album |
 | `GET` | `/api/albums/:id` | Get album |
 | `PATCH` | `/api/albums/:id` | Update album |
