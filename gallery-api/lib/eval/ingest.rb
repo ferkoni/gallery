@@ -19,7 +19,7 @@ module Eval
     # re-running this free rather than merely safe: the unique index on s3_key turns a
     # second run into a lookup instead of a duplicate row.
     #
-    # A real upload later assigns its own key (albums/<id>/<uuid>/<filename>) and this
+    # A real upload later assigns its own key (images/<uuid>/<filename>) and this
     # value is overwritten at that point. Nothing reads it before then: no byte-fetching
     # code path runs during a lexical run.
     PREFIX = "eval-corpus/".freeze

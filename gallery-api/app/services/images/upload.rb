@@ -49,7 +49,6 @@ class Images::Upload < Images::Base
     s3_key = write do
       @storage.upload(
         stripped,
-        album_id: @album_id,
         filename: @file.original_filename,
         content_type: @file.content_type
       )

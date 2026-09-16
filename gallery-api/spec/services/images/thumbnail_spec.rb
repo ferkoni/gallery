@@ -72,6 +72,13 @@ RSpec.describe Images::Thumbnail do
 
   describe ".key_for" do
     it "puts the thumbnail beside its original, marked .thumb.webp" do
+      expect(described_class.key_for("images/uuid/beach.jpg")).to eq("images/uuid/beach.thumb.webp")
+    end
+
+    # Photos uploaded before keys dropped the folder keep albums/<id>/<uuid>/ keys in the
+    # bucket, and a thumbnail backfilled for one still belongs beside it
+    # (docs: s3-key-prefix/02, decision 2).
+    it "puts the thumbnail beside an original with an old albums/<id>/ key" do
       expect(described_class.key_for("albums/2/uuid/beach.jpg")).to eq("albums/2/uuid/beach.thumb.webp")
     end
 
@@ -79,13 +86,13 @@ RSpec.describe Images::Thumbnail do
     # a WebP original and its thumbnail would share a key, and the thumbnail PUT would
     # overwrite the user's photo.
     %w[
-      albums/2/uuid/beach.jpg
-      albums/2/uuid/beach.png
-      albums/2/uuid/beach.gif
-      albums/2/uuid/beach.webp
-      albums/2/uuid/beach
-      albums/2/uuid/beach.thumb.webp
-      albums/2/uuid/.webp
+      images/uuid/beach.jpg
+      images/uuid/beach.png
+      images/uuid/beach.gif
+      images/uuid/beach.webp
+      images/uuid/beach
+      images/uuid/beach.thumb.webp
+      images/uuid/.webp
     ].each do |s3_key|
       it "never equals the original's own key (#{s3_key})" do
         expect(described_class.key_for(s3_key)).not_to eq(s3_key)
@@ -93,7 +100,7 @@ RSpec.describe Images::Thumbnail do
     end
 
     it "does not contain the size, so regenerating at a new size overwrites in place" do
-      expect(described_class.key_for("albums/2/uuid/beach.jpg")).not_to include(described_class::SIZE.to_s)
+      expect(described_class.key_for("images/uuid/beach.jpg")).not_to include(described_class::SIZE.to_s)
     end
   end
 end

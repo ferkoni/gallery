@@ -34,8 +34,8 @@ RSpec.describe S3::Storage, type: :model do
     # its own. Both arrive as keyword arguments instead.
     let(:body) { StringIO.new("bytes") }
 
-    def upload(album_id: 42, filename: "photo.jpg", content_type: "image/jpeg")
-      storage.upload(body, album_id: album_id, filename: filename, content_type: content_type)
+    def upload(filename: "photo.jpg", content_type: "image/jpeg")
+      storage.upload(body, filename: filename, content_type: content_type)
     end
 
     it "calls put_object on the S3 client" do
@@ -52,9 +52,11 @@ RSpec.describe S3::Storage, type: :model do
       upload(content_type: "image/webp")
     end
 
-    it "includes the album_id in the key prefix" do
+    # No folder in the key: a photo's folder lives in the database, and a move would leave a
+    # folder id in the key stale (docs: s3-key-prefix/02, decision 1).
+    it "keys the object images/<uuid>/<filename>" do
       allow(client).to receive(:put_object)
-      expect(upload).to start_with("albums/42/")
+      expect(upload).to match(%r{\Aimages/\h{8}-\h{4}-\h{4}-\h{4}-\h{12}/photo\.jpg\z})
     end
 
     it "returns a key that ends with the filename" do
@@ -88,15 +90,15 @@ RSpec.describe S3::Storage, type: :model do
 
     it "writes to exactly the key it was given" do
       expect(client).to receive(:put_object).with(
-        bucket: bucket, key: "albums/42/uuid/photo.thumb.webp", body: body, content_type: "image/webp"
+        bucket: bucket, key: "images/uuid/photo.thumb.webp", body: body, content_type: "image/webp"
       )
-      storage.put("albums/42/uuid/photo.thumb.webp", body, content_type: "image/webp")
+      storage.put("images/uuid/photo.thumb.webp", body, content_type: "image/webp")
     end
 
     it "returns the key" do
       allow(client).to receive(:put_object)
-      expect(storage.put("albums/42/uuid/photo.thumb.webp", body, content_type: "image/webp"))
-        .to eq("albums/42/uuid/photo.thumb.webp")
+      expect(storage.put("images/uuid/photo.thumb.webp", body, content_type: "image/webp"))
+        .to eq("images/uuid/photo.thumb.webp")
     end
 
     # The upload service rolls back on this, so it must reach the caller.
@@ -108,8 +110,8 @@ RSpec.describe S3::Storage, type: :model do
 
   describe "#delete_object" do
     it "calls delete_object on the S3 client with the given key" do
-      expect(client).to receive(:delete_object).with(bucket: bucket, key: "albums/1/uuid/photo.jpg")
-      storage.delete_object("albums/1/uuid/photo.jpg")
+      expect(client).to receive(:delete_object).with(bucket: bucket, key: "images/uuid/photo.jpg")
+      storage.delete_object("images/uuid/photo.jpg")
     end
 
     it "swallows Aws::S3::Errors::ServiceError and logs it" do
@@ -117,7 +119,7 @@ RSpec.describe S3::Storage, type: :model do
         Aws::S3::Errors::ServiceError.new(nil, "something went wrong")
       )
       expect(Rails.logger).to receive(:error).with(/delete_object failed/)
-      expect { storage.delete_object("albums/1/uuid/photo.jpg") }.not_to raise_error
+      expect { storage.delete_object("images/uuid/photo.jpg") }.not_to raise_error
     end
 
     it "swallows Seahorse::Client::NetworkingError and logs it" do
@@ -125,21 +127,21 @@ RSpec.describe S3::Storage, type: :model do
         Seahorse::Client::NetworkingError.new(RuntimeError.new("connection refused"))
       )
       expect(Rails.logger).to receive(:error).with(/delete_object failed/)
-      expect { storage.delete_object("albums/1/uuid/photo.jpg") }.not_to raise_error
+      expect { storage.delete_object("images/uuid/photo.jpg") }.not_to raise_error
     end
   end
 
   describe "#delete_object!" do
     it "calls delete_object on the S3 client" do
-      expect(client).to receive(:delete_object).with(bucket: bucket, key: "albums/1/uuid/photo.jpg")
-      storage.delete_object!("albums/1/uuid/photo.jpg")
+      expect(client).to receive(:delete_object).with(bucket: bucket, key: "images/uuid/photo.jpg")
+      storage.delete_object!("images/uuid/photo.jpg")
     end
 
     it "re-raises Aws::S3::Errors::ServiceError" do
       allow(client).to receive(:delete_object).and_raise(
         Aws::S3::Errors::ServiceError.new(nil, "access denied")
       )
-      expect { storage.delete_object!("albums/1/uuid/photo.jpg") }
+      expect { storage.delete_object!("images/uuid/photo.jpg") }
         .to raise_error(Aws::S3::Errors::ServiceError)
     end
 
@@ -147,14 +149,14 @@ RSpec.describe S3::Storage, type: :model do
       allow(client).to receive(:delete_object).and_raise(
         Seahorse::Client::NetworkingError.new(RuntimeError.new("connection refused"))
       )
-      expect { storage.delete_object!("albums/1/uuid/photo.jpg") }
+      expect { storage.delete_object!("images/uuid/photo.jpg") }
         .to raise_error(Seahorse::Client::NetworkingError)
     end
   end
 
   describe "#delete_objects!" do
     it "calls delete_objects with all keys in a single batch when under 1000" do
-      keys = %w[albums/1/a/photo.jpg albums/1/b/photo.jpg]
+      keys = %w[images/a/photo.jpg images/b/photo.jpg]
       response = instance_double(Aws::S3::Types::DeleteObjectsOutput, errors: [])
       expect(client).to receive(:delete_objects).with(
         bucket: bucket,
@@ -164,14 +166,14 @@ RSpec.describe S3::Storage, type: :model do
     end
 
     it "slices into 1000-key batches" do
-      keys = (1..1001).map { |n| "albums/1/#{n}/photo.jpg" }
+      keys = (1..1001).map { |n| "images/#{n}/photo.jpg" }
       response = instance_double(Aws::S3::Types::DeleteObjectsOutput, errors: [])
       expect(client).to receive(:delete_objects).twice.and_return(response)
       storage.delete_objects!(keys)
     end
 
     it "raises Aws::S3::Errors::ServiceError when the response contains per-key errors" do
-      keys = [ "albums/1/uuid/photo.jpg" ]
+      keys = [ "images/uuid/photo.jpg" ]
       err = instance_double("Aws::S3::Types::Error", key: keys.first, message: "AccessDenied")
       response = instance_double(Aws::S3::Types::DeleteObjectsOutput, errors: [ err ])
       allow(client).to receive(:delete_objects).and_return(response)
