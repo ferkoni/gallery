@@ -116,10 +116,15 @@ module Images
     # the caller already applied — above all `with_user`, which is what prevents
     # cross-user leakage — stays in the SQL instead of being trusted to have been
     # baked into the id list.
+    #
+    # Its conditions, but not its order. The index arrives sorted newest first, and
+    # in_order_of appends to an existing ORDER BY rather than replacing it, so the ranking
+    # only broke ties on created_at: page 1 was the newest candidates, not the best.
     def order_by_ids(ids)
       return @scope.none if ids.empty?
 
-      @scope.where(id: ids).in_order_of(:id, ids)
+      # in_order_of filters to ids as well as ordering by them, so no separate where.
+      @scope.reorder(nil).in_order_of(:id, ids)
     end
   end
 end
