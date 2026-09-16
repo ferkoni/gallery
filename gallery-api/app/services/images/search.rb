@@ -24,9 +24,9 @@ module Images
     # the actual deliverable of the eval, and it cannot be produced if the strategy is
     # only ever chosen implicitly.
     #
-    # It is NOT reachable from a request. BaseApi#apply_filters passes only the query,
-    # so the client sends the same ?q= regardless and never has to know whether this
-    # install has AI. Forcing a strategy from a parameter would fork the frontend and
+    # It is NOT reachable from a request. Api::ImagesController#apply_filters passes only
+    # the query, so the client sends the same ?q= regardless and never has to know whether
+    # this install has AI. Forcing a strategy from a parameter would fork the frontend and
     # undo what the Null adapter is for.
     def initialize(scope:, query:, strategy: nil)
       @scope = scope

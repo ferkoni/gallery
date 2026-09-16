@@ -84,6 +84,14 @@ class Api::ImagesController < ApplicationController
     apply_filters(scope).page(params[:page])
   end
 
+  def apply_filters(scope)
+    scope = scope.global_search(params[:q]) if params[:q].present?
+    scope = scope.search_by_title(params[:title]) if params[:title].present?
+    scope = scope.search_by_tag(params[:tag]) if params[:tag].present?
+    scope = scope.from_date(params[:from]) if params[:from].present?
+    scope
+  end
+
   # The nested route sets album_scope: "direct" as a routing default. A client may send
   # ?album_scope=direct on the flat route too; that only narrows its own results.
   def album_ids
