@@ -127,6 +127,32 @@ RSpec.describe Api::ImagesController, type: :controller do
       expect(meta.keys).to match_array(%w[current_page total_pages total_count per_page])
     end
 
+    it "breaks a created_at tie on id, descending" do
+      same_moment = 1.day.ago
+      first = create(:image, user: user, album: album, created_at: same_moment)
+      second = create(:image, user: user, album: album, created_at: same_moment)
+
+      get :index, as: :json
+
+      ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+      expect(ids).to eq([ second.id, first.id ])
+    end
+
+    # Search and Favourites load page after page into one list. OFFSET over rows with no
+    # total order can hand the same photo to two pages and none to another.
+    it "pages over a created_at tie without repeating or skipping a photo" do
+      allow(Kaminari.config).to receive(:default_per_page).and_return(2)
+      same_moment = 1.day.ago
+      tied = Array.new(4) { create(:image, user: user, album: album, created_at: same_moment) }
+
+      ids = [ 1, 2 ].flat_map do |page|
+        get :index, params: { page: page }, as: :json
+        JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+      end
+
+      expect(ids).to eq(tied.map(&:id).reverse)
+    end
+
     context "with q param" do
       it "returns images matching by title" do
         match = create(:image, user: user, album: album, title: "Sunset Beach")
