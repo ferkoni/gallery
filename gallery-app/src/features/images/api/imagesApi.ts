@@ -25,27 +25,25 @@ export async function fetchAlbumImages(albumId: number, page = 1, filters?: Albu
   };
 }
 
-// GET /api/images?album_id=
-export async function fetchImages(albumId?: number): Promise<Image[]> {
-  const res = await apiClient.get('/api/images', {
-    params: albumId ? { album_id: albumId } : {},
-  });
-  return res.data.data.map((item: { attributes: Image }) => item.attributes);
+// GET /api/images?favorited=true&page=
+export async function fetchFavoriteImages(page = 1): Promise<PaginatedResponse<Image>> {
+  const res = await apiClient.get('/api/images', { params: { favorited: true, page } });
+  return {
+    data: res.data.data.map((item: { attributes: Image }) => item.attributes),
+    meta: res.data.meta,
+  };
 }
 
-// GET /api/images?favorited=true
-export async function fetchFavoriteImages(): Promise<Image[]> {
-  const res = await apiClient.get('/api/images', { params: { favorited: true } });
-  return res.data.data.map((item: { attributes: Image }) => item.attributes);
-}
-
-// GET /api/images?q=…&title=…&tag=…&from=…&album_id=…
-export async function fetchSearchImages(params: SearchParams): Promise<Image[]> {
+// GET /api/images?q=…&title=…&tag=…&from=…&album_id=…&page=
+export async function fetchSearchImages(params: SearchParams, page = 1): Promise<PaginatedResponse<Image>> {
   const { albumId, ...rest } = params;
   const res = await apiClient.get('/api/images', {
-    params: { ...rest, ...(albumId !== undefined && { album_id: albumId }) },
+    params: { ...rest, ...(albumId !== undefined && { album_id: albumId }), page },
   });
-  return res.data.data.map((item: { attributes: Image }) => item.attributes);
+  return {
+    data: res.data.data.map((item: { attributes: Image }) => item.attributes),
+    meta: res.data.meta,
+  };
 }
 
 // POST /api/images  (multipart/form-data)

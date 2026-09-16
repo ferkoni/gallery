@@ -29,6 +29,25 @@ const favImage: Image = {
   thumbnail_url: 'https://thumb1',
 };
 
+let intersect: () => void;
+// The no-op observer from setup.ts never fires. This one hands the test a trigger for the
+// element it is observing, as SubfolderSection.test.tsx does.
+function installIntersectionObserver() {
+  intersect = () => {};
+  vi.stubGlobal('IntersectionObserver', class {
+    callback: IntersectionObserverCallback;
+    constructor(callback: IntersectionObserverCallback) { this.callback = callback; }
+    observe(node: Element) {
+      intersect = () => this.callback(
+        [{ isIntersecting: true, target: node } as IntersectionObserverEntry],
+        this as unknown as IntersectionObserver
+      );
+    }
+    disconnect() { intersect = () => {}; }
+    unobserve() {}
+  });
+}
+
 function renderPage() {
   return render(<FavoritesPage />);
 }
@@ -126,6 +145,45 @@ describe('FavoritesPage', () => {
         unmount();
         act(() => { vi.advanceTimersByTime(7000); }); // no error or state update after unmount
       });
+    });
+  });
+
+  describe('loading more favourites', () => {
+    const fetchNextPage = vi.fn();
+    const favourites = (overrides: object) => ({
+      data: [favImage], isPending: false, isError: false,
+      hasNextPage: true, isFetchingNextPage: false, fetchNextPage,
+      ...overrides,
+    });
+
+    beforeEach(() => installIntersectionObserver());
+    afterEach(() => vi.unstubAllGlobals());
+
+    // The regression test for bugs.md bug 3: only the first 25 favourites were ever reachable.
+    it('asks for the next page when the end of the grid scrolls into view', () => {
+      mockUseFavoriteImages.mockReturnValue(favourites({}));
+      renderPage();
+
+      intersect();
+
+      expect(fetchNextPage).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows that more are loading, and stops watching until they arrive', () => {
+      mockUseFavoriteImages.mockReturnValue(favourites({ isFetchingNextPage: true }));
+      renderPage();
+
+      intersect();
+
+      expect(screen.getByTestId('favorites-loading-more')).toBeInTheDocument();
+      expect(fetchNextPage).not.toHaveBeenCalled();
+    });
+
+    it('has nothing to watch once the last page is loaded', () => {
+      mockUseFavoriteImages.mockReturnValue(favourites({ hasNextPage: false }));
+      renderPage();
+
+      expect(screen.queryByTestId('favorites-sentinel')).not.toBeInTheDocument();
     });
   });
 });

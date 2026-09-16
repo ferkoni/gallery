@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
 import { useFavoriteImages, useFavoriteImage } from '../hooks/useImages';
 import { ImageCard } from '../components/ImageCard';
 import { UndoToast } from '../components/UndoToast';
@@ -7,7 +8,9 @@ import type { Image } from '../types/image';
 const UNDO_TIMEOUT_MS = 7000; // 7 seconds
 
 export function FavoritesPage() {
-  const { data: images, isPending, isError } = useFavoriteImages();
+  const {
+    data: images, isPending, isError, hasNextPage, isFetchingNextPage, fetchNextPage,
+  } = useFavoriteImages();
   const { mutate: toggleFavorite } = useFavoriteImage();
   const [undoImage, setUndoImage] = useState<Image | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -31,6 +34,12 @@ export function FavoritesPage() {
   }, [undoImage, toggleFavorite, clearUndo]);
 
   useEffect(() => () => { clearTimeout(timerRef.current); }, []);
+
+  // Below the grid, so it only comes into view once the loaded favourites are scrolled past.
+  const sentinelRef = useInfiniteSentinel<HTMLDivElement>(
+    hasNextPage && !isFetchingNextPage,
+    fetchNextPage
+  );
 
   if (isPending) {
     return (
@@ -63,6 +72,16 @@ export function FavoritesPage() {
               </li>
             ))}
           </ul>
+        )}
+
+        {hasNextPage && (
+          <div ref={sentinelRef} className="h-4" data-testid="favorites-sentinel" />
+        )}
+
+        {isFetchingNextPage && (
+          <p className="text-gray-400 text-sm text-center mt-4" data-testid="favorites-loading-more">
+            Loading more…
+          </p>
         )}
       </main>
       {undoImage && (

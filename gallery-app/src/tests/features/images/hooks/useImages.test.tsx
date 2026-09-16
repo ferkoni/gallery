@@ -3,7 +3,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import MockAdapter from 'axios-mock-adapter';
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import apiClient from '@/lib/api/client';
-import { useImages, useUpdateImage, useDeleteImage, useFavoriteImage } from '@/features/images/hooks/useImages';
+import {
+  useSearchImages,
+  useFavoriteImages,
+  useUpdateImage,
+  useDeleteImage,
+  useFavoriteImage,
+  flattenImagePages,
+} from '@/features/images/hooks/useImages';
 import type { Image } from '@/features/images/types/image';
 
 const mock = new MockAdapter(apiClient);
@@ -34,25 +41,95 @@ function makeWrapper() {
   );
 }
 
-describe('useImages', () => {
+const photo = (id: number): Image => ({ ...images[0], id, title: `Photo ${id}` });
+
+const meta = (current_page: number, total_pages: number) =>
+  ({ current_page, total_pages, total_count: total_pages * 25, per_page: 25 });
+
+const page = (data: Image[], current_page: number, total_pages: number) =>
+  ({ data: data.map(attributes => ({ attributes })), meta: meta(current_page, total_pages) });
+
+// Replies by the page param, so a test can load page 1 and then ask for page 2.
+function replyByPage(pages: Record<number, ReturnType<typeof page>>) {
+  mock.onGet('/api/images').reply(config => [200, pages[config.params.page as number]]);
+}
+
+describe('flattenImagePages', () => {
+  it('lists every loaded page in order, each photo once', () => {
+    const data = {
+      pageParams: [1, 2],
+      pages: [
+        { data: [photo(1), photo(2)], meta: meta(1, 2) },
+        { data: [photo(2), photo(3)], meta: meta(2, 2) },
+      ],
+    };
+
+    expect(flattenImagePages(data).map(image => image.id)).toEqual([1, 2, 3]);
+  });
+});
+
+describe('useSearchImages', () => {
   beforeEach(() => mock.reset());
 
-  it('returns images for the given albumId', async () => {
-    mock.onGet('/api/images').reply(200, { data: [{ attributes: images[0] }] });
+  it('does not search while every param is empty', () => {
+    const { result } = renderHook(() => useSearchImages({ q: '', albumId: undefined }), {
+      wrapper: makeWrapper(),
+    });
 
-    const { result } = renderHook(() => useImages(1), { wrapper: makeWrapper() });
-
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual(images);
-    expect(mock.history.get[0].params).toEqual({ album_id: 1 });
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(mock.history.get).toHaveLength(0);
   });
 
-  it('returns an error state when the server responds with an error', async () => {
-    mock.onGet('/api/images').reply(500);
+  it('loads the next page into one list, and stops at the last page', async () => {
+    replyByPage({ 1: page([photo(1), photo(2)], 1, 2), 2: page([photo(3)], 2, 2) });
 
-    const { result } = renderHook(() => useImages(1), { wrapper: makeWrapper() });
+    const { result } = renderHook(() => useSearchImages({ q: 'lentes' }), { wrapper: makeWrapper() });
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.map(image => image.id)).toEqual([1, 2]);
+    expect(result.current.hasNextPage).toBe(true);
+
+    await act(() => result.current.fetchNextPage());
+
+    await waitFor(() => expect(result.current.data?.map(image => image.id)).toEqual([1, 2, 3]));
+    expect(result.current.hasNextPage).toBe(false);
+    expect(mock.history.get.map(request => request.params)).toEqual([
+      { q: 'lentes', page: 1 },
+      { q: 'lentes', page: 2 },
+    ]);
+  });
+
+  // A photo embedded between two requests shifts every rank after it, so the next page
+  // can start with the photo the previous one ended on.
+  it('shows a photo returned on both sides of a page boundary once', async () => {
+    replyByPage({ 1: page([photo(1), photo(2)], 1, 2), 2: page([photo(2), photo(3)], 2, 2) });
+
+    const { result } = renderHook(() => useSearchImages({ q: 'lentes' }), { wrapper: makeWrapper() });
+
+    await waitFor(() => expect(result.current.data?.map(image => image.id)).toEqual([1, 2]));
+    await act(() => result.current.fetchNextPage());
+
+    await waitFor(() => expect(result.current.data?.map(image => image.id)).toEqual([1, 2, 3]));
+  });
+});
+
+describe('useFavoriteImages', () => {
+  beforeEach(() => mock.reset());
+
+  it('loads favourites page by page into one list', async () => {
+    replyByPage({ 1: page([photo(1)], 1, 2), 2: page([photo(2)], 2, 2) });
+
+    const { result } = renderHook(() => useFavoriteImages(), { wrapper: makeWrapper() });
+
+    await waitFor(() => expect(result.current.data?.map(image => image.id)).toEqual([1]));
+    await act(() => result.current.fetchNextPage());
+
+    await waitFor(() => expect(result.current.data?.map(image => image.id)).toEqual([1, 2]));
+    expect(result.current.hasNextPage).toBe(false);
+    expect(mock.history.get.map(request => request.params)).toEqual([
+      { favorited: true, page: 1 },
+      { favorited: true, page: 2 },
+    ]);
   });
 });
 
@@ -238,25 +315,61 @@ describe('useFavoriteImage', () => {
     });
   });
 
-  it('optimistically removes image from favorites cache when unfavoriting', async () => {
-    mock.onPatch('/api/images/1').reply(200, { data: { attributes: { ...images[0], favorited: false } } });
-
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  describe('the favourites list, cached as pages', () => {
+    const favourites = () => ({
+      pageParams: [1, 2],
+      pages: [
+        { data: [photo(1), photo(2)].map(image => ({ ...image, favorited: true })), meta: meta(1, 2) },
+        { data: [photo(3)].map(image => ({ ...image, favorited: true })), meta: meta(2, 2) },
+      ],
     });
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
 
-    queryClient.setQueryData(['images', 'favorites'], images);
+    function setup() {
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      });
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+      queryClient.setQueryData(['images', 'favorites'], favourites());
+      const cachedIds = () =>
+        queryClient.getQueryData<ReturnType<typeof favourites>>(['images', 'favorites'])
+          ?.pages.map(p => p.data.map(image => image.id));
+      return { wrapper, cachedIds };
+    }
 
-    const { result } = renderHook(() => useFavoriteImage(), { wrapper });
+    it('removes an unfavourited photo from whichever page holds it', async () => {
+      mock.onPatch('/api/images/3').reply(() => new Promise(() => {}));
+      const { wrapper, cachedIds } = setup();
 
-    act(() => { result.current.mutate({ id: 1, favorited: false }); });
+      const { result } = renderHook(() => useFavoriteImage(), { wrapper });
+      act(() => { result.current.mutate({ id: 3, favorited: false }); });
 
-    await waitFor(() => {
-      const cached = queryClient.getQueryData<Image[]>(['images', 'favorites']);
-      expect(cached).toHaveLength(0);
+      await waitFor(() => expect(cachedIds()).toEqual([[1, 2], []]));
+    });
+
+    // The list is ordered by upload date, so the photo's place may be on a page that is not
+    // loaded. The refetch after the mutation settles puts it where the server says.
+    it('adds nothing to the cache when a photo is favourited', async () => {
+      mock.onPatch('/api/images/9').reply(() => new Promise(() => {}));
+      const { wrapper, cachedIds } = setup();
+
+      const { result } = renderHook(() => useFavoriteImage(), { wrapper });
+      act(() => { result.current.mutate({ id: 9, favorited: true }); });
+
+      await waitFor(() => expect(result.current.isPending).toBe(true));
+      expect(cachedIds()).toEqual([[1, 2], [3]]);
+    });
+
+    it('puts the photo back when the server refuses', async () => {
+      mock.onPatch('/api/images/1').reply(500);
+      const { wrapper, cachedIds } = setup();
+
+      const { result } = renderHook(() => useFavoriteImage(), { wrapper });
+      act(() => { result.current.mutate({ id: 1, favorited: false }); });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+      expect(cachedIds()).toEqual([[1, 2], [3]]);
     });
   });
 });
