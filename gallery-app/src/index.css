@@ -2,8 +2,8 @@
 
 /*
  * Colour tokens. Components use these (bg-surface, text-muted…), never literal grays, so a
- * dark theme can redefine them in one place. `@theme`, not `@theme inline`: inline would write
- * the light value into each utility and a later override would do nothing.
+ * the dark block below can redefine them in one place. `@theme`, not `@theme inline`: inline would write
+ * the light value into each utility and the dark override would do nothing.
  * Each namespace makes one utility: --background-color-surface is bg-surface only.
  */
 @theme {
@@ -34,6 +34,42 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  /* Follows the OS. A toggle would move these under :root[data-theme="dark"];
+     components wouldn't change, since they only name tokens. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+
+      --background-color-canvas: var(--color-gray-950);
+      --background-color-surface: var(--color-gray-900);
+      --background-color-sunken: var(--color-gray-950);
+      --background-color-hover: var(--color-gray-800);
+      --background-color-skeleton: var(--color-gray-800);
+      --background-color-selected: var(--color-blue-950);
+      --background-color-danger-subtle: var(--color-red-950);
+
+      --text-color-strong: var(--color-gray-100);
+      --text-color-body: var(--color-gray-200);
+      --text-color-secondary: var(--color-gray-300);
+      --text-color-muted: var(--color-gray-400);
+      --text-color-faint: var(--color-gray-500);
+      --text-color-danger: var(--color-red-400);
+      --text-color-danger-strong: var(--color-red-300);
+      --text-color-success: var(--color-green-400);
+      --text-color-link: var(--color-blue-400);
+      --text-color-link-strong: var(--color-blue-300);
+
+      --border-color-control: var(--color-gray-600);
+      --border-color-subtle: var(--color-gray-800);
+
+      --ring-color-focus: var(--color-blue-400);
+    }
+  }
+
   body {
     background-color: var(--background-color-canvas);
     color: var(--text-color-body);
