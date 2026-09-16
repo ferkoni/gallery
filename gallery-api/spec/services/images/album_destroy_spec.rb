@@ -190,7 +190,7 @@ RSpec.describe Images::AlbumDestroy, type: :service do
 
     before do
       allow(storage).to receive(:delete_objects!).and_raise(
-        Aws::S3::Errors::ServiceError.new(nil, "albums/1/uuid/photo.jpg: AccessDenied")
+        Aws::S3::Errors::ServiceError.new(nil, "images/uuid/photo.jpg: AccessDenied")
       )
     end
 

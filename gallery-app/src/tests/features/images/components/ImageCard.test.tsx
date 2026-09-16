@@ -13,12 +13,12 @@ const image: Image = {
   title: 'Beach',
   description: null,
   tags: [],
-  s3_key: 'albums/1/uuid/photo.jpg',
+  s3_key: 'images/uuid/photo.jpg',
   album_id: 1,
   favorited: false,
   created_at: '2026-01-01T00:00:00.000Z',
-  url: 'https://my-bucket.s3.amazonaws.com/albums/1/uuid/photo.jpg?sig=abc',
-  thumbnail_url: 'https://my-bucket.s3.amazonaws.com/albums/1/uuid/photo.thumb.webp?sig=abc',
+  url: 'https://my-bucket.s3.amazonaws.com/images/uuid/photo.jpg?sig=abc',
+  thumbnail_url: 'https://my-bucket.s3.amazonaws.com/images/uuid/photo.thumb.webp?sig=abc',
 };
 
 describe('ImageCard', () => {

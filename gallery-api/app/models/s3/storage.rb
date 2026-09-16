@@ -40,12 +40,15 @@ module S3
     # binary/octet-stream, which breaks inline display in the browser without
     # breaking the upload.
     #
-    # The key is prefixed with the album id so all of an album's objects share a
-    # common S3 prefix. A UUID prevents collisions between uploads of the same
-    # filename to the same album. File.basename strips any path the browser may
-    # include in the filename (some older browsers sent the full local path).
-    def upload(body, album_id:, filename:, content_type:)
-      key = "albums/#{album_id}/#{SecureRandom.uuid}/#{File.basename(filename)}"
+    # The key is images/<uuid>/<filename>. The UUID prevents collisions between
+    # uploads of the same filename. It names no folder: which folder a photo is in
+    # lives in the database, and moving the photo would leave a folder in the key
+    # stale. Photos uploaded before this keep their albums/<id>/<uuid>/ keys, and
+    # every reader takes the key from the row, so both work. File.basename strips
+    # any path the browser may include in the filename (some older browsers sent
+    # the full local path).
+    def upload(body, filename:, content_type:)
+      key = "images/#{SecureRandom.uuid}/#{File.basename(filename)}"
       s3_client.put_object(
         bucket: @bucket,
         key: key,

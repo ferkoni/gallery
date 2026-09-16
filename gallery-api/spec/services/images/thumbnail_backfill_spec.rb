@@ -20,13 +20,13 @@ RSpec.describe Images::ThumbnailBackfill, type: :service do
   def call = described_class.call(out: out)
 
   it "generates a thumbnail beside the original and records its key" do
-    image = create(:image, user: user, album: album, s3_key: "albums/1/uuid/beach.jpg")
+    image = create(:image, user: user, album: album, s3_key: "images/uuid/beach.jpg")
 
     summary = call
 
     expect(storage).to have_received(:put)
-      .with("albums/1/uuid/beach.thumb.webp", an_instance_of(StringIO), content_type: "image/webp")
-    expect(image.reload.thumb_key).to eq("albums/1/uuid/beach.thumb.webp")
+      .with("images/uuid/beach.thumb.webp", an_instance_of(StringIO), content_type: "image/webp")
+    expect(image.reload.thumb_key).to eq("images/uuid/beach.thumb.webp")
     expect(summary).to have_attributes(generated: 1, failed: 0, skipped: 0)
   end
 
@@ -99,7 +99,7 @@ RSpec.describe Images::ThumbnailBackfill, type: :service do
   # Images::Destroy read s3_keys before the thumbnail's key was saved, so nothing else
   # would ever delete that object.
   it "deletes the thumbnail it just wrote when the image was deleted meanwhile" do
-    image = create(:image, user: user, album: album, s3_key: "albums/1/uuid/beach.jpg")
+    image = create(:image, user: user, album: album, s3_key: "images/uuid/beach.jpg")
     allow(storage).to receive(:put) do |key, *|
       Image.where(id: image.id).delete_all
       key
@@ -107,7 +107,7 @@ RSpec.describe Images::ThumbnailBackfill, type: :service do
 
     summary = call
 
-    expect(storage).to have_received(:delete_object).with("albums/1/uuid/beach.thumb.webp")
+    expect(storage).to have_received(:delete_object).with("images/uuid/beach.thumb.webp")
     expect(summary.generated).to eq(0)
   end
 end

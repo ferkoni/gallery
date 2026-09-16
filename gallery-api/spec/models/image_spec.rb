@@ -148,16 +148,16 @@ RSpec.describe Image, type: :model do
 
   describe "#s3_keys" do
     it "is the original and its thumbnail" do
-      image = build(:image, :with_thumbnail, s3_key: "albums/1/uuid/beach.jpg")
+      image = build(:image, :with_thumbnail, s3_key: "images/uuid/beach.jpg")
 
-      expect(image.s3_keys).to eq([ "albums/1/uuid/beach.jpg", "albums/1/uuid/beach.thumb.webp" ])
+      expect(image.s3_keys).to eq([ "images/uuid/beach.jpg", "images/uuid/beach.thumb.webp" ])
     end
 
     # An image from before thumbnails. A nil in the list would reach S3 as a key.
     it "is only the original when there is no thumbnail" do
-      image = build(:image, s3_key: "albums/1/uuid/beach.jpg")
+      image = build(:image, s3_key: "images/uuid/beach.jpg")
 
-      expect(image.s3_keys).to eq([ "albums/1/uuid/beach.jpg" ])
+      expect(image.s3_keys).to eq([ "images/uuid/beach.jpg" ])
     end
   end
 
@@ -165,10 +165,10 @@ RSpec.describe Image, type: :model do
     # The index, not the validation: a backfill writes with update_all, which skips
     # validations entirely.
     it "rejects two rows pointing at one thumbnail" do
-      create(:image, thumb_key: "albums/1/uuid/beach.thumb.webp")
+      create(:image, thumb_key: "images/uuid/beach.thumb.webp")
       other = create(:image)
 
-      expect { other.update_column(:thumb_key, "albums/1/uuid/beach.thumb.webp") }
+      expect { other.update_column(:thumb_key, "images/uuid/beach.thumb.webp") }
         .to raise_error(ActiveRecord::RecordNotUnique)
     end
 

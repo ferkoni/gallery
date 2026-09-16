@@ -101,7 +101,7 @@ RSpec.describe Albums::ZipDownload, type: :service do
     # is built from, and two photos may well share one.
     def photo(album, basename)
       create(:image, user: user, album: album,
-                     s3_key: "albums/#{album.id}/#{SecureRandom.uuid}/#{basename}")
+                     s3_key: "images/#{SecureRandom.uuid}/#{basename}")
     end
 
     it "files each photo under its own folder's directory" do

@@ -20,7 +20,7 @@ RSpec.describe Images::Upload, type: :service do
   end
 
   before do
-    allow(storage).to receive(:upload).and_return("albums/#{album.id}/uuid/vacation.jpg")
+    allow(storage).to receive(:upload).and_return("images/uuid/vacation.jpg")
     allow(storage).to receive(:put) { |key, *| key }
   end
 
@@ -46,11 +46,11 @@ RSpec.describe Images::Upload, type: :service do
     end
 
     it "sets the s3_key from the upload" do
-      expect(call.record.s3_key).to eq("albums/#{album.id}/uuid/vacation.jpg")
+      expect(call.record.s3_key).to eq("images/uuid/vacation.jpg")
     end
 
     it "sets the thumb_key to the thumbnail beside the original" do
-      expect(call.record.thumb_key).to eq("albums/#{album.id}/uuid/vacation.thumb.webp")
+      expect(call.record.thumb_key).to eq("images/uuid/vacation.thumb.webp")
     end
 
     it "uses the provided title" do
@@ -140,7 +140,7 @@ RSpec.describe Images::Upload, type: :service do
       captured = nil
       allow(storage).to receive(:upload) do |body, **|
         captured = body.read
-        "albums/1/uuid/vacation.jpg"
+        "images/uuid/vacation.jpg"
       end
       call
       Vips::Image.new_from_buffer(captured, "")
@@ -163,10 +163,10 @@ RSpec.describe Images::Upload, type: :service do
     # display without breaking the upload — it fails silently, in the browser,
     # long after this code ran.
     it "passes the filename and content type explicitly, since the bytes carry neither" do
+      # Exactly these keywords: the key no longer names a folder, so nothing else is sent.
       expect(storage).to receive(:upload).with(
-        an_instance_of(StringIO),
-        hash_including(filename: "vacation.jpg", content_type: "image/jpeg")
-      ).and_return("albums/1/uuid/vacation.jpg")
+        an_instance_of(StringIO), filename: "vacation.jpg", content_type: "image/jpeg"
+      ).and_return("images/uuid/vacation.jpg")
 
       call
     end
@@ -192,7 +192,7 @@ RSpec.describe Images::Upload, type: :service do
   describe "the thumbnail" do
     it "writes it beside the original, as WebP" do
       expect(storage).to receive(:put).with(
-        "albums/#{album.id}/uuid/vacation.thumb.webp",
+        "images/uuid/vacation.thumb.webp",
         an_instance_of(StringIO),
         content_type: "image/webp"
       ) { |key, *| key }
@@ -294,12 +294,12 @@ RSpec.describe Images::Upload, type: :service do
     end
 
     it "deletes the original it already wrote" do
-      expect(storage).to receive(:delete_object).with("albums/#{album.id}/uuid/vacation.jpg")
+      expect(storage).to receive(:delete_object).with("images/uuid/vacation.jpg")
       call
     end
 
     it "deletes only the original — never the thumbnail key it failed to write" do
-      expect(storage).not_to receive(:delete_object).with("albums/#{album.id}/uuid/vacation.thumb.webp")
+      expect(storage).not_to receive(:delete_object).with("images/uuid/vacation.thumb.webp")
       call
     end
 
@@ -310,15 +310,15 @@ RSpec.describe Images::Upload, type: :service do
 
   describe "rollback on DB failure" do
     before do
-      allow(storage).to receive(:upload).and_return("albums/1/uuid/vacation.jpg")
+      allow(storage).to receive(:upload).and_return("images/uuid/vacation.jpg")
       allow_any_instance_of(Image).to receive(:save!).and_raise(
         ActiveRecord::RecordInvalid.new(Image.new)
       )
     end
 
     it "deletes both the original and the thumbnail" do
-      expect(storage).to receive(:delete_object).with("albums/1/uuid/vacation.jpg")
-      expect(storage).to receive(:delete_object).with("albums/1/uuid/vacation.thumb.webp")
+      expect(storage).to receive(:delete_object).with("images/uuid/vacation.jpg")
+      expect(storage).to receive(:delete_object).with("images/uuid/vacation.thumb.webp")
       call
     end
 
