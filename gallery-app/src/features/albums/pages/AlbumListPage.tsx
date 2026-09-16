@@ -13,8 +13,8 @@ export function AlbumListPage() {
   const { data, isPending, isError } = usePagedListAlbum(page);
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
 
-  if (isPending) return <p className="p-6 text-gray-500" data-testid="loading-label">Loading...</p>;
-  if (isError) return <p className="p-6 text-red-500" data-testid="failed-label">Failed to load folders.</p>;
+  if (isPending) return <p className="p-6 text-muted" data-testid="loading-label">Loading...</p>;
+  if (isError) return <p className="p-6 text-danger" data-testid="failed-label">Failed to load folders.</p>;
 
   const albums = data.data;
   const meta = data.meta;
@@ -23,7 +23,7 @@ export function AlbumListPage() {
     <>
       <main className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Folders</h1>
+          <h1 className="text-3xl font-bold text-strong">Folders</h1>
           <Link
             to="/folders/new"
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
@@ -34,7 +34,7 @@ export function AlbumListPage() {
         </div>
 
         {albums.length === 0 ? (
-          <p className="text-gray-500" data-testid="no-album-label">No folders yet.</p>
+          <p className="text-muted" data-testid="no-album-label">No folders yet.</p>
         ) : (
           <ul className="grid grid-cols-2 gap-4">
             {albums.map(album => (

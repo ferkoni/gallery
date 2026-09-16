@@ -40,13 +40,13 @@ export function ImageGrid({ albumId }: Props) {
     return (
       <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6" data-testid="image-grid-skeleton">
         {Array.from({ length: 6 }).map((_, i) => (
-          <li key={i} className="bg-gray-200 animate-pulse rounded-xl h-48" />
+          <li key={i} className="bg-skeleton animate-pulse rounded-xl h-48" />
         ))}
       </ul>
     );
   }
 
-  if (isError) return <p className="text-red-500" data-testid="images-error">Failed to load images.</p>;
+  if (isError) return <p className="text-danger" data-testid="images-error">Failed to load images.</p>;
 
   const meta = data.meta;
 
@@ -58,25 +58,25 @@ export function ImageGrid({ albumId }: Props) {
           placeholder="Filter by title…"
           value={title}
           onChange={e => setTitle(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-32 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="border border-control rounded-lg px-3 py-2 text-sm flex-1 min-w-32 focus:outline-none focus:ring-2 focus:ring-focus"
         />
         <input
           type="text"
           placeholder="Filter by tag…"
           value={tag}
           onChange={e => setTag(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-32 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="border border-control rounded-lg px-3 py-2 text-sm flex-1 min-w-32 focus:outline-none focus:ring-2 focus:ring-focus"
         />
         <input
           type="date"
           value={from}
           onChange={e => setFrom(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
         />
       </div>
 
       {images.length === 0 ? (
-        <p className="text-gray-400 text-sm mt-4" data-testid="images-empty">
+        <p className="text-faint text-sm mt-4" data-testid="images-empty">
           No images yet. Upload one above.
         </p>
       ) : (

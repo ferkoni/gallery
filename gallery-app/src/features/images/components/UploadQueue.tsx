@@ -10,23 +10,23 @@ export function UploadQueue() {
 
   return (
     <div
-      className="fixed bottom-4 right-4 w-72 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
+      className="fixed bottom-4 right-4 w-72 bg-surface rounded-xl shadow-xl border border-subtle overflow-hidden z-50"
       data-testid="upload-queue"
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-        <span className="text-sm font-semibold text-gray-700">Uploads</span>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-subtle">
+        <span className="text-sm font-semibold text-body">Uploads</span>
         {hasDone && (
           <button
             type="button"
             onClick={clearCompleted}
-            className="text-xs text-blue-500 hover:text-blue-700 font-medium cursor-pointer"
+            className="text-xs text-link hover:text-link-strong font-medium cursor-pointer"
             data-testid="clear-done-button"
           >
             Clear done
           </button>
         )}
       </div>
-      <ul className="max-h-64 overflow-y-auto divide-y divide-gray-100">
+      <ul className="max-h-64 overflow-y-auto divide-y divide-subtle">
         {queue.map((item) => (
           <li key={item.id} className="px-4 py-3">
             <UploadQueueItem item={item} />

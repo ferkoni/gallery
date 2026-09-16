@@ -37,75 +37,75 @@ export function S3CredentialForm({
 
   return (
     <main className="max-w-lg mx-auto px-6 py-10">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">
+      <h1 className="text-3xl font-bold text-strong mb-4">
         {configured ? "Update S3 Credentials" : "Add S3 Credentials"}
       </h1>
 
       {configured && (
-        <p data-testid="configured-banner" className="text-sm text-green-600 font-medium mb-6">
+        <p data-testid="configured-banner" className="text-sm text-success font-medium mb-6">
           ✓ S3 credentials are configured
         </p>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Access Key ID</label>
+          <label className="text-sm font-medium text-body">Access Key ID</label>
           <input
             {...register("access_key_id")}
             type="password"
             data-testid="access-key-id-input"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           />
           {errors.access_key_id && (
-            <p className="text-xs text-red-500" data-testid="access-key-id-error-label">{errors.access_key_id.message}</p>
+            <p className="text-xs text-danger" data-testid="access-key-id-error-label">{errors.access_key_id.message}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Secret Access Key</label>
+          <label className="text-sm font-medium text-body">Secret Access Key</label>
           <input
             {...register("secret_access_key")}
             type="password"
             data-testid="secret-access-key-input"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           />
           {errors.secret_access_key && (
-            <p className="text-xs text-red-500" data-testid="secret-access-key-error-label">{errors.secret_access_key.message}</p>
+            <p className="text-xs text-danger" data-testid="secret-access-key-error-label">{errors.secret_access_key.message}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Region</label>
+          <label className="text-sm font-medium text-body">Region</label>
           <input
             {...register("region")}
             type="text"
             data-testid="region-input"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           />
           {errors.region && (
-            <p className="text-xs text-red-500" data-testid="region-error-label">{errors.region.message}</p>
+            <p className="text-xs text-danger" data-testid="region-error-label">{errors.region.message}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Bucket</label>
+          <label className="text-sm font-medium text-body">Bucket</label>
           <input
             {...register("bucket")}
             type="text"
             data-testid="bucket-input"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           />
           {errors.bucket && (
-            <p className="text-xs text-red-500" data-testid="bucket-error-label">{errors.bucket.message}</p>
+            <p className="text-xs text-danger" data-testid="bucket-error-label">{errors.bucket.message}</p>
           )}
         </div>
 
         {isError && (
-          <p className="text-sm text-red-500" data-testid="error-label">Failed to add S3 Credentials</p>
+          <p className="text-sm text-danger" data-testid="error-label">Failed to add S3 Credentials</p>
         )}
 
         {isDeleteError && (
-          <p className="text-sm text-red-500" data-testid="delete-error-label">Failed to delete S3 Credentials</p>
+          <p className="text-sm text-danger" data-testid="delete-error-label">Failed to delete S3 Credentials</p>
         )}
 
         <div className="flex gap-3 mt-2">

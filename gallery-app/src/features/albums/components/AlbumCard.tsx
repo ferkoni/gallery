@@ -12,7 +12,7 @@ type Props = {
 export function AlbumCard({ album, onEdit }: Props) {
   return (
     <li
-      className="relative group bg-white rounded-xl shadow p-4"
+      className="relative group bg-surface rounded-xl shadow p-4"
       data-testid={`album-card-${album.id}`}
     >
       <Link
@@ -20,9 +20,9 @@ export function AlbumCard({ album, onEdit }: Props) {
         className="absolute inset-0 rounded-xl"
         aria-label={album.name}
       />
-      <h2 className="font-semibold text-gray-800" data-testid={`album-name-${album.id}`}>{album.name}</h2>
+      <h2 className="font-semibold text-strong" data-testid={`album-name-${album.id}`}>{album.name}</h2>
       {album.description && (
-        <p className="text-sm text-gray-500 mt-1" data-testid={`album-description-${album.id}`}>{album.description}</p>
+        <p className="text-sm text-muted mt-1" data-testid={`album-description-${album.id}`}>{album.description}</p>
       )}
       <CardEditButton
         onClick={() => onEdit(album)}

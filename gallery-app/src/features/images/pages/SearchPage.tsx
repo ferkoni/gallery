@@ -101,56 +101,56 @@ export function SearchPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-10">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Search</h1>
+      <h1 className="text-3xl font-bold text-strong mb-6">Search</h1>
 
       <div className="flex flex-wrap gap-4 mb-8">
         <div className="flex flex-col gap-1 flex-1 min-w-40">
-          <label className="text-xs font-medium text-gray-500">Global search</label>
+          <label className="text-xs font-medium text-muted">Global search</label>
           <input
             type="text"
             placeholder="Search your photos…"
             value={q}
             onChange={e => setQ(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           />
         </div>
 
         <div className="flex flex-col gap-1 flex-1 min-w-40">
-          <label className="text-xs font-medium text-gray-500">Title</label>
+          <label className="text-xs font-medium text-muted">Title</label>
           <input
             type="text"
             placeholder="Filter by title…"
             value={title}
             onChange={e => setTitle(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           />
         </div>
 
         <div className="flex flex-col gap-1 flex-1 min-w-40">
-          <label className="text-xs font-medium text-gray-500">Tag</label>
+          <label className="text-xs font-medium text-muted">Tag</label>
           <input
             type="text"
             placeholder="Filter by tag…"
             value={tag}
             onChange={e => setTag(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">From date</label>
+          <label className="text-xs font-medium text-muted">From date</label>
           <input
             type="date"
             value={from}
             onChange={e => setFrom(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           />
         </div>
 
         <div className="flex flex-col gap-1 flex-1 min-w-40">
           <AlbumPicker
             label="Folder"
-            labelClassName="text-xs font-medium text-gray-500"
+            labelClassName="text-xs font-medium text-muted"
             value={albumId}
             onChange={setAlbumId}
             placeholder="All folders"
@@ -160,7 +160,7 @@ export function SearchPage() {
       </div>
 
       {!hasAnyFilter && (
-        <p className="text-gray-400 text-sm" data-testid="search-prompt">
+        <p className="text-faint text-sm" data-testid="search-prompt">
           Enter a search term or apply a filter to find images.
         </p>
       )}
@@ -168,19 +168,19 @@ export function SearchPage() {
       {hasAnyFilter && isPending && (
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4" data-testid="search-skeleton">
           {Array.from({ length: 6 }).map((_, i) => (
-            <li key={i} className="bg-gray-200 animate-pulse rounded-xl h-48" />
+            <li key={i} className="bg-skeleton animate-pulse rounded-xl h-48" />
           ))}
         </ul>
       )}
 
       {hasAnyFilter && isError && (
-        <p className="text-red-500 text-sm" data-testid="search-error">Failed to load results.</p>
+        <p className="text-danger text-sm" data-testid="search-error">Failed to load results.</p>
       )}
 
       {/* Only once nothing is left to load: the live title and tag narrowing can empty the
           loaded pages while a later page still holds a match. */}
       {hasAnyFilter && !isPending && !isError && !hasNextPage && filtered.length === 0 && (
-        <p className="text-gray-400 text-sm" data-testid="search-empty">No images match your filters.</p>
+        <p className="text-faint text-sm" data-testid="search-empty">No images match your filters.</p>
       )}
 
       {/* hasAnyFilter too, because the previous results stay as placeholder data after the
@@ -200,7 +200,7 @@ export function SearchPage() {
       )}
 
       {hasAnyFilter && isFetchingNextPage && (
-        <p className="text-gray-400 text-sm text-center mt-4" data-testid="search-loading-more">
+        <p className="text-faint text-sm text-center mt-4" data-testid="search-loading-more">
           Loading more…
         </p>
       )}

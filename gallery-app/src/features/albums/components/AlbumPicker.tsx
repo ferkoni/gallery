@@ -112,7 +112,7 @@ export function AlbumPicker({
 
   return (
     <div className="relative">
-      <label {...getLabelProps()} className={labelClassName ?? 'text-sm font-medium text-gray-700'}>
+      <label {...getLabelProps()} className={labelClassName ?? 'text-sm font-medium text-body'}>
         {label}
       </label>
 
@@ -135,14 +135,14 @@ export function AlbumPicker({
               }
             },
           })}
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           data-testid="album-picker-input"
         />
         {allowClear && value !== undefined && (
           <button
             type="button"
             onClick={() => onChange(undefined)}
-            className="text-sm text-gray-500 hover:text-gray-800 px-2 cursor-pointer"
+            className="text-sm text-muted hover:text-strong px-2 cursor-pointer"
             data-testid="album-picker-clear"
           >
             Clear
@@ -150,7 +150,7 @@ export function AlbumPicker({
         )}
         <button
           {...getToggleButtonProps({ type: 'button', 'aria-label': 'Toggle folder list' })}
-          className="text-sm text-gray-500 px-2 cursor-pointer"
+          className="text-sm text-muted px-2 cursor-pointer"
           data-testid="album-picker-toggle"
         >
           ▾
@@ -158,10 +158,10 @@ export function AlbumPicker({
       </div>
 
       <div
-        className={`absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg ${isOpen ? '' : 'hidden'}`}
+        className={`absolute z-20 mt-1 w-full bg-surface border border-subtle rounded-lg shadow-lg ${isOpen ? '' : 'hidden'}`}
       >
         {isOpen && (
-          <div className="px-3 py-2 border-b border-gray-100 text-xs text-gray-500">
+          <div className="px-3 py-2 border-b border-subtle text-xs text-muted">
             {searching ? (
               <span data-testid="album-picker-searching">Searching every folder</span>
             ) : (
@@ -180,7 +180,7 @@ export function AlbumPicker({
             // the click lands on it.
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setPath(path.slice(0, -1))}
-            className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 cursor-pointer"
+            className="w-full text-left px-3 py-2 text-sm text-secondary hover:bg-hover cursor-pointer"
             data-testid="album-picker-up"
           >
             ↑ {path.length === 1 ? 'Folders' : path.at(-2)!.name}
@@ -198,17 +198,17 @@ export function AlbumPicker({
               {...getItemProps({ item: option, index })}
               // Dimmed while the rows belong to the previous filter, so the swap reads as
               // a refresh rather than a jump.
-              className={`flex items-center justify-between gap-2 px-3 py-2 text-sm cursor-pointer transition-opacity ${isPlaceholderData ? 'opacity-60' : ''} ${highlightedIndex === index ? 'bg-blue-50' : ''}`}
+              className={`flex items-center justify-between gap-2 px-3 py-2 text-sm cursor-pointer transition-opacity ${isPlaceholderData ? 'opacity-60' : ''} ${highlightedIndex === index ? 'bg-selected' : ''}`}
               data-testid={isTopLevel(option) ? 'album-picker-top-level' : `album-picker-option-${option.id}`}
             >
               {isTopLevel(option) ? (
-                <span className="text-gray-600">Top level</span>
+                <span className="text-secondary">Top level</span>
               ) : (
                 <>
                   <span className="truncate">
                     {option.name}
                     {option.ancestors && option.ancestors.length > 0 && (
-                      <span className="text-xs text-gray-400 ml-2" data-testid={`album-picker-path-${option.id}`}>
+                      <span className="text-xs text-faint ml-2" data-testid={`album-picker-path-${option.id}`}>
                         {option.ancestors.map(c => c.name).join(' › ')}
                       </span>
                     )}
@@ -218,7 +218,7 @@ export function AlbumPicker({
                     // Entering is not selecting, so the click must not reach the row.
                     onClick={(e) => { e.stopPropagation(); enter(option); }}
                     aria-label={`Open ${option.name}`}
-                    className="text-gray-400 hover:text-gray-700 px-1 cursor-pointer"
+                    className="text-faint hover:text-body px-1 cursor-pointer"
                     data-testid={`album-picker-enter-${option.id}`}
                   >
                     ›
@@ -230,19 +230,19 @@ export function AlbumPicker({
           {/* Nothing loaded yet is not the same as nothing matching, and saying the second
               while the first is true is a blink. */}
           {isOpen && isPending && (
-            <li className="px-3 py-2 text-sm text-gray-400" data-testid="album-picker-loading">
+            <li className="px-3 py-2 text-sm text-faint" data-testid="album-picker-loading">
               Loading folders…
             </li>
           )}
           {isOpen && !isPending && options.length === 0 && (
-            <li className="px-3 py-2 text-sm text-gray-400" data-testid="album-picker-empty">
+            <li className="px-3 py-2 text-sm text-faint" data-testid="album-picker-empty">
               {searching ? 'No folders match.' : 'No folders here.'}
             </li>
           )}
           {isOpen && hasNextPage && (
             <li
               ref={sentinelRef}
-              className="px-3 py-2 text-sm text-gray-400"
+              className="px-3 py-2 text-sm text-faint"
               data-testid="album-picker-sentinel"
             >
               Loading more…

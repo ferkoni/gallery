@@ -39,37 +39,37 @@ export function AlbumForm({
 
   return (
     <main className="max-w-lg mx-auto px-6 py-10">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">{title}</h1>
+      <h1 className="text-3xl font-bold text-strong mb-8">{title}</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Name</label>
+          <label className="text-sm font-medium text-body">Name</label>
           <input
             {...register("name")}
             type="text"
             data-testid="name-input"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
           />
           {errors.name && (
-            <p className="text-xs text-red-500" data-testid="name-error-label">{errors.name.message}</p>
+            <p className="text-xs text-danger" data-testid="name-error-label">{errors.name.message}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Description</label>
+          <label className="text-sm font-medium text-body">Description</label>
           <textarea
             {...register("description")}
             rows={3}
             data-testid="description-input"
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus resize-none"
           />
           {errors.description && (
-            <p className="text-xs text-red-500" data-testid="description-error-label">{errors.description.message}</p>
+            <p className="text-xs text-danger" data-testid="description-error-label">{errors.description.message}</p>
           )}
         </div>
 
         {isError && (
-          <p className="text-sm text-red-500" data-testid="error-label">{errorMessage}</p>
+          <p className="text-sm text-danger" data-testid="error-label">{errorMessage}</p>
         )}
 
         <div className="flex gap-3 mt-2">
@@ -77,7 +77,7 @@ export function AlbumForm({
             type="button"
             onClick={onCancel}
             data-testid="cancel-button"
-            className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex-1 border border-control text-body font-semibold py-2 rounded-lg hover:bg-hover transition-colors cursor-pointer"
           >
             Cancel
           </button>
