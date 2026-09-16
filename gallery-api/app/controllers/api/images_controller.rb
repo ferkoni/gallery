@@ -3,7 +3,7 @@ class Api::ImagesController < ApplicationController
 
   before_action :authorize_resource!, only: %i[show update destroy]
 
-  # POST /api/images
+  # POST /api/v1/images
   # Expects multipart/form-data with:
   #   image[file]      — the file itself
   #   image[title]     — display name (optional, defaults to filename)
@@ -39,7 +39,7 @@ class Api::ImagesController < ApplicationController
     end
   end
 
-  # PATCH /api/images/:id
+  # PATCH /api/v1/images/:id
   # Updates metadata (title, description, tags, album_id). The S3 object is never
   # touched. If album_id is supplied it must belong to the current user; otherwise
   # Album.with_user raises RecordNotFound → 404 via BaseApi rescue.
@@ -52,7 +52,7 @@ class Api::ImagesController < ApplicationController
                            .serializable_hash.to_json
   end
 
-  # DELETE /api/images/:id
+  # DELETE /api/v1/images/:id
   # Delegates to Images::Destroy, which deletes the S3 object first and
   # only then destroys the DB record. If S3 fails the DB record is untouched
   # and a 422 is returned. If S3 succeeds but DB destroy fails (near-impossible),
@@ -72,8 +72,8 @@ class Api::ImagesController < ApplicationController
 
   protected
 
-  # GET /api/images?album_id=&page=          — the album and everything under it
-  # GET /api/albums/:album_id/images?page=   — that album exactly
+  # GET /api/v1/images?album_id=&page=          — the album and everything under it
+  # GET /api/v1/albums/:album_id/images?page=   — that album exactly
   # Scoped to the current user; album-filtered when :album_id is present.
   # album raises RecordNotFound (→ 404) if the album doesn't exist or belongs
   # to another user, so no images from other users can ever leak.

@@ -23,41 +23,41 @@ describe('apiErrorMessage', () => {
   afterAll(() => mock.restore());
 
   it("returns the API's sentence from a 422", async () => {
-    mock.onPost('/api/images').reply(422, { errors: 'File is too large. Maximum size is 25 MB' });
+    mock.onPost('/images').reply(422, { errors: 'File is too large. Maximum size is 25 MB' });
 
-    const err = await rejectionFrom(() => apiClient.post('/api/images'));
+    const err = await rejectionFrom(() => apiClient.post('/images'));
 
     expect(apiErrorMessage(err, fallback)).toBe('File is too large. Maximum size is 25 MB');
   });
 
   it("never returns axios's own message", async () => {
-    mock.onPost('/api/images').reply(422, { errors: 'File type not allowed. Accepted: JPEG, PNG, WebP, GIF' });
+    mock.onPost('/images').reply(422, { errors: 'File type not allowed. Accepted: JPEG, PNG, WebP, GIF' });
 
-    const err = await rejectionFrom(() => apiClient.post('/api/images'));
+    const err = await rejectionFrom(() => apiClient.post('/images'));
 
     expect(apiErrorMessage(err, fallback)).not.toContain('status code');
   });
 
   it('falls back when the response has no body', async () => {
-    mock.onPost('/api/images').reply(500);
+    mock.onPost('/images').reply(500);
 
-    const err = await rejectionFrom(() => apiClient.post('/api/images'));
+    const err = await rejectionFrom(() => apiClient.post('/images'));
 
     expect(apiErrorMessage(err, fallback)).toBe(fallback);
   });
 
   it('falls back on a network failure, where there is no response at all', async () => {
-    mock.onPost('/api/images').networkError();
+    mock.onPost('/images').networkError();
 
-    const err = await rejectionFrom(() => apiClient.post('/api/images'));
+    const err = await rejectionFrom(() => apiClient.post('/images'));
 
     expect(apiErrorMessage(err, fallback)).toBe(fallback);
   });
 
   it("falls back for the API's other error shapes rather than printing them", async () => {
-    mock.onPost('/api/albums').reply(422, { errors: { name: ["can't be blank"] } });
+    mock.onPost('/albums').reply(422, { errors: { name: ["can't be blank"] } });
 
-    const err = await rejectionFrom(() => apiClient.post('/api/albums'));
+    const err = await rejectionFrom(() => apiClient.post('/albums'));
 
     expect(apiErrorMessage(err, fallback)).toBe(fallback);
   });

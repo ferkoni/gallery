@@ -1,9 +1,30 @@
 import MockAdapter from 'axios-mock-adapter';
-import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest';
 import apiClient from '@/lib/api/client';
 import { getToken, setToken } from '@/lib/api/tokenStore';
 
 const mock = new MockAdapter(apiClient);
+
+// The version is written in the client and nowhere else, so call sites say '/albums'
+// (docs: api-versioning/02, decision 6).
+describe('apiClient base URL', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it('sends requests under /api/v1 on the same origin when VITE_API_URL is empty', () => {
+    expect(apiClient.getUri({ url: '/albums' })).toBe('/api/v1/albums');
+  });
+
+  it('puts /api/v1 after the origin that VITE_API_URL names', async () => {
+    vi.stubEnv('VITE_API_URL', 'http://localhost:3000');
+    vi.resetModules();
+    const { default: client } = await import('@/lib/api/client');
+
+    expect(client.getUri({ url: '/albums' })).toBe('http://localhost:3000/api/v1/albums');
+  });
+});
 
 describe('apiClient request interceptor', () => {
   beforeEach(() => {

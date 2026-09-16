@@ -28,11 +28,11 @@ const folder = (id: number, name: string): Album => ({
   id, name, description: null, parent_id: null, created_at: '2026-01-01T00:00:00.000Z',
 });
 
-// The folder picker pages through GET /api/albums and resolves the photo's own folder
-// with GET /api/albums/:id. `pages` is what the server has, one array per page; `known`
+// The folder picker pages through GET /api/v1/albums and resolves the photo's own folder
+// with GET /api/v1/albums/:id. `pages` is what the server has, one array per page; `known`
 // is what the by-id lookup can answer, which is every folder unless a test says otherwise.
 function stubFolders(pages: Album[][] = [[folder(1, 'Holidays')]], known = pages.flat()) {
-  mock.onGet('/api/albums').reply(config => {
+  mock.onGet('/albums').reply(config => {
     const page = Number(config.params?.page ?? 1);
     const q = config.params?.q as string | undefined;
     // ?q= searches every folder, as the server does; without it, one page at a time.
@@ -46,7 +46,7 @@ function stubFolders(pages: Album[][] = [[folder(1, 'Holidays')]], known = pages
     }];
   });
 
-  mock.onGet(/^\/api\/albums\/\d+$/).reply(config => {
+  mock.onGet(/^\/albums\/\d+$/).reply(config => {
     const found = known.find(a => a.id === Number(config.url!.split('/').pop()));
     return found ? [200, { data: { attributes: found } }] : [404, { errors: 'Not found' }];
   });
@@ -124,7 +124,7 @@ describe('ImageEditModal', () => {
   it('calls PATCH and then onClose on successful save', async () => {
     const updated: Image = { ...image, title: 'New Beach' };
     stubFolders();
-    mock.onPatch('/api/images/1').reply(200, { data: { attributes: updated } });
+    mock.onPatch('/images/1').reply(200, { data: { attributes: updated } });
 
     const onClose = vi.fn();
     renderModal(onClose);
@@ -134,12 +134,12 @@ describe('ImageEditModal', () => {
     await userEvent.click(screen.getByTestId('edit-save-button'));
 
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
-    expect(mock.history.patch[0].url).toBe('/api/images/1');
+    expect(mock.history.patch[0].url).toBe('/images/1');
   });
 
   it('shows an error message when save fails', async () => {
     stubFolders();
-    mock.onPatch('/api/images/1').reply(500);
+    mock.onPatch('/images/1').reply(500);
 
     renderModal();
     await userEvent.click(screen.getByTestId('edit-save-button'));
@@ -168,7 +168,7 @@ describe('ImageEditModal', () => {
     it('can move a photo into a folder that is not on the first page', async () => {
       const distant = folder(40, 'Archive 2019');
       stubFolders([[folder(1, 'Holidays')], [distant]]);
-      mock.onPatch('/api/images/1').reply(200, { data: { attributes: image } });
+      mock.onPatch('/images/1').reply(200, { data: { attributes: image } });
 
       renderModal();
 
@@ -185,7 +185,7 @@ describe('ImageEditModal', () => {
     it("names the photo's own folder, and leaves it alone on a title-only save", async () => {
       const distant = folder(40, 'Archive 2019');
       stubFolders([[folder(1, 'Holidays')]], [folder(1, 'Holidays'), distant]);
-      mock.onPatch('/api/images/40').reply(200, { data: { attributes: image } });
+      mock.onPatch('/images/40').reply(200, { data: { attributes: image } });
 
       render(<ImageEditModal image={{ ...image, id: 40, album_id: 40 }} onClose={vi.fn()} />, {
         wrapper: makeWrapper(),
@@ -252,7 +252,7 @@ describe('ImageEditModal', () => {
 
     it('calls DELETE and then onClose on confirmation', async () => {
       stubFolders();
-      mock.onDelete('/api/images/1').reply(204);
+      mock.onDelete('/images/1').reply(204);
 
       const onClose = vi.fn();
       renderModal(onClose);
@@ -261,12 +261,12 @@ describe('ImageEditModal', () => {
       await userEvent.click(screen.getByTestId('delete-confirm-button'));
 
       await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
-      expect(mock.history.delete[0].url).toBe('/api/images/1');
+      expect(mock.history.delete[0].url).toBe('/images/1');
     });
 
     it('shows an error message when delete fails', async () => {
       stubFolders();
-      mock.onDelete('/api/images/1').reply(500);
+      mock.onDelete('/images/1').reply(500);
 
       renderModal();
       await userEvent.click(screen.getByTestId('delete-image-button'));

@@ -71,9 +71,9 @@ src/
 ## Auth flow
 
 ```
-POST /api/users/login
+POST /api/v1/users/login
   → JWT token returned in response body
-  → stored in memory (tokenStore)
+  → stored in sessionStorage (tokenStore)
   → attached to every request via Axios interceptor
 
 401 response
@@ -81,9 +81,8 @@ POST /api/users/login
   → redirect to /login
 
 Logout
-  → DELETE /api/users/logout
   → token cleared locally
-  → JTI rotated server-side (token immediately invalid)
+  (the API's DELETE /api/v1/users/logout, which rotates the JTI, is not called)
 ```
 
 ---
@@ -106,16 +105,15 @@ Tests are written with Vitest + Testing Library. Covered areas:
 
 ## Deployment
 
-The `Dockerfile` produces a static build served by nginx:
+`nginx/Dockerfile` at the repo root builds the SPA and serves it from nginx, which also proxies `/api/` and `/cable` to the API:
 
 ```bash
-docker build \
+docker build -f nginx/Dockerfile \
   --build-arg VITE_API_URL=https://api.example.com \
-  -t gallery-app .
-docker run -p 80:80 gallery-app
+  -t gallery-nginx .
 ```
 
-`VITE_API_URL` defaults to `/api` (same-origin reverse proxy). For cross-origin deployments, set it to the full API URL at build time.
+`VITE_API_URL` is the API's **origin**, and it is empty by default: nginx serves the SPA and the API on the same origin. The client adds `/api/v1` itself (`src/lib/api/client.ts`), so never set this to a path. For a cross-origin deployment, set it to the API's origin at build time.
 
 ---
 
@@ -126,7 +124,7 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-The dev server proxies `/api` requests to `http://localhost:3000` (the Rails backend).
+The dev server has no proxy. `.env.development` sets `VITE_API_URL=http://localhost:3000`, so requests go straight to the Rails backend at `http://localhost:3000/api/v1/…`, which allows `http://localhost:5173` through CORS.
 
 ```bash
 npm run build      # production build → dist/

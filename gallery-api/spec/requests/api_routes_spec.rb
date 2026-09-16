@@ -5,7 +5,7 @@ require "rails_helper"
 # green. The prefix is defined once, so moving the API is a one-line change here
 # (docs: api-versioning/03, PR 2).
 RSpec.describe "API routes", type: :request do
-  let(:prefix) { "/api" }
+  let(:prefix) { "/api/v1" }
 
   let(:user) { create(:user) }
   let(:headers) { auth_headers_for(user) }
@@ -109,6 +109,13 @@ RSpec.describe "API routes", type: :request do
     get "#{prefix}/albums", headers: { "Accept" => "application/json" }
 
     expect(response).to have_http_status(:unauthorized)
+  end
+
+  # Nothing is left behind at the unversioned paths (docs: api-versioning/02, decision 4).
+  it "answers 404 at the unversioned /api, even with a valid token" do
+    get "/api/albums", headers: headers.merge("Accept" => "application/json")
+
+    expect(response).to have_http_status(:not_found)
   end
 
   it "returns a token from login" do

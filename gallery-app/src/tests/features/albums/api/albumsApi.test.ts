@@ -11,7 +11,7 @@ const meta = { current_page: 1, total_pages: 3, total_count: 60, per_page: 25 };
 describe('fetchAlbumPage', () => {
   beforeEach(() => {
     mock.reset();
-    mock.onGet('/api/albums').reply(200, {
+    mock.onGet('/albums').reply(200, {
       data: [{ attributes: { id: 1, name: 'Holidays', description: null, parent_id: null, created_at: '2026-01-01T00:00:00.000Z' } }],
       meta,
     });

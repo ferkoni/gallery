@@ -2,7 +2,10 @@ import axios from 'axios';
 import { getToken, setToken } from './tokenStore';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  // VITE_API_URL is the API's origin, empty when nginx serves the SPA on the same origin. The
+  // version lives here and nowhere else, so call sites say '/albums' (docs: api-versioning/02,
+  // decision 6).
+  baseURL: `${import.meta.env.VITE_API_URL ?? ''}/api/v1`,
   headers: { 'Content-Type': 'application/json' }
 });
 

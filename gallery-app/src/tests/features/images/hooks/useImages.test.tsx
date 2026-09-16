@@ -51,7 +51,7 @@ const page = (data: Image[], current_page: number, total_pages: number) =>
 
 // Replies by the page param, so a test can load page 1 and then ask for page 2.
 function replyByPage(pages: Record<number, ReturnType<typeof page>>) {
-  mock.onGet('/api/images').reply(config => [200, pages[config.params.page as number]]);
+  mock.onGet('/images').reply(config => [200, pages[config.params.page as number]]);
 }
 
 describe('flattenImagePages', () => {
@@ -138,7 +138,7 @@ describe('useUpdateImage', () => {
 
   it('patches the image and returns the updated data on success', async () => {
     const updated: Image = { ...images[0], title: 'New Beach' };
-    mock.onPatch('/api/images/1').reply(200, { data: { attributes: updated } });
+    mock.onPatch('/images/1').reply(200, { data: { attributes: updated } });
 
     const { result } = renderHook(() => useUpdateImage(1), { wrapper: makeWrapper() });
 
@@ -149,7 +149,7 @@ describe('useUpdateImage', () => {
   });
 
   it('enters error state when the server responds with an error', async () => {
-    mock.onPatch('/api/images/1').reply(500);
+    mock.onPatch('/images/1').reply(500);
 
     const { result } = renderHook(() => useUpdateImage(1), { wrapper: makeWrapper() });
 
@@ -163,7 +163,7 @@ describe('useUpdateImage', () => {
     // something else happens to invalidate that cache.
     it('refetches both ends of the move', async () => {
       const moved: Image = { ...images[0], album_id: 2 };
-      mock.onPatch('/api/images/1').reply(200, { data: { attributes: moved } });
+      mock.onPatch('/images/1').reply(200, { data: { attributes: moved } });
 
       const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -183,7 +183,7 @@ describe('useUpdateImage', () => {
 
     it('refetches one folder when the photo did not move', async () => {
       const renamed: Image = { ...images[0], title: 'New Beach' };
-      mock.onPatch('/api/images/1').reply(200, { data: { attributes: renamed } });
+      mock.onPatch('/images/1').reply(200, { data: { attributes: renamed } });
 
       const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -205,19 +205,19 @@ describe('useUpdateImage', () => {
 describe('useDeleteImage', () => {
   beforeEach(() => mock.reset());
 
-  it('sends DELETE to /api/images/:id and enters success state', async () => {
-    mock.onDelete('/api/images/1').reply(204);
+  it('sends DELETE to /api/v1/images/:id and enters success state', async () => {
+    mock.onDelete('/images/1').reply(204);
 
     const { result } = renderHook(() => useDeleteImage(), { wrapper: makeWrapper() });
 
     act(() => { result.current.mutate({ id: 1, albumId: 1 }); });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(mock.history.delete[0].url).toBe('/api/images/1');
+    expect(mock.history.delete[0].url).toBe('/images/1');
   });
 
   it('removes the image and updates meta in the cache optimistically', async () => {
-    mock.onDelete('/api/images/1').reply(204);
+    mock.onDelete('/images/1').reply(204);
 
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -245,7 +245,7 @@ describe('useDeleteImage', () => {
   });
 
   it('calls onSuccess callback after successful delete', async () => {
-    mock.onDelete('/api/images/1').reply(204);
+    mock.onDelete('/images/1').reply(204);
 
     const { result } = renderHook(() => useDeleteImage(), { wrapper: makeWrapper() });
     const onSuccess = vi.fn();
@@ -256,7 +256,7 @@ describe('useDeleteImage', () => {
   });
 
   it('enters error state when the server responds with an error', async () => {
-    mock.onDelete('/api/images/1').reply(500);
+    mock.onDelete('/images/1').reply(500);
 
     const { result } = renderHook(() => useDeleteImage(), { wrapper: makeWrapper() });
 
@@ -271,7 +271,7 @@ describe('useFavoriteImage', () => {
 
   it('patches the image with the given favorited value', async () => {
     const updated: Image = { ...images[0], favorited: true };
-    mock.onPatch('/api/images/1').reply(200, { data: { attributes: updated } });
+    mock.onPatch('/images/1').reply(200, { data: { attributes: updated } });
 
     const { result } = renderHook(() => useFavoriteImage(), { wrapper: makeWrapper() });
 
@@ -281,7 +281,7 @@ describe('useFavoriteImage', () => {
   });
 
   it('enters error state when the server responds with an error', async () => {
-    mock.onPatch('/api/images/1').reply(500);
+    mock.onPatch('/images/1').reply(500);
 
     const { result } = renderHook(() => useFavoriteImage(), { wrapper: makeWrapper() });
 
@@ -291,7 +291,7 @@ describe('useFavoriteImage', () => {
   });
 
   it('optimistically flips favorited in album image pages', async () => {
-    mock.onPatch('/api/images/1').reply(200, { data: { attributes: { ...images[0], favorited: true } } });
+    mock.onPatch('/images/1').reply(200, { data: { attributes: { ...images[0], favorited: true } } });
 
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -339,7 +339,7 @@ describe('useFavoriteImage', () => {
     }
 
     it('removes an unfavourited photo from whichever page holds it', async () => {
-      mock.onPatch('/api/images/3').reply(() => new Promise(() => {}));
+      mock.onPatch('/images/3').reply(() => new Promise(() => {}));
       const { wrapper, cachedIds } = setup();
 
       const { result } = renderHook(() => useFavoriteImage(), { wrapper });
@@ -351,7 +351,7 @@ describe('useFavoriteImage', () => {
     // The list is ordered by upload date, so the photo's place may be on a page that is not
     // loaded. The refetch after the mutation settles puts it where the server says.
     it('adds nothing to the cache when a photo is favourited', async () => {
-      mock.onPatch('/api/images/9').reply(() => new Promise(() => {}));
+      mock.onPatch('/images/9').reply(() => new Promise(() => {}));
       const { wrapper, cachedIds } = setup();
 
       const { result } = renderHook(() => useFavoriteImage(), { wrapper });
@@ -362,7 +362,7 @@ describe('useFavoriteImage', () => {
     });
 
     it('puts the photo back when the server refuses', async () => {
-      mock.onPatch('/api/images/1').reply(500);
+      mock.onPatch('/images/1').reply(500);
       const { wrapper, cachedIds } = setup();
 
       const { result } = renderHook(() => useFavoriteImage(), { wrapper });

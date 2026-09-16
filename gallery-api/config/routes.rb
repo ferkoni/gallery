@@ -11,9 +11,11 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   get "health" => "health#show"
 
-  namespace :api do
+  # The version is in the path only: controllers stay in Api::, and route names stay api_*
+  # (docs: api-versioning/02, decision 3).
+  scope "api/v1", module: "api", as: "api" do
     resources :albums, only: [ :index, :show, :create, :update, :destroy ] do
-      # "What is in this folder": exact, no subfolders. The flat /api/images?album_id= is
+      # "What is in this folder": exact, no subfolders. The flat /api/v1/images?album_id= is
       # "search in this folder" and spans the subtree. Both set params[:album_id], so this
       # default is the only thing that tells Api::ImagesController#resources them apart.
       resources :images, only: [ :index ], defaults: { album_scope: "direct" }

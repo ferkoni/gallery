@@ -272,7 +272,7 @@ RSpec.describe Api::ImagesController, type: :controller do
     # Controller specs bypass routing, so the rest of this block passes album_scope by
     # hand. This is the example that proves the route supplies it.
     it "is routed with album_scope: direct" do
-      expect(Rails.application.routes.recognize_path("/api/albums/1/images", method: :get))
+      expect(Rails.application.routes.recognize_path("/api/v1/albums/1/images", method: :get))
         .to include(album_scope: "direct")
     end
 

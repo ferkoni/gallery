@@ -12,7 +12,7 @@ export type AlbumPageParams = {
   excludeSubtree?: number;
 };
 
-// GET /api/albums?page=&q=&parent_id=&exclude_subtree=
+// GET /api/v1/albums?page=&q=&parent_id=&exclude_subtree=
 //
 // Beside createCrudApi rather than inside it: the generic helper has no business
 // growing query parameters that only albums have.
@@ -20,7 +20,7 @@ export async function fetchAlbumPage(
   page = 1,
   { q, parentId, excludeSubtree }: AlbumPageParams = {}
 ): Promise<PaginatedResponse<Album>> {
-  const res = await apiClient.get('/api/albums', {
+  const res = await apiClient.get('/albums', {
     params: {
       page,
       ...(q && { q }),

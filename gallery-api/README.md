@@ -49,29 +49,29 @@ Images are never stored locally — only the S3 key is persisted. Presigned GET 
 
 ## API endpoints
 
-All endpoints are under `/api`. Every request except login and register requires `Authorization: Bearer <token>`.
+All endpoints are under `/api/v1`. Every request except login and register requires `Authorization: Bearer <token>`.
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/api/users` | Register |
-| `POST` | `/api/users/login` | Login — returns JWT |
-| `DELETE` | `/api/users/logout` | Logout — rotates JTI, invalidating the token |
-| `GET` | `/api/albums` | List top-level albums — newest first, paginated. `parent_id` lists one album's children; `q` (name substring) searches every album at any depth and ignores `parent_id`; `exclude_subtree` hides an album and its descendants |
-| `POST` | `/api/albums` | Create album |
-| `GET` | `/api/albums/:id` | Get album |
-| `PATCH` | `/api/albums/:id` | Update album |
-| `DELETE` | `/api/albums/:id` | Delete album, its sub-albums, and all their S3 objects |
-| `GET` | `/api/albums/:id/images` | List images in album exactly, no sub-albums (paginated) |
-| `GET` | `/api/images` | List images — filterable by `album_id` (the album **and its sub-albums**), `favorited`, `q` (search) |
-| `POST` | `/api/images` | Upload image (multipart/form-data) |
-| `GET` | `/api/images/:id` | Get image |
-| `PATCH` | `/api/images/:id` | Update image metadata |
-| `DELETE` | `/api/images/:id` | Delete image and its S3 object |
-| `PUT` | `/api/s3_credentials` | Create or update S3 credentials (upsert) |
-| `DELETE` | `/api/s3_credentials` | Remove S3 credentials |
-| `GET` | `/api/async_tasks` | List async tasks |
-| `GET` | `/api/async_tasks/:id` | Get async task status |
-| `POST` | `/api/async_tasks` | Enqueue a task (e.g. `album_download`) |
+| `POST` | `/api/v1/users` | Register |
+| `POST` | `/api/v1/users/login` | Login — returns JWT |
+| `DELETE` | `/api/v1/users/logout` | Logout — rotates JTI, invalidating the token |
+| `GET` | `/api/v1/albums` | List top-level albums — newest first, paginated. `parent_id` lists one album's children; `q` (name substring) searches every album at any depth and ignores `parent_id`; `exclude_subtree` hides an album and its descendants |
+| `POST` | `/api/v1/albums` | Create album |
+| `GET` | `/api/v1/albums/:id` | Get album |
+| `PATCH` | `/api/v1/albums/:id` | Update album |
+| `DELETE` | `/api/v1/albums/:id` | Delete album, its sub-albums, and all their S3 objects |
+| `GET` | `/api/v1/albums/:id/images` | List images in album exactly, no sub-albums (paginated) |
+| `GET` | `/api/v1/images` | List images — filterable by `album_id` (the album **and its sub-albums**), `favorited`, `q` (search) |
+| `POST` | `/api/v1/images` | Upload image (multipart/form-data) |
+| `GET` | `/api/v1/images/:id` | Get image |
+| `PATCH` | `/api/v1/images/:id` | Update image metadata |
+| `DELETE` | `/api/v1/images/:id` | Delete image and its S3 object |
+| `PUT` | `/api/v1/s3_credentials` | Create or update S3 credentials (upsert) |
+| `DELETE` | `/api/v1/s3_credentials` | Remove S3 credentials |
+| `GET` | `/api/v1/async_tasks` | List async tasks |
+| `GET` | `/api/v1/async_tasks/:id` | Get async task status |
+| `POST` | `/api/v1/async_tasks` | Enqueue a task (e.g. `album_download`) |
 
 ---
 

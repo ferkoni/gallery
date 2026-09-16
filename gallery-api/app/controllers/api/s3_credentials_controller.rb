@@ -3,7 +3,7 @@ class Api::S3CredentialsController < ApplicationController
 
   before_action :authorize_resource!, only: [ :update, :destroy ]
 
-  # PUT /api/s3_credentials — create or update (upsert)
+  # PUT /api/v1/s3_credentials — create or update (upsert)
   def update
     resource.assign_attributes(resource_params)
     # validate reachability
@@ -12,7 +12,7 @@ class Api::S3CredentialsController < ApplicationController
     head :no_content
   end
 
-  # DELETE /api/s3_credentials
+  # DELETE /api/v1/s3_credentials
   def destroy
     raise ActiveRecord::RecordNotFound unless resource.persisted?
     resource.destroy!

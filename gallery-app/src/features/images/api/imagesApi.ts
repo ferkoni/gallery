@@ -16,28 +16,28 @@ export type AlbumImageFilters = {
   from?: string;
 };
 
-// GET /api/albums/:albumId/images?page=&title=&tag=&from=
+// GET /api/v1/albums/:albumId/images?page=&title=&tag=&from=
 export async function fetchAlbumImages(albumId: number, page = 1, filters?: AlbumImageFilters): Promise<PaginatedResponse<Image>> {
-  const res = await apiClient.get(`/api/albums/${albumId}/images`, { params: { page, ...filters } });
+  const res = await apiClient.get(`/albums/${albumId}/images`, { params: { page, ...filters } });
   return {
     data: res.data.data.map((item: { attributes: Image }) => item.attributes),
     meta: res.data.meta,
   };
 }
 
-// GET /api/images?favorited=true&page=
+// GET /api/v1/images?favorited=true&page=
 export async function fetchFavoriteImages(page = 1): Promise<PaginatedResponse<Image>> {
-  const res = await apiClient.get('/api/images', { params: { favorited: true, page } });
+  const res = await apiClient.get('/images', { params: { favorited: true, page } });
   return {
     data: res.data.data.map((item: { attributes: Image }) => item.attributes),
     meta: res.data.meta,
   };
 }
 
-// GET /api/images?q=…&title=…&tag=…&from=…&album_id=…&page=
+// GET /api/v1/images?q=…&title=…&tag=…&from=…&album_id=…&page=
 export async function fetchSearchImages(params: SearchParams, page = 1): Promise<PaginatedResponse<Image>> {
   const { albumId, ...rest } = params;
-  const res = await apiClient.get('/api/images', {
+  const res = await apiClient.get('/images', {
     params: { ...rest, ...(albumId !== undefined && { album_id: albumId }), page },
   });
   return {
@@ -46,7 +46,7 @@ export async function fetchSearchImages(params: SearchParams, page = 1): Promise
   };
 }
 
-// POST /api/images  (multipart/form-data)
+// POST /api/v1/images  (multipart/form-data)
 export async function uploadImage(
   file: File,
   title: string,
@@ -58,7 +58,7 @@ export async function uploadImage(
   form.append('image[title]', title);
   form.append('image[album_id]', String(albumId));
 
-  const res = await apiClient.post('/api/images', form, {
+  const res = await apiClient.post('/images', form, {
     headers: { 'Content-Type': undefined }, // let axios set multipart/form-data + boundary
     onUploadProgress: (e) => {
       if (e.total) onProgress(Math.round((e.loaded / e.total) * 100));
@@ -67,13 +67,13 @@ export async function uploadImage(
   return res.data.data.attributes;
 }
 
-// PATCH /api/images/:id
+// PATCH /api/v1/images/:id
 export async function updateImage(id: number, data: UpdateImagePayload): Promise<Image> {
-  const res = await apiClient.patch(`/api/images/${id}`, { image: data });
+  const res = await apiClient.patch(`/images/${id}`, { image: data });
   return res.data.data.attributes;
 }
 
-// DELETE /api/images/:id
+// DELETE /api/v1/images/:id
 export async function deleteImage(id: number): Promise<void> {
-  await apiClient.delete(`/api/images/${id}`);
+  await apiClient.delete(`/images/${id}`);
 }
