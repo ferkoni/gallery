@@ -176,7 +176,74 @@ describe('Lightbox', () => {
     expect(document.body.style.overflow).toBe('');
   });
 
+  // A folder loads its photos as the grid scrolls, so the last photo the Lightbox has is not
+  // necessarily the folder's last.
+  describe('with more photos still to load', () => {
+    const more: Image = { ...images[2], id: 4, title: 'Lake', url: 'https://url4' };
 
+    function renderLoading(onLoadMore = vi.fn()) {
+      const children = (
+        <>
+          <Lightbox.Image />
+          <Lightbox.Nav />
+        </>
+      );
+      const view = render(
+        <Lightbox images={images} initialIndex={2} onClose={vi.fn()} hasMore onLoadMore={onLoadMore}>
+          {children}
+        </Lightbox>
+      );
+      const arrive = () => view.rerender(
+        <Lightbox images={[ ...images, more ]} initialIndex={2} onClose={vi.fn()} hasMore={false} onLoadMore={onLoadMore}>
+          {children}
+        </Lightbox>
+      );
+      return { onLoadMore, arrive };
+    }
+
+    it('keeps Next enabled on the last loaded photo', () => {
+      renderLoading();
+      expect(screen.getByTestId('lightbox-next')).toBeEnabled();
+    });
+
+    it('asks for more and stays on the last photo until they arrive', async () => {
+      const { onLoadMore } = renderLoading();
+
+      await userEvent.click(screen.getByTestId('lightbox-next'));
+
+      expect(onLoadMore).toHaveBeenCalledOnce();
+      expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url3');
+    });
+
+    it('moves on to the first new photo once it arrives', async () => {
+      const { arrive } = renderLoading();
+
+      await userEvent.click(screen.getByTestId('lightbox-next'));
+      arrive();
+
+      expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url4');
+      expect(screen.getByTestId('lightbox-next')).toBeDisabled();
+    });
+
+    it('does the same from the keyboard', async () => {
+      const { onLoadMore, arrive } = renderLoading();
+
+      await userEvent.keyboard('{ArrowRight}');
+      expect(onLoadMore).toHaveBeenCalledOnce();
+      arrive();
+
+      expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url4');
+    });
+
+    it('goes back one photo, not two, when Prev is pressed while waiting', async () => {
+      renderLoading();
+
+      await userEvent.click(screen.getByTestId('lightbox-next'));
+      await userEvent.click(screen.getByTestId('lightbox-prev'));
+
+      expect(screen.getByTestId('lightbox-image')).toHaveAttribute('src', 'https://url2');
+    });
+  });
 });
 
 describe('Lightbox.Menu', () => {

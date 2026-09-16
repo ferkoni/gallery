@@ -4,14 +4,15 @@ import { AlbumBreadcrumbs } from '@/features/albums/components/AlbumBreadcrumbs'
 import { SubfolderSection } from '@/features/albums/components/SubfolderSection';
 import { ImageGrid } from '../components/ImageGrid';
 import { ImageUploadButton } from '../components/ImageUploadButton';
-import { useAlbumImages } from '../hooks/useImages';
+import { useAlbumImageCount } from '../hooks/useImages';
 import { DownloadAlbumButton } from '@/features/downloads/components/DownloadAlbumButton';
 
 export function AlbumDetailPage() {
   const { id } = useParams();
   const albumId = id ? Number(id) : 0;
   const { data: album, isPending, isError } = useGetAlbum(albumId, { enabled: !!id });
-  const { data: imagesData } = useAlbumImages(albumId, 1, undefined, { enabled: !!id });
+  // The folder's own photos, unfiltered. The same cache entry as the grid's while it has no filter.
+  const { data: imageCount } = useAlbumImageCount(albumId, { enabled: !!id });
   // The same query SubfolderSection runs, so react-query serves both from one request.
   const { data: subfolders } = useInfiniteAlbums({ parentId: albumId });
 
@@ -19,13 +20,13 @@ export function AlbumDetailPage() {
   if (isPending) return <p className="p-6 text-muted">Loading...</p>;
   if (isError || !album) return <p className="p-6 text-danger">Failed to load folder.</p>;
 
-  const hasImages = (imagesData?.meta.total_count ?? 0) > 0;
+  const hasImages = (imageCount ?? 0) > 0;
   const hasSubfolders = (subfolders?.pages[0]?.data.length ?? 0) > 0;
   // Only a folder with neither photos nor subfolders is pointless to download. One whose
   // subfolders are all empty still looks downloadable and is not; that refusal is the
   // server's, and it arrives in the download queue. Held back until both queries have
   // answered, so the button does not flash disabled while they load.
-  const knowsWhatItHolds = imagesData !== undefined && subfolders !== undefined;
+  const knowsWhatItHolds = imageCount !== undefined && subfolders !== undefined;
   const nothingToDownload = knowsWhatItHolds && !hasImages && !hasSubfolders;
 
   return (
