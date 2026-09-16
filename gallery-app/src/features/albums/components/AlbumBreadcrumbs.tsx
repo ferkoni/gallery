@@ -18,15 +18,15 @@ export function AlbumBreadcrumbs({ ancestors, name }: Props) {
     : ancestors;
 
   return (
-    <nav aria-label="Breadcrumb" className="text-sm text-gray-500 mb-2" data-testid="album-breadcrumbs">
-      <Link to="/folders" className="hover:text-gray-800">Folders</Link>
+    <nav aria-label="Breadcrumb" className="text-sm text-muted mb-2" data-testid="album-breadcrumbs">
+      <Link to="/folders" className="hover:text-strong">Folders</Link>
       {shown.map((crumb, index) => (
         <span key={crumb?.id ?? `gap-${index}`}>
           <span>{' › '}</span>
           {crumb ? (
             <Link
               to={`/folders/${crumb.id}`}
-              className="hover:text-gray-800"
+              className="hover:text-strong"
               data-testid={`breadcrumb-${crumb.id}`}
             >
               {crumb.name}
@@ -37,7 +37,7 @@ export function AlbumBreadcrumbs({ ancestors, name }: Props) {
         </span>
       ))}
       <span>{' › '}</span>
-      <span className="text-gray-700" data-testid="breadcrumb-current">{name}</span>
+      <span className="text-body" data-testid="breadcrumb-current">{name}</span>
     </nav>
   );
 }

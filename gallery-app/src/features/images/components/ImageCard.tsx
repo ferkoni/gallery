@@ -21,7 +21,7 @@ export const ImageCard = memo(function ImageCard({ image, onClick, onUnfavorite 
 
   return (
     <div
-      className="relative group bg-white rounded-xl shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      className="relative group bg-surface rounded-xl shadow overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
       data-testid={`image-card-${image.id}`}
       onClick={onClick}
     >
@@ -34,7 +34,7 @@ export const ImageCard = memo(function ImageCard({ image, onClick, onUnfavorite 
           toggleFavorite({ id: image.id, favorited: next });
           if (!next) onUnfavorite?.(image);
         }}
-        className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 hover:bg-white transition-colors disabled:opacity-50 cursor-pointer"
+        className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-surface/80 hover:bg-surface transition-colors disabled:opacity-50 cursor-pointer"
         aria-label={image.favorited ? 'Remove from favorites' : 'Add to favorites'}
       >
         <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden>
@@ -48,10 +48,10 @@ export const ImageCard = memo(function ImageCard({ image, onClick, onUnfavorite 
       </button>
       {broken ? (
         <div
-          className="w-full h-48 bg-gray-100 flex items-center justify-center"
+          className="w-full h-48 bg-sunken flex items-center justify-center"
           data-testid="image-broken"
         >
-          <span className="text-gray-400 text-sm">Image unavailable</span>
+          <span className="text-faint text-sm">Image unavailable</span>
         </div>
       ) : (
         <img
@@ -63,8 +63,8 @@ export const ImageCard = memo(function ImageCard({ image, onClick, onUnfavorite 
         />
       )}
       <div className="p-3">
-        <p className="text-sm font-medium text-gray-700 truncate">{image.title}</p>
-        <p className="text-xs text-gray-400 mt-0.5" data-testid={`image-date-${image.id}`}>{uploadDate}</p>
+        <p className="text-sm font-medium text-body truncate">{image.title}</p>
+        <p className="text-xs text-faint mt-0.5" data-testid={`image-date-${image.id}`}>{uploadDate}</p>
       </div>
     </div>
   );

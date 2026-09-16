@@ -1,1 +1,41 @@
 @import "tailwindcss";
+
+/*
+ * Colour tokens. Components use these (bg-surface, text-muted…), never literal grays, so a
+ * dark theme can redefine them in one place. `@theme`, not `@theme inline`: inline would write
+ * the light value into each utility and a later override would do nothing.
+ * Each namespace makes one utility: --background-color-surface is bg-surface only.
+ */
+@theme {
+  --background-color-canvas: var(--color-white);
+  --background-color-surface: var(--color-white);
+  --background-color-sunken: var(--color-gray-100);
+  --background-color-hover: var(--color-gray-50);
+  --background-color-skeleton: var(--color-gray-200);
+  --background-color-selected: var(--color-blue-50);
+  --background-color-danger-subtle: var(--color-red-50);
+
+  --text-color-strong: var(--color-gray-800);
+  --text-color-body: var(--color-gray-700);
+  --text-color-secondary: var(--color-gray-600);
+  --text-color-muted: var(--color-gray-500);
+  --text-color-faint: var(--color-gray-400);
+  --text-color-danger: var(--color-red-500);
+  --text-color-danger-strong: var(--color-red-700);
+  --text-color-success: var(--color-green-600);
+  --text-color-link: var(--color-blue-600);
+  --text-color-link-strong: var(--color-blue-800);
+
+  /* divide-* reads this namespace too */
+  --border-color-control: var(--color-gray-300);
+  --border-color-subtle: var(--color-gray-200);
+
+  --ring-color-focus: var(--color-blue-500);
+}
+
+@layer base {
+  body {
+    background-color: var(--background-color-canvas);
+    color: var(--text-color-body);
+  }
+}

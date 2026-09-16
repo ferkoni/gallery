@@ -56,36 +56,36 @@ export function AlbumEditModal({ album, onClose }: Props) {
         onClick={onClose}
         data-testid="album-edit-modal-overlay"
       />
-      <div className="relative z-10 bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+      <div className="relative z-10 bg-surface rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
         <h2
           id="album-edit-heading"
-          className="text-lg font-semibold text-gray-800 mb-4"
+          className="text-lg font-semibold text-strong mb-4"
         >
           Edit folder
         </h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label htmlFor="edit-name" className="text-sm font-medium text-gray-700">Name</label>
+            <label htmlFor="edit-name" className="text-sm font-medium text-body">Name</label>
             <input
               id="edit-name"
               {...register('name')}
               type="text"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus"
               data-testid="edit-name-input"
             />
             {errors.name && (
-              <p className="text-xs text-red-500" data-testid="edit-name-error">{errors.name.message}</p>
+              <p className="text-xs text-danger" data-testid="edit-name-error">{errors.name.message}</p>
             )}
           </div>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="edit-description" className="text-sm font-medium text-gray-700">Description</label>
+            <label htmlFor="edit-description" className="text-sm font-medium text-body">Description</label>
             <textarea
               id="edit-description"
               {...register('description')}
               rows={3}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="border border-control rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus resize-none"
               data-testid="edit-description-input"
             />
           </div>
@@ -109,7 +109,7 @@ export function AlbumEditModal({ album, onClose }: Props) {
           </div>
 
           {isError && (
-            <p className="text-sm text-red-500" data-testid="album-edit-error">
+            <p className="text-sm text-danger" data-testid="album-edit-error">
               {apiErrorMessage(error, 'Failed to save. Please try again.')}
             </p>
           )}
@@ -118,7 +118,7 @@ export function AlbumEditModal({ album, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+              className="flex-1 border border-control text-body font-semibold py-2 rounded-lg hover:bg-hover transition-colors cursor-pointer"
               data-testid="edit-cancel-button"
             >
               Cancel

@@ -186,19 +186,19 @@ function LightboxMenu({ onEdit, onDelete }: LightboxMenuProps) {
       </button>
       {open && (
         <div
-          className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg overflow-hidden min-w-[120px]"
+          className="absolute top-full right-0 mt-1 bg-surface rounded-lg shadow-lg overflow-hidden min-w-[120px]"
           data-testid="lightbox-menu-dropdown"
         >
           <button
             onClick={() => { setOpen(false); onEdit(image); }}
-            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="w-full text-left px-4 py-2 text-sm text-body hover:bg-hover transition-colors cursor-pointer"
             data-testid="lightbox-menu-edit"
           >
             Edit
           </button>
           <button
             onClick={() => { setOpen(false); onDelete(image); }}
-            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+            className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-subtle transition-colors cursor-pointer"
             data-testid="lightbox-menu-delete"
           >
             Delete

@@ -44,24 +44,24 @@ export function FavoritesPage() {
   if (isPending) {
     return (
       <main className="max-w-4xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Favorites</h1>
+        <h1 className="text-3xl font-bold text-strong mb-6">Favorites</h1>
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4" data-testid="favorites-skeleton">
           {Array.from({ length: 6 }).map((_, i) => (
-            <li key={i} className="bg-gray-200 animate-pulse rounded-xl h-48" />
+            <li key={i} className="bg-skeleton animate-pulse rounded-xl h-48" />
           ))}
         </ul>
       </main>
     );
   }
 
-  if (isError) return <p className="p-6 text-red-500">Failed to load favorites.</p>;
+  if (isError) return <p className="p-6 text-danger">Failed to load favorites.</p>;
 
   return (
     <>
       <main className="max-w-4xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Favorites</h1>
+        <h1 className="text-3xl font-bold text-strong mb-6">Favorites</h1>
         {images.length === 0 ? (
-          <p className="text-gray-400 text-sm" data-testid="favorites-empty">
+          <p className="text-faint text-sm" data-testid="favorites-empty">
             No favorites yet. Click the heart on any image.
           </p>
         ) : (
@@ -79,7 +79,7 @@ export function FavoritesPage() {
         )}
 
         {isFetchingNextPage && (
-          <p className="text-gray-400 text-sm text-center mt-4" data-testid="favorites-loading-more">
+          <p className="text-faint text-sm text-center mt-4" data-testid="favorites-loading-more">
             Loading more…
           </p>
         )}

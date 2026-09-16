@@ -8,10 +8,10 @@ const statusLabel: Record<UploadStatus, string> = {
 };
 
 const statusColor: Record<UploadStatus, string> = {
-  pending: 'text-gray-500',
-  uploading: 'text-blue-500',
-  done: 'text-green-500',
-  error: 'text-red-500',
+  pending: 'text-muted',
+  uploading: 'text-link',
+  done: 'text-success',
+  error: 'text-danger',
 };
 
 type Props = { item: UploadItem };
@@ -20,7 +20,7 @@ export function UploadQueueItem({ item }: Props) {
   return (
     <div className="text-sm" data-testid={`upload-item-${item.id}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate max-w-[160px] text-gray-700">{item.file.name}</span>
+        <span className="truncate max-w-[160px] text-body">{item.file.name}</span>
         <span className={`text-xs font-medium ${statusColor[item.status]}`}>
           {statusLabel[item.status]}
         </span>
@@ -33,7 +33,7 @@ export function UploadQueueItem({ item }: Props) {
         />
       )}
       {item.status === 'error' && item.error && (
-        <p className="text-xs text-red-500 mt-1">{item.error}</p>
+        <p className="text-xs text-danger mt-1">{item.error}</p>
       )}
     </div>
   );

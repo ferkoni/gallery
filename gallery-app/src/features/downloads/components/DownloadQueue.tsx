@@ -18,13 +18,13 @@ export function DownloadQueue() {
 
   return (
     <div
-      className="fixed bottom-4 right-4 w-72 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
+      className="fixed bottom-4 right-4 w-72 bg-surface rounded-xl shadow-xl border border-subtle overflow-hidden z-50"
       data-testid="download-queue"
     >
-      <div className="flex items-center px-4 py-3 border-b border-gray-100">
-        <span className="text-sm font-semibold text-gray-700">Downloads</span>
+      <div className="flex items-center px-4 py-3 border-b border-subtle">
+        <span className="text-sm font-semibold text-body">Downloads</span>
       </div>
-      <ul className="max-h-64 overflow-y-auto divide-y divide-gray-100">
+      <ul className="max-h-64 overflow-y-auto divide-y divide-subtle">
         {items.map((item) => (
           <li key={item.taskId} className="px-4 py-3">
             <DownloadToast item={item} onRetry={handleRetry} />

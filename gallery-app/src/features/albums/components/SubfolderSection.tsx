@@ -31,7 +31,7 @@ export function SubfolderSection({ albumId }: Props) {
 
   return (
     <section className="mb-8" data-testid="subfolder-section">
-      <h2 className="text-sm font-semibold text-gray-500 mb-3">Folders</h2>
+      <h2 className="text-sm font-semibold text-muted mb-3">Folders</h2>
       <ul className="grid grid-cols-2 gap-4">
         {albums.map(album => (
           <AlbumCard key={album.id} album={album} onEdit={setEditing} />
@@ -45,7 +45,7 @@ export function SubfolderSection({ albumId }: Props) {
           <button
             type="button"
             onClick={() => fetchNextPage()}
-            className="mt-3 text-sm text-blue-600 hover:text-blue-800 cursor-pointer"
+            className="mt-3 text-sm text-link hover:text-link-strong cursor-pointer"
             data-testid="subfolder-show-more"
           >
             Show more folders

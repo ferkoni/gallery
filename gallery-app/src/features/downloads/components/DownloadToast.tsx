@@ -9,9 +9,9 @@ const statusLabel: Record<DownloadStatus, string> = {
 };
 
 const statusColor: Record<DownloadStatus, string> = {
-  pending: 'text-blue-500',
-  completed: 'text-green-500',
-  failed: 'text-red-500',
+  pending: 'text-link',
+  completed: 'text-success',
+  failed: 'text-danger',
 };
 
 type Props = {
@@ -25,7 +25,7 @@ export const DownloadToast = memo(function DownloadToast({ item, onRetry }: Prop
   return (
     <div className="text-sm" data-testid={`download-item-${item.taskId}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate max-w-[160px] text-gray-700">{item.albumName}</span>
+        <span className="truncate max-w-[160px] text-body">{item.albumName}</span>
         <span className={`text-xs font-medium ${statusColor[item.status]}`}>
           {statusLabel[item.status]}
         </span>
@@ -35,7 +35,7 @@ export const DownloadToast = memo(function DownloadToast({ item, onRetry }: Prop
         <a
           href={item.url}
           download={`${item.albumName} ${item.completedAt}.zip`}
-          className="text-xs text-blue-500 hover:text-blue-700 font-medium mt-1 block"
+          className="text-xs text-link hover:text-link-strong font-medium mt-1 block"
         >
           Save file
         </a>
@@ -43,11 +43,11 @@ export const DownloadToast = memo(function DownloadToast({ item, onRetry }: Prop
 
       {item.status === 'failed' && (
         <div className="flex items-center justify-between mt-1">
-          {item.error && <p className="text-xs text-red-500">{item.error}</p>}
+          {item.error && <p className="text-xs text-danger">{item.error}</p>}
           {onRetry && (
             <button
               onClick={() => onRetry(item)}
-              className="text-xs text-blue-500 hover:text-blue-700 font-medium cursor-pointer"
+              className="text-xs text-link hover:text-link-strong font-medium cursor-pointer"
             >
               Try again
             </button>
@@ -59,7 +59,7 @@ export const DownloadToast = memo(function DownloadToast({ item, onRetry }: Prop
         <button
           onClick={() => remove(item.taskId)}
           aria-label="Dismiss"
-          className="text-xs text-gray-400 hover:text-gray-600 mt-1 cursor-pointer"
+          className="text-xs text-faint hover:text-secondary mt-1 cursor-pointer"
         >
           Dismiss
         </button>
