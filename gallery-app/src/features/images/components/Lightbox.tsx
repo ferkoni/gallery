@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import type { Image } from '../types/image';
 
@@ -25,15 +25,27 @@ type LightboxProps = {
   initialIndex: number;
   onClose: () => void;
   children: React.ReactNode;
+  // More photos exist beyond the last one loaded. Next stays enabled at the end and asks for them.
+  hasMore?: boolean;
+  onLoadMore?: () => void;
 };
 
-function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps) {
+function LightboxRoot({ images, initialIndex, onClose, children, hasMore, onLoadMore }: LightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   const safeIndex = Math.min(currentIndex, Math.max(0, images.length - 1));
   const image = images[safeIndex];
-  const hasNext = safeIndex < images.length - 1;
+  const atLastLoaded = safeIndex === images.length - 1;
+  const hasNext = !atLastLoaded || !!hasMore;
   const hasPrev = safeIndex > 0;
+
+  // At the last loaded photo this steps past the end on purpose: safeIndex clamps it back to
+  // that photo until the next page arrives, and then the same index is the first new one. A
+  // second press while loading lands on the same index.
+  const goNext = useCallback(() => {
+    if (atLastLoaded) onLoadMore?.();
+    setCurrentIndex(safeIndex + 1);
+  }, [atLastLoaded, onLoadMore, safeIndex]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -43,12 +55,12 @@ function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowRight' && hasNext) setCurrentIndex((i) => i + 1);
-      if (e.key === 'ArrowLeft' && hasPrev) setCurrentIndex((i) => i - 1);
+      if (e.key === 'ArrowRight' && hasNext) goNext();
+      if (e.key === 'ArrowLeft' && hasPrev) setCurrentIndex(safeIndex - 1);
     }
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [hasNext, hasPrev, onClose]);
+  }, [hasNext, hasPrev, safeIndex, goNext, onClose]);
 
   return (
     <LightboxContext.Provider
@@ -56,7 +68,7 @@ function LightboxRoot({ images, initialIndex, onClose, children }: LightboxProps
         image,
         hasNext,
         hasPrev,
-        goNext: () => setCurrentIndex(safeIndex + 1),
+        goNext,
         goPrev: () => setCurrentIndex(safeIndex - 1),
         close: onClose,
       }}

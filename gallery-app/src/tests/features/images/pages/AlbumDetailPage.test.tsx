@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AlbumDetailPage } from '@/features/images/pages/AlbumDetailPage';
 import { useGetAlbum, useInfiniteAlbums } from '@/features/albums/albums';
-import { useAlbumImages } from '@/features/images/hooks/useImages';
+import { useAlbumImageCount } from '@/features/images/hooks/useImages';
 import type { Album } from '@/features/albums/types/album';
 
 vi.mock('@/features/albums/albums', () => ({
@@ -12,7 +12,7 @@ vi.mock('@/features/albums/albums', () => ({
   useInfiniteAlbums: vi.fn(),
   useUpdateAlbum: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false })),
 }));
-vi.mock('@/features/images/hooks/useImages', () => ({ useAlbumImages: vi.fn() }));
+vi.mock('@/features/images/hooks/useImages', () => ({ useAlbumImageCount: vi.fn() }));
 // The photo grid has its own tests; here it only needs to be findable, to check that the
 // subfolders come before it.
 vi.mock('@/features/images/components/ImageGrid', () => ({
@@ -26,7 +26,7 @@ vi.mock('@/features/downloads/components/DownloadAlbumButton', () => ({
 
 const mockUseGetAlbum = useGetAlbum as Mock;
 const mockUseInfiniteAlbums = useInfiniteAlbums as Mock;
-const mockUseAlbumImages = useAlbumImages as Mock;
+const mockUseAlbumImageCount = useAlbumImageCount as Mock;
 
 const album: Album = {
   id: 1, name: 'Summer 2026', description: 'A great summer', parent_id: null, created_at: '2026-01-01',
@@ -48,11 +48,7 @@ function stubSubfolders(albums: Album[], hasNextPage = false) {
 }
 
 function stubImageCount(total: number) {
-  mockUseAlbumImages.mockReturnValue({
-    isPending: false,
-    isError: false,
-    data: { data: [], meta: { current_page: 1, total_pages: 1, total_count: total, per_page: 25 } },
-  });
+  mockUseAlbumImageCount.mockReturnValue({ data: total });
 }
 
 function renderPage() {
@@ -190,7 +186,7 @@ describe('AlbumDetailPage', () => {
     });
 
     it('is not greyed out before both queries have answered', () => {
-      mockUseAlbumImages.mockReturnValue({ isPending: true, isError: false, data: undefined });
+      mockUseAlbumImageCount.mockReturnValue({ data: undefined });
       renderPage();
       expect(screen.getByTestId('download-button')).not.toBeDisabled();
     });

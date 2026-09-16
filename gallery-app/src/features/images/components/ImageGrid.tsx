@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useAlbumImages } from '../hooks/useImages';
-import { usePagination } from '@/hooks/usePagination';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Pagination } from '@/components/Pagination';
+import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
 import { ImageCard } from './ImageCard';
 import { ImageEditModal } from './ImageEditModal';
 import { Lightbox } from './Lightbox';
@@ -11,7 +10,6 @@ import type { Image } from '../types/image';
 type Props = { albumId: number };
 
 export function ImageGrid({ albumId }: Props) {
-  const { page, goNext, goPrev, reset } = usePagination();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [modal, setModal] = useState<{ image: Image; mode: 'edit' | 'delete' } | null>(null);
 
@@ -23,18 +21,35 @@ export function ImageGrid({ albumId }: Props) {
   const debouncedTag = useDebounce(tag, 300);
   const debouncedFrom = useDebounce(from, 300);
 
-  useEffect(() => { reset(); }, [albumId, debouncedTitle, debouncedTag, debouncedFrom, reset]);
-
   const filters = useMemo(() => ({
     title: debouncedTitle || undefined,
     tag: debouncedTag || undefined,
     from: debouncedFrom || undefined,
   }), [debouncedTitle, debouncedTag, debouncedFrom]);
 
-  const { data, isPending, isError } = useAlbumImages(albumId, page, filters);
+  // A new filter is a new query, so it starts from its own first page. The previous filter's
+  // photos stay on screen until it arrives.
+  const {
+    data: images = [], isPending, isLoadingError, isFetchNextPageError,
+    hasNextPage, isFetchingNextPage, isPlaceholderData, fetchNextPage,
+  } = useAlbumImages(albumId, filters);
 
-  const images = useMemo(() => data?.data ?? [], [data?.data]);
   const clickHandlers = useMemo(() => images.map((_, i) => () => setSelectedIndex(i)), [images]);
+
+  // Below the grid, the last thing on the page, so unlike the subfolder sentinel above it
+  // nothing scrolls past it on the way somewhere else. Not while showing the previous filter's
+  // photos (the next page would belong to the new filter), and not after a failed page: the
+  // failure would re-arm it, and a sentinel still in view would retry in a loop.
+  const sentinelRef = useInfiniteSentinel<HTMLDivElement>(
+    hasNextPage && !isFetchingNextPage && !isPlaceholderData && !isFetchNextPageError,
+    fetchNextPage
+  );
+
+  // For the lightbox's Next on the last loaded photo. fetchNextPage restarts a request already
+  // in flight, so holding the arrow key would otherwise resend the page on every repeat.
+  const loadMore = useCallback(() => {
+    if (!isFetchingNextPage) fetchNextPage();
+  }, [isFetchingNextPage, fetchNextPage]);
 
   if (isPending) {
     return (
@@ -46,9 +61,8 @@ export function ImageGrid({ albumId }: Props) {
     );
   }
 
-  if (isError) return <p className="text-danger" data-testid="images-error">Failed to load images.</p>;
-
-  const meta = data.meta;
+  // Only when nothing loaded. A failed later page, or a failed refetch, keeps the photos.
+  if (isLoadingError) return <p className="text-danger" data-testid="images-error">Failed to load images.</p>;
 
   return (
     <>
@@ -80,25 +94,39 @@ export function ImageGrid({ albumId }: Props) {
           No images yet. Upload one above.
         </p>
       ) : (
-        <>
-          <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6" data-testid="image-grid">
-            {images.map((image, index) => (
-              <li key={image.id}>
-                <ImageCard
-                  image={image}
-                  onClick={clickHandlers[index]}
-                />
-              </li>
-            ))}
-          </ul>
+        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6" data-testid="image-grid">
+          {images.map((image, index) => (
+            <li key={image.id}>
+              <ImageCard
+                image={image}
+                onClick={clickHandlers[index]}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
 
-          <Pagination
-            currentPage={meta.current_page}
-            totalPages={meta.total_pages}
-            onNext={goNext}
-            onPrev={goPrev}
-          />
-        </>
+      {hasNextPage && (
+        <div ref={sentinelRef} className="h-4" data-testid="image-grid-sentinel" />
+      )}
+
+      {isFetchingNextPage && (
+        <p className="text-faint text-sm text-center mt-4" data-testid="image-grid-loading-more">
+          Loading more…
+        </p>
+      )}
+
+      {isFetchNextPageError && (
+        <p className="text-danger text-sm text-center mt-4" data-testid="image-grid-load-more-error">
+          Couldn't load more photos.{' '}
+          <button
+            type="button"
+            onClick={() => fetchNextPage()}
+            className="text-link hover:text-link-strong font-medium cursor-pointer"
+          >
+            Retry
+          </button>
+        </p>
       )}
 
       {selectedIndex !== null && (
@@ -106,6 +134,8 @@ export function ImageGrid({ albumId }: Props) {
           images={images}
           initialIndex={selectedIndex}
           onClose={() => setSelectedIndex(null)}
+          hasMore={hasNextPage}
+          onLoadMore={loadMore}
         >
           <Lightbox.Overlay />
           <Lightbox.Image />

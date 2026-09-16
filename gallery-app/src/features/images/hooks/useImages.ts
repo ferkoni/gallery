@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { infiniteQueryOptions, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import {
   fetchAlbumImages,
@@ -29,11 +29,34 @@ export function flattenImagePages(data: ImagePages): Image[] {
     .filter(image => !seen.has(image.id) && seen.add(image.id));
 }
 
-export function useAlbumImages(albumId: number, page: number, filters?: AlbumImageFilters, options?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: ['albums', albumId, 'images', page, filters],
-    queryFn: () => fetchAlbumImages(albumId, page, filters),
+// The folder grid and the download guard read one cache entry: the key is the same whenever
+// the grid has no filters, because a filters object whose values are all undefined hashes like
+// {}. Pages live inside the entry, so every key under ['albums', id, 'images'] has the
+// { pages } shape, and the optimistic updaters below only handle that one.
+export const albumImagesQuery = (albumId: number, filters: AlbumImageFilters = {}) =>
+  infiniteQueryOptions({
+    queryKey: ['albums', albumId, 'images', filters],
+    queryFn: ({ pageParam }) => fetchAlbumImages(albumId, pageParam, filters),
+    initialPageParam: 1,
+    getNextPageParam: nextImagePage,
     staleTime: PRESIGNED_URL_STALE_MS,
+  });
+
+export function useAlbumImages(albumId: number, filters?: AlbumImageFilters) {
+  return useInfiniteQuery({
+    ...albumImagesQuery(albumId, filters),
+    select: flattenImagePages,
+    // A filter change is a new key; without this the grid would blank for each round trip.
+    placeholderData: keepPreviousData,
+  });
+}
+
+// The folder's own photo count, unfiltered. The grid's first page can't answer this while a
+// filter is set, because its total_count is the filtered one.
+export function useAlbumImageCount(albumId: number, options?: { enabled?: boolean }) {
+  return useInfiniteQuery({
+    ...albumImagesQuery(albumId),
+    select: (data) => data.pages[0].meta.total_count,
     enabled: options?.enabled ?? true,
   });
 }
@@ -94,16 +117,19 @@ export function useFavoriteImage() {
           (q.queryKey[0] === 'images' && q.queryKey[1] === 'favorites'),
       });
 
-      const prevAlbumPages = queryClient.getQueriesData<PaginatedResponse<Image>>({
+      const prevAlbumPages = queryClient.getQueriesData<ImagePages>({
         predicate: (q) => q.queryKey[0] === 'albums' && q.queryKey[2] === 'images',
       });
       const prevFavorites = queryClient.getQueryData<ImagePages>(['images', 'favorites']);
 
-      queryClient.setQueriesData<PaginatedResponse<Image>>(
+      queryClient.setQueriesData<ImagePages>(
         { predicate: (q) => q.queryKey[0] === 'albums' && q.queryKey[2] === 'images' },
-        (old) => {
-          if (!old) return old;
-          return { ...old, data: old.data.map((img) => img.id === id ? { ...img, favorited } : img) };
+        (old) => old && {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.map((img) => img.id === id ? { ...img, favorited } : img),
+          })),
         }
       );
 
@@ -145,20 +171,16 @@ export function useDeleteImage() {
     mutationFn: ({ id }: { id: number; albumId: number }) => deleteImage(id),
     onMutate: async ({ id, albumId }) => {
       await queryClient.cancelQueries({ queryKey: ['albums', albumId, 'images'] });
-      queryClient.setQueriesData<PaginatedResponse<Image>>(
+      queryClient.setQueriesData<ImagePages>(
         { queryKey: ['albums', albumId, 'images'] },
-        (old) => {
-          if (!old) return old;
-          const newTotalCount = Math.max(0, old.meta.total_count - 1);
-          return {
-            ...old,
-            data: old.data.filter((img) => img.id !== id),
-            meta: {
-              ...old.meta,
-              total_count: newTotalCount,
-              total_pages: Math.max(1, Math.ceil(newTotalCount / old.meta.per_page)),
-            },
-          };
+        (old) => old && {
+          ...old,
+          pages: old.pages.map((page) => ({
+            data: page.data.filter((img) => img.id !== id),
+            // Every page carries the count, and the download guard reads the first: deleting
+            // a folder's last photo greys out Download without waiting for the refetch.
+            meta: { ...page.meta, total_count: Math.max(0, page.meta.total_count - 1) },
+          })),
         }
       );
     },

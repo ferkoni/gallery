@@ -4,6 +4,8 @@ import MockAdapter from 'axios-mock-adapter';
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import apiClient from '@/lib/api/client';
 import {
+  useAlbumImages,
+  useAlbumImageCount,
   useSearchImages,
   useFavoriteImages,
   useUpdateImage,
@@ -65,6 +67,80 @@ describe('flattenImagePages', () => {
     };
 
     expect(flattenImagePages(data).map(image => image.id)).toEqual([1, 2, 3]);
+  });
+});
+
+describe('useAlbumImages', () => {
+  beforeEach(() => mock.reset());
+
+  it('loads a folder page by page into one list, and stops at the last page', async () => {
+    mock.onGet('/albums/1/images').reply(config =>
+      [200, { 1: page([photo(1), photo(2)], 1, 2), 2: page([photo(3)], 2, 2) }[config.params.page as number]]);
+
+    const { result } = renderHook(() => useAlbumImages(1), { wrapper: makeWrapper() });
+
+    await waitFor(() => expect(result.current.data?.map(image => image.id)).toEqual([1, 2]));
+    expect(result.current.hasNextPage).toBe(true);
+
+    await act(() => result.current.fetchNextPage());
+
+    await waitFor(() => expect(result.current.data?.map(image => image.id)).toEqual([1, 2, 3]));
+    expect(result.current.hasNextPage).toBe(false);
+    expect(mock.history.get.map(request => request.params)).toEqual([{ page: 1 }, { page: 2 }]);
+  });
+
+  it('sends the filters with every page', async () => {
+    mock.onGet('/albums/1/images').reply(200, page([photo(1)], 1, 1));
+
+    const { result } = renderHook(
+      () => useAlbumImages(1, { title: 'beach', tag: undefined, from: '2026-01-01' }),
+      { wrapper: makeWrapper() }
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mock.history.get[0].params).toEqual({ page: 1, title: 'beach', tag: undefined, from: '2026-01-01' });
+  });
+});
+
+describe('useAlbumImageCount', () => {
+  beforeEach(() => mock.reset());
+
+  it("answers with the folder's own photo count", async () => {
+    mock.onGet('/albums/1/images').reply(200, page([photo(1)], 1, 3));
+
+    const { result } = renderHook(() => useAlbumImageCount(1), { wrapper: makeWrapper() });
+
+    await waitFor(() => expect(result.current.data).toBe(75));
+  });
+
+  it('answers 0 for a folder with no photos', async () => {
+    mock.onGet('/albums/1/images').reply(200, { data: [], meta: { current_page: 1, total_pages: 0, total_count: 0, per_page: 25 } });
+
+    const { result } = renderHook(() => useAlbumImageCount(1), { wrapper: makeWrapper() });
+
+    await waitFor(() => expect(result.current.data).toBe(0));
+  });
+
+  it('does not fetch while disabled', () => {
+    const { result } = renderHook(() => useAlbumImageCount(1, { enabled: false }), { wrapper: makeWrapper() });
+
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(mock.history.get).toHaveLength(0);
+  });
+
+  // The folder page asks for the count while the grid below it asks for the photos. With no
+  // filter set they must be one cache entry, or every folder opens with two identical requests.
+  it('shares one request with an unfiltered grid', async () => {
+    mock.onGet('/albums/1/images').reply(200, page([photo(1)], 1, 1));
+
+    const { result } = renderHook(() => ({
+      grid: useAlbumImages(1, { title: undefined, tag: undefined, from: undefined }),
+      count: useAlbumImageCount(1),
+    }), { wrapper: makeWrapper() });
+
+    await waitFor(() => expect(result.current.count.data).toBe(25));
+    expect(result.current.grid.data?.map(image => image.id)).toEqual([1]);
+    expect(mock.history.get).toHaveLength(1);
   });
 });
 
@@ -216,31 +292,44 @@ describe('useDeleteImage', () => {
     expect(mock.history.delete[0].url).toBe('/images/1');
   });
 
-  it('removes the image and updates meta in the cache optimistically', async () => {
-    mock.onDelete('/images/1').reply(204);
+  describe("a folder's photos, cached as pages", () => {
+    type Pages = { pageParams: number[]; pages: { data: Image[]; meta: ReturnType<typeof meta> }[] };
 
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-    });
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
-
-    queryClient.setQueryData(['albums', 1, 'images', 1], {
-      data: [images[0]],
-      meta: { current_page: 1, total_pages: 1, total_count: 1, per_page: 25 },
-    });
-
-    const { result } = renderHook(() => useDeleteImage(), { wrapper });
-
-    act(() => { result.current.mutate({ id: 1, albumId: 1 }); });
-
-    await waitFor(() => {
-      const cached = queryClient.getQueryData<{ data: typeof images; meta: { total_count: number } }>(
-        ['albums', 1, 'images', 1]
+    function setup(pages: Pages['pages']) {
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      });
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
       );
-      expect(cached?.data).toHaveLength(0);
-      expect(cached?.meta.total_count).toBe(0);
+      queryClient.setQueryData<Pages>(['albums', 1, 'images', {}], { pageParams: pages.map((_, i) => i + 1), pages });
+      const cached = () => queryClient.getQueryData<Pages>(['albums', 1, 'images', {}])!;
+      return { wrapper, cached };
+    }
+
+    it('removes the photo from whichever page holds it, and lowers the count on every page', async () => {
+      mock.onDelete('/images/3').reply(() => new Promise(() => {}));
+      const { wrapper, cached } = setup([
+        { data: [photo(1), photo(2)], meta: { ...meta(1, 2), total_count: 3 } },
+        { data: [photo(3)], meta: { ...meta(2, 2), total_count: 3 } },
+      ]);
+
+      const { result } = renderHook(() => useDeleteImage(), { wrapper });
+      act(() => { result.current.mutate({ id: 3, albumId: 1 }); });
+
+      await waitFor(() => expect(cached().pages.map(p => p.data.map(image => image.id))).toEqual([[1, 2], []]));
+      expect(cached().pages.map(p => p.meta.total_count)).toEqual([2, 2]);
+    });
+
+    it('never lowers the count below 0', async () => {
+      mock.onDelete('/images/1').reply(() => new Promise(() => {}));
+      const { wrapper, cached } = setup([{ data: [photo(1)], meta: { ...meta(1, 1), total_count: 0 } }]);
+
+      const { result } = renderHook(() => useDeleteImage(), { wrapper });
+      act(() => { result.current.mutate({ id: 1, albumId: 1 }); });
+
+      await waitFor(() => expect(cached().pages[0].data).toEqual([]));
+      expect(cached().pages[0].meta.total_count).toBe(0);
     });
   });
 
@@ -300,9 +389,12 @@ describe('useFavoriteImage', () => {
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
 
-    queryClient.setQueryData(['albums', 1, 'images', 1], {
-      data: [images[0]],
-      meta: { current_page: 1, total_pages: 1, total_count: 1, per_page: 25 },
+    queryClient.setQueryData(['albums', 1, 'images', {}], {
+      pageParams: [1, 2],
+      pages: [
+        { data: [photo(2)], meta: meta(1, 2) },
+        { data: [images[0]], meta: meta(2, 2) },
+      ],
     });
 
     const { result } = renderHook(() => useFavoriteImage(), { wrapper });
@@ -310,9 +402,29 @@ describe('useFavoriteImage', () => {
     act(() => { result.current.mutate({ id: 1, favorited: true }); });
 
     await waitFor(() => {
-      const cached = queryClient.getQueryData<{ data: Image[] }>(['albums', 1, 'images', 1]);
-      expect(cached?.data[0].favorited).toBe(true);
+      const cached = queryClient.getQueryData<{ pages: { data: Image[] }[] }>(['albums', 1, 'images', {}]);
+      expect(cached?.pages[1].data[0].favorited).toBe(true);
+      expect(cached?.pages[0].data[0].favorited).toBe(false);
     });
+  });
+
+  it('puts album pages back when the server refuses', async () => {
+    mock.onPatch('/images/1').reply(500);
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const pages = { pageParams: [1], pages: [{ data: [images[0]], meta: meta(1, 1) }] };
+    queryClient.setQueryData(['albums', 1, 'images', {}], pages);
+
+    const { result } = renderHook(() => useFavoriteImage(), { wrapper });
+    act(() => { result.current.mutate({ id: 1, favorited: true }); });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(queryClient.getQueryData(['albums', 1, 'images', {}])).toEqual(pages);
   });
 
   describe('the favourites list, cached as pages', () => {
