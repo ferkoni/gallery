@@ -14,6 +14,7 @@ const album: Album = {
   id: 1,
   name: 'My Album',
   description: 'A description',
+  parent_id: null,
   created_at: '2026-01-01T00:00:00.000Z',
 };
 
@@ -32,8 +33,32 @@ function renderModal(onClose = vi.fn()) {
   });
 }
 
+// The Location picker pages through GET /api/albums and names the current parent with
+// GET /api/albums/:id.
+function stubFolders(folders: Album[] = []) {
+  mock.onGet('/api/albums').reply(200, {
+    data: folders.map(attributes => ({ attributes })),
+    meta: { current_page: 1, total_pages: 1, total_count: folders.length, per_page: 25 },
+  });
+  mock.onGet(/^\/api\/albums\/\d+$/).reply(config => {
+    const found = folders.find(f => f.id === Number(config.url!.split('/').pop()));
+    return found ? [ 200, { data: { attributes: found } } ] : [ 404, { errors: 'Not found' } ];
+  });
+}
+
+const folder = (id: number, name: string): Album => ({
+  id, name, description: null, parent_id: null, created_at: '2026-01-01T00:00:00.000Z',
+});
+
+function patchBody() {
+  return JSON.parse(mock.history.patch[0].data).album ?? JSON.parse(mock.history.patch[0].data);
+}
+
 describe('AlbumEditModal', () => {
-  beforeEach(() => mock.reset());
+  beforeEach(() => {
+    mock.reset();
+    stubFolders();
+  });
 
   it('renders the modal', () => {
     renderModal();
@@ -105,5 +130,95 @@ describe('AlbumEditModal', () => {
       expect(screen.getByTestId('album-edit-error')).toBeInTheDocument();
     });
     expect(screen.getByTestId('album-edit-modal')).toBeInTheDocument();
+  });
+
+  describe('Location', () => {
+    const destination = folder(9, 'Trips');
+
+    it('names the folder it is already in', async () => {
+      stubFolders([ destination ]);
+      render(<AlbumEditModal album={{ ...album, parent_id: 9 }} onClose={vi.fn()} />, {
+        wrapper: makeWrapper(),
+      });
+
+      await waitFor(() =>
+        expect(screen.getByRole('combobox', { name: 'Location' })).toHaveValue('Trips')
+      );
+    });
+
+    it('says Top level for a folder that is in none', () => {
+      renderModal();
+      expect(screen.getByRole('combobox', { name: 'Location' })).toHaveValue('Top level');
+    });
+
+    it('moves the folder when a new one is picked', async () => {
+      stubFolders([ destination ]);
+      mock.onPatch('/api/albums/1').reply(200, { data: { attributes: album } });
+      renderModal();
+
+      await userEvent.click(screen.getAllByTestId('album-picker-toggle')[0]);
+      await waitFor(() => expect(screen.getByTestId('album-picker-option-9')).toBeInTheDocument());
+      await userEvent.click(screen.getByTestId('album-picker-option-9'));
+      await userEvent.click(screen.getByTestId('edit-save-button'));
+
+      await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+      expect(patchBody().parent_id).toBe(9);
+    });
+
+    it('moves the folder out to the top level', async () => {
+      stubFolders([ destination ]);
+      mock.onPatch('/api/albums/1').reply(200, { data: { attributes: album } });
+      render(<AlbumEditModal album={{ ...album, parent_id: 9 }} onClose={vi.fn()} />, {
+        wrapper: makeWrapper(),
+      });
+
+      await userEvent.click(screen.getAllByTestId('album-picker-toggle')[0]);
+      await userEvent.click(await screen.findByTestId('album-picker-top-level'));
+      await userEvent.click(screen.getByTestId('edit-save-button'));
+
+      await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+      expect(patchBody().parent_id).toBeNull();
+    });
+
+    // An omitted parent_id leaves the folder where it is, so a rename never races a move
+    // it did not ask for.
+    it('says nothing about the location when only the name changed', async () => {
+      mock.onPatch('/api/albums/1').reply(200, { data: { attributes: album } });
+      renderModal();
+
+      await userEvent.clear(screen.getByTestId('edit-name-input'));
+      await userEvent.type(screen.getByTestId('edit-name-input'), 'Renamed');
+      await userEvent.click(screen.getByTestId('edit-save-button'));
+
+      await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+      expect(patchBody()).not.toHaveProperty('parent_id');
+    });
+
+    // The picker cannot offer a folder inside the one being moved, but the server is the
+    // one that decides, and it says why.
+    it('shows the reason the server gave for refusing a move', async () => {
+      mock.onPatch('/api/albums/1').reply(422, {
+        errors: 'cannot be the folder itself or one of its subfolders',
+      });
+      renderModal();
+
+      await userEvent.click(screen.getByTestId('edit-save-button'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('album-edit-error'))
+          .toHaveTextContent('cannot be the folder itself or one of its subfolders')
+      );
+    });
+
+    it('falls back to a fixed sentence when the failure explains nothing', async () => {
+      mock.onPatch('/api/albums/1').reply(500);
+      renderModal();
+
+      await userEvent.click(screen.getByTestId('edit-save-button'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('album-edit-error')).toHaveTextContent('Failed to save')
+      );
+    });
   });
 });

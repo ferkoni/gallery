@@ -9,6 +9,16 @@ import type { Album } from "@/features/albums/types/album";
 
 vi.mock('@/features/albums/albums', () => ({
   usePagedListAlbum: vi.fn(),
+  // The edit modal's Location picker reaches for these.
+  useGetAlbum: vi.fn(() => ({ data: undefined })),
+  useInfiniteAlbums: vi.fn(() => ({
+    data: { pages: [{ data: [], meta: {} }] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    isPending: false,
+    isPlaceholderData: false,
+  })),
   useUpdateAlbum: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false })),
 }));
 
@@ -49,7 +59,7 @@ describe("AlbumListPage", () => {
     (usePagedListAlbum as Mock).mockReturnValue({
       isPending: false,
       isError: false,
-      data: pagedData([{ id: 10, name: 'AlbumTest', description: null, created_at: '' }]),
+      data: pagedData([{ id: 10, name: 'AlbumTest', description: null, parent_id: null, created_at: '' }]),
     });
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
     expect(screen.getByRole('link', { name: 'AlbumTest' })).toHaveAttribute('href', '/folders/10');
@@ -60,8 +70,8 @@ describe("AlbumListPage", () => {
       isPending: false,
       isError: false,
       data: pagedData([
-        { id: 10, name: 'AlbumTest', description: 'some-album-description', created_at: '' },
-        { id: 15, name: 'AlbumWithNoDescription', description: null, created_at: '' },
+        { id: 10, name: 'AlbumTest', description: 'some-album-description', parent_id: null, created_at: '' },
+        { id: 15, name: 'AlbumWithNoDescription', description: null, parent_id: null, created_at: '' },
       ]),
     });
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
@@ -77,8 +87,8 @@ describe("AlbumListPage", () => {
       isPending: false,
       isError: false,
       data: pagedData([
-        { id: 10, name: 'AlbumTest', description: null, created_at: '' },
-        { id: 15, name: 'Another', description: null, created_at: '' },
+        { id: 10, name: 'AlbumTest', description: null, parent_id: null, created_at: '' },
+        { id: 15, name: 'Another', description: null, parent_id: null, created_at: '' },
       ]),
     });
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
@@ -90,7 +100,7 @@ describe("AlbumListPage", () => {
     (usePagedListAlbum as Mock).mockReturnValue({
       isPending: false,
       isError: false,
-      data: pagedData([{ id: 10, name: 'AlbumTest', description: null, created_at: '' }]),
+      data: pagedData([{ id: 10, name: 'AlbumTest', description: null, parent_id: null, created_at: '' }]),
     });
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
     await userEvent.click(screen.getByTestId('edit-album-button-10'));
@@ -102,7 +112,7 @@ describe("AlbumListPage", () => {
     (usePagedListAlbum as Mock).mockReturnValue({
       isPending: false,
       isError: false,
-      data: pagedData([{ id: 10, name: 'AlbumTest', description: null, created_at: '' }]),
+      data: pagedData([{ id: 10, name: 'AlbumTest', description: null, parent_id: null, created_at: '' }]),
     });
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
     await userEvent.click(screen.getByTestId('edit-album-button-10'));
@@ -114,7 +124,7 @@ describe("AlbumListPage", () => {
     (usePagedListAlbum as Mock).mockReturnValue({
       isPending: false,
       isError: false,
-      data: pagedData([{ id: 1, name: 'A', description: null, created_at: '' }]),
+      data: pagedData([{ id: 1, name: 'A', description: null, parent_id: null, created_at: '' }]),
     });
     render(<MemoryRouter><AlbumListPage /></MemoryRouter>);
     expect(screen.queryByTestId('pagination')).not.toBeInTheDocument();
@@ -125,7 +135,7 @@ describe("AlbumListPage", () => {
       isPending: false,
       isError: false,
       data: pagedData(
-        [{ id: 1, name: 'A', description: null, created_at: '' }],
+        [{ id: 1, name: 'A', description: null, parent_id: null, created_at: '' }],
         { total_pages: 3 }
       ),
     });

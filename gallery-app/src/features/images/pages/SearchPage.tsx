@@ -133,9 +133,9 @@ export function SearchPage() {
         </div>
 
         <div className="flex flex-col gap-1 flex-1 min-w-40">
-          <label htmlFor="search-album" className="text-xs font-medium text-gray-500">Folder</label>
           <AlbumPicker
-            id="search-album"
+            label="Folder"
+            labelClassName="text-xs font-medium text-gray-500"
             value={albumId}
             onChange={setAlbumId}
             placeholder="All folders"

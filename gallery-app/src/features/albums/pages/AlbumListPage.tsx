@@ -4,11 +4,12 @@ import { usePagination } from '@/hooks/usePagination';
 import { Pagination } from '@/components/Pagination';
 import { Link } from "react-router-dom";
 import { AlbumEditModal } from '@/features/albums/components/AlbumEditModal';
-import { CardEditButton } from '@/components/CardEditButton';
+import { AlbumCard } from '@/features/albums/components/AlbumCard';
 import type { Album } from '@/features/albums/types/album';
 
 export function AlbumListPage() {
   const { page, goNext, goPrev } = usePagination();
+  // The bare index is the top level of the tree, so this page needs no parent of its own.
   const { data, isPending, isError } = usePagedListAlbum(page);
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
 
@@ -37,26 +38,7 @@ export function AlbumListPage() {
         ) : (
           <ul className="grid grid-cols-2 gap-4">
             {albums.map(album => (
-              <li
-                key={album.id}
-                className="relative group bg-white rounded-xl shadow p-4"
-                data-testid={`album-card-${album.id}`}
-              >
-                <Link
-                  to={`/folders/${album.id}`}
-                  className="absolute inset-0 rounded-xl"
-                  aria-label={album.name}
-                />
-                <h2 className="font-semibold text-gray-800" data-testid={`album-name-${album.id}`}>{album.name}</h2>
-                {album.description && (
-                  <p className="text-sm text-gray-500 mt-1" data-testid={`album-description-${album.id}`}>{album.description}</p>
-                )}
-                <CardEditButton
-                  onClick={() => setEditingAlbum(album)}
-                  aria-label="Edit folder"
-                  data-testid={`edit-album-button-${album.id}`}
-                />
-              </li>
+              <AlbumCard key={album.id} album={album} onEdit={setEditingAlbum} />
             ))}
           </ul>
         )}

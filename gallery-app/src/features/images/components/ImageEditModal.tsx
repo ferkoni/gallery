@@ -159,13 +159,13 @@ export function ImageEditModal({ image, onClose, initialMode = 'edit' }: Props) 
               </div>
 
               <div className="flex flex-col gap-1">
-                <label htmlFor="edit-album" className="text-sm font-medium text-gray-700">Folder</label>
+                {/* No allowTopLevel: a photo has to live in a folder. */}
                 <Controller
                   name="album_id"
                   control={control}
                   render={({ field }) => (
                     <AlbumPicker
-                      id="edit-album"
+                      label="Folder"
                       value={field.value}
                       onChange={(albumId) => field.onChange(albumId)}
                     />

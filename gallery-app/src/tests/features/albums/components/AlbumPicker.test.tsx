@@ -16,9 +16,13 @@ vi.mock('@/hooks/useDebounce', () => ({ useDebounce: (value: unknown) => value }
 const mockUseGetAlbum = useGetAlbum as Mock;
 const mockUseInfiniteAlbums = useInfiniteAlbums as Mock;
 
-const album = (id: number, name: string): Album => ({
-  id, name, description: null, created_at: '2026-01-01T00:00:00.000Z',
+const album = (id: number, name: string, ancestors?: { id: number; name: string }[]): Album => ({
+  id, name, description: null, parent_id: ancestors?.at(-1)?.id ?? null,
+  created_at: '2026-01-01T00:00:00.000Z', ancestors,
 });
+
+// What the hook was last asked for, which is where level browsing and searching show up.
+const lastRequest = () => mockUseInfiniteAlbums.mock.lastCall?.[0];
 
 const fetchNextPage = vi.fn();
 
@@ -89,13 +93,13 @@ describe('AlbumPicker', () => {
     stubPages([[album(1, 'Holidays')]]);
     mockUseGetAlbum.mockReturnValue({ data: album(40, 'Archive 2019') });
 
-    render(<AlbumPicker value={40} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={40} onChange={vi.fn()} />);
 
     expect(screen.getByTestId('album-picker-input')).toHaveValue('Archive 2019');
   });
 
   it('lists the loaded folders when opened', async () => {
-    render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
 
@@ -104,29 +108,29 @@ describe('AlbumPicker', () => {
   });
 
   it('asks the server for the typed name, and for everything again once cleared', async () => {
-    render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
     await userEvent.type(screen.getByTestId('album-picker-input'), 'fam');
-    expect(mockUseInfiniteAlbums).toHaveBeenLastCalledWith('fam');
+    expect(mockUseInfiniteAlbums).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'fam' }));
 
     await userEvent.clear(screen.getByTestId('album-picker-input'));
-    expect(mockUseInfiniteAlbums).toHaveBeenLastCalledWith(undefined);
+    expect(mockUseInfiniteAlbums).toHaveBeenLastCalledWith(expect.objectContaining({ q: undefined }));
   });
 
   it('goes back to naming the selection when the menu is dismissed', async () => {
     mockUseGetAlbum.mockReturnValue({ data: album(1, 'Holidays') });
-    render(<AlbumPicker value={1} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={1} onChange={vi.fn()} />);
 
     await userEvent.type(screen.getByTestId('album-picker-input'), 'fam');
     await userEvent.keyboard('{Escape}');
 
     expect(screen.getByTestId('album-picker-input')).toHaveValue('Holidays');
-    expect(mockUseInfiniteAlbums).toHaveBeenLastCalledWith(undefined);
+    expect(mockUseInfiniteAlbums).toHaveBeenLastCalledWith(expect.objectContaining({ q: undefined }));
   });
 
   it('says so when nothing matches the typed name', async () => {
     stubPages([[]]);
-    render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
 
@@ -138,7 +142,7 @@ describe('AlbumPicker', () => {
   describe('while a new name filter is in flight', () => {
     it('keeps the folders already on screen instead of emptying the list', async () => {
       stubPages([[album(1, 'Holidays')]], { isPlaceholderData: true });
-      render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
       await userEvent.click(screen.getByTestId('album-picker-toggle'));
 
@@ -148,7 +152,7 @@ describe('AlbumPicker', () => {
 
     it('does not page on from a list that is about to be replaced', async () => {
       stubPages([[album(1, 'Holidays')]], { hasNextPage: true, isPlaceholderData: true });
-      render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
       await userEvent.click(screen.getByTestId('album-picker-toggle'));
       intersect();
@@ -159,7 +163,7 @@ describe('AlbumPicker', () => {
 
   it('says it is still loading rather than that nothing matches, before the first page', async () => {
     stubPending();
-    render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
 
@@ -169,7 +173,7 @@ describe('AlbumPicker', () => {
 
   it('reports the folder that was clicked', async () => {
     const onChange = vi.fn();
-    render(<AlbumPicker value={undefined} onChange={onChange} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={onChange} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
     await userEvent.click(screen.getByTestId('album-picker-option-2'));
@@ -179,7 +183,7 @@ describe('AlbumPicker', () => {
 
   it('reports the folder chosen with the arrow keys and Enter', async () => {
     const onChange = vi.fn();
-    render(<AlbumPicker value={undefined} onChange={onChange} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={onChange} />);
 
     const input = screen.getByTestId('album-picker-input');
     await userEvent.click(input);
@@ -190,7 +194,7 @@ describe('AlbumPicker', () => {
 
   it('loads the next page when the sentinel scrolls into view', async () => {
     stubPages([[album(1, 'Holidays')]], { hasNextPage: true });
-    render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
     intersect();
@@ -200,7 +204,7 @@ describe('AlbumPicker', () => {
 
   it('waits for the sentinel to actually come into view', async () => {
     stubPages([[album(1, 'Holidays')]], { hasNextPage: true });
-    render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
     scrollPast();
@@ -209,7 +213,7 @@ describe('AlbumPicker', () => {
   });
 
   it('has no sentinel to load past the last page', async () => {
-    render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
     intersect();
@@ -220,7 +224,7 @@ describe('AlbumPicker', () => {
 
   it('does not ask for the same page twice while it is still loading', async () => {
     stubPages([[album(1, 'Holidays')]], { hasNextPage: true, isFetchingNextPage: true });
-    render(<AlbumPicker value={undefined} onChange={vi.fn()} />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
 
     await userEvent.click(screen.getByTestId('album-picker-toggle'));
     intersect();
@@ -230,28 +234,201 @@ describe('AlbumPicker', () => {
 
   it('offers a clear button only when clearing is allowed and something is selected', () => {
     mockUseGetAlbum.mockReturnValue({ data: album(1, 'Holidays') });
-    const { rerender } = render(<AlbumPicker value={1} onChange={vi.fn()} />);
+    const { rerender } = render(<AlbumPicker label="Folder" value={1} onChange={vi.fn()} />);
     expect(screen.queryByTestId('album-picker-clear')).not.toBeInTheDocument();
 
-    rerender(<AlbumPicker value={undefined} onChange={vi.fn()} allowClear />);
+    rerender(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} allowClear />);
     expect(screen.queryByTestId('album-picker-clear')).not.toBeInTheDocument();
 
-    rerender(<AlbumPicker value={1} onChange={vi.fn()} allowClear />);
+    rerender(<AlbumPicker label="Folder" value={1} onChange={vi.fn()} allowClear />);
     expect(screen.getByTestId('album-picker-clear')).toBeInTheDocument();
   });
 
   it('reports no folder at all when cleared', async () => {
     mockUseGetAlbum.mockReturnValue({ data: album(1, 'Holidays') });
     const onChange = vi.fn();
-    render(<AlbumPicker value={1} onChange={onChange} allowClear />);
+    render(<AlbumPicker label="Folder" value={1} onChange={onChange} allowClear />);
 
     await userEvent.click(screen.getByTestId('album-picker-clear'));
 
     expect(onChange).toHaveBeenCalledWith(undefined);
   });
 
+  // Browsing a level at a time is how a picker stays usable with a deep tree; typing
+  // leaves it, because a search spans the whole forest.
+  describe('browsing levels', () => {
+    it('starts at the top level', async () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+      expect(lastRequest()).toMatchObject({ parentId: undefined });
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders');
+    });
+
+    it('walks into a folder without selecting it', async () => {
+      const onChange = vi.fn();
+      render(<AlbumPicker label="Folder" value={undefined} onChange={onChange} />);
+
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+      await userEvent.click(screen.getByTestId('album-picker-enter-2'));
+
+      expect(lastRequest()).toMatchObject({ parentId: 2 });
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Family');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('has nothing to walk into before a folder is highlighted', async () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.click(screen.getByTestId('album-picker-input'));
+      await userEvent.keyboard('{ArrowRight}');
+
+      expect(lastRequest()).toMatchObject({ parentId: undefined });
+    });
+
+    it('walks in with the right arrow key, which the empty input has no use for', async () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.click(screen.getByTestId('album-picker-input'));
+      await userEvent.keyboard('{ArrowDown}{ArrowRight}');
+
+      expect(lastRequest()).toMatchObject({ parentId: 1 });
+    });
+
+    it('offers a way back up, and no way up from the top', async () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+      expect(screen.queryByTestId('album-picker-up')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByTestId('album-picker-enter-2'));
+      await userEvent.click(screen.getByTestId('album-picker-up'));
+
+      expect(lastRequest()).toMatchObject({ parentId: undefined });
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders');
+    });
+
+    it('says when a level holds nothing, which is not the same as nothing matching', async () => {
+      stubPages([[]]);
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+      expect(screen.getByTestId('album-picker-empty')).toHaveTextContent('No folders here.');
+    });
+  });
+
+  describe('searching', () => {
+    it('leaves the level behind, so the server searches the whole forest', async () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+      await userEvent.click(screen.getByTestId('album-picker-enter-2'));
+      await userEvent.type(screen.getByTestId('album-picker-input'), 'mad');
+
+      expect(lastRequest()).toMatchObject({ q: 'mad', parentId: undefined });
+      expect(screen.getByTestId('album-picker-searching')).toBeInTheDocument();
+    });
+
+    it('says nothing matched, which is not the same as an empty level', async () => {
+      stubPages([[]]);
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.type(screen.getByTestId('album-picker-input'), 'zzz');
+
+      expect(screen.getByTestId('album-picker-empty')).toHaveTextContent('No folders match.');
+    });
+
+    it('shows each match with its path, since sibling names may repeat', async () => {
+      stubPages([[ album(9, 'Day 2', [ { id: 1, name: 'Trips' }, { id: 2, name: 'Madrid' } ]) ]]);
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.type(screen.getByTestId('album-picker-input'), 'day');
+
+      expect(screen.getByTestId('album-picker-path-9')).toHaveTextContent('Trips › Madrid');
+    });
+
+    it('walks into a match at its own level, path and all', async () => {
+      stubPages([[ album(9, 'Day 2', [ { id: 1, name: 'Trips' }, { id: 2, name: 'Madrid' } ]) ]]);
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.type(screen.getByTestId('album-picker-input'), 'day');
+      await userEvent.click(screen.getByTestId('album-picker-enter-9'));
+
+      expect(lastRequest()).toMatchObject({ parentId: 9, q: undefined });
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Trips › Madrid › Day 2');
+    });
+
+    it('returns to the level that was being browsed when the query is cleared', async () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+      await userEvent.click(screen.getByTestId('album-picker-enter-2'));
+      await userEvent.type(screen.getByTestId('album-picker-input'), 'mad');
+      await userEvent.clear(screen.getByTestId('album-picker-input'));
+
+      expect(lastRequest()).toMatchObject({ parentId: 2, q: undefined });
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Family');
+    });
+  });
+
+  describe('a folder that cannot be its own parent', () => {
+    // Browsing already cannot reach a descendant, but searching spans the forest. Both are
+    // closed by asking the server to leave the subtree out of every response.
+    it('asks the server to leave it and its subfolders out', async () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} disabledId={7} />);
+
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+      expect(lastRequest()).toMatchObject({ excludeSubtree: 7 });
+    });
+
+    it('keeps asking while searching, which is where a cycle could otherwise be offered', async () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} disabledId={7} />);
+
+      await userEvent.type(screen.getByTestId('album-picker-input'), 'mad');
+
+      expect(lastRequest()).toMatchObject({ q: 'mad', excludeSubtree: 7 });
+    });
+  });
+
+  describe('the top level as a destination', () => {
+    it('is offered only where a folder may have no parent', async () => {
+      const { rerender } = render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+      expect(screen.queryByTestId('album-picker-top-level')).not.toBeInTheDocument();
+
+      rerender(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} allowTopLevel />);
+      expect(screen.getByTestId('album-picker-top-level')).toBeInTheDocument();
+    });
+
+    it('is reported as no parent at all', async () => {
+      const onChange = vi.fn();
+      render(<AlbumPicker label="Folder" value={1} onChange={onChange} allowTopLevel />);
+
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+      await userEvent.click(screen.getByTestId('album-picker-top-level'));
+
+      expect(onChange).toHaveBeenCalledWith(undefined);
+    });
+
+    it('names itself in the closed box, so the choice is visible', () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} allowTopLevel />);
+
+      expect(screen.getByTestId('album-picker-input')).toHaveValue('Top level');
+    });
+
+    it('is not offered below the top, where it is not where you are', async () => {
+      render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} allowTopLevel />);
+
+      await userEvent.click(screen.getByTestId('album-picker-toggle'));
+      await userEvent.click(screen.getByTestId('album-picker-enter-2'));
+
+      expect(screen.queryByTestId('album-picker-top-level')).not.toBeInTheDocument();
+    });
+  });
+
   it('shows the placeholder when nothing is selected', () => {
-    render(<AlbumPicker value={undefined} onChange={vi.fn()} placeholder="All folders" />);
+    render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} placeholder="All folders" />);
 
     expect(screen.getByPlaceholderText('All folders')).toHaveValue('');
   });

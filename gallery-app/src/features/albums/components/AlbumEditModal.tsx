@@ -1,12 +1,16 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUpdateAlbum } from '@/features/albums/albums';
+import { AlbumPicker } from './AlbumPicker';
+import { apiErrorMessage } from '@/lib/api/errorMessage';
 import type { Album } from '../types/album';
 
 const schema = z.object({
   name: z.string().min(1, 'Required').max(50),
   description: z.string().max(500).optional(),
+  // undefined is the top level, which is a destination like any other here.
+  parent_id: z.number().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -17,19 +21,24 @@ type Props = {
 };
 
 export function AlbumEditModal({ album, onClose }: Props) {
-  const { mutate, isPending, isError } = useUpdateAlbum();
+  const { mutate, isPending, isError, error } = useUpdateAlbum();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: album.name,
       description: album.description ?? '',
+      parent_id: album.parent_id ?? undefined,
     },
   });
 
-  const onSubmit = (values: FormData) => {
+  const onSubmit = ({ parent_id, ...values }: FormData) => {
+    // parent_id is sent only when it changed: an omitted key leaves the folder where it
+    // is, so a rename never races a move it did not ask for. null is the top level.
+    const moved = (parent_id ?? null) !== album.parent_id;
+
     mutate(
-      { id: album.id, body: values },
+      { id: album.id, body: moved ? { ...values, parent_id: parent_id ?? null } : values },
       { onSuccess: onClose }
     );
   };
@@ -81,9 +90,27 @@ export function AlbumEditModal({ album, onClose }: Props) {
             />
           </div>
 
+          <div className="flex flex-col gap-1">
+            <Controller
+              name="parent_id"
+              control={control}
+              render={({ field }) => (
+                <AlbumPicker
+                  label="Location"
+                  value={field.value}
+                  onChange={field.onChange}
+                  allowTopLevel
+                  // The folder cannot be moved inside itself, so it and its subfolders are
+                  // dropped from what the picker can reach, by browsing or by searching.
+                  disabledId={album.id}
+                />
+              )}
+            />
+          </div>
+
           {isError && (
             <p className="text-sm text-red-500" data-testid="album-edit-error">
-              Failed to save. Please try again.
+              {apiErrorMessage(error, 'Failed to save. Please try again.')}
             </p>
           )}
 

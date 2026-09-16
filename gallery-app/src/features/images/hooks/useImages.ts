@@ -46,8 +46,13 @@ export function useUpdateImage(albumId: number) {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateImagePayload }) =>
       updateImage(id, data),
-    onSuccess: () => {
+    // Both ends of a move. Invalidating only the folder the photo came from left the
+    // destination's grid without it until something else happened to refetch.
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['albums', albumId, 'images'] });
+      if (updated.album_id !== albumId) {
+        queryClient.invalidateQueries({ queryKey: ['albums', updated.album_id, 'images'] });
+      }
     },
   });
 }
