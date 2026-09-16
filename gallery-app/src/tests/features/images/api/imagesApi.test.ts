@@ -28,7 +28,7 @@ describe('fetchFavoriteImages', () => {
   beforeEach(() => mock.reset());
 
   it('asks for page 1 of favorited images by default', async () => {
-    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }], meta });
+    mock.onGet('/images').reply(200, { data: [{ attributes: image }], meta });
 
     await fetchFavoriteImages();
 
@@ -36,7 +36,7 @@ describe('fetchFavoriteImages', () => {
   });
 
   it('sends the page it is given and returns the images with their meta', async () => {
-    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }], meta });
+    mock.onGet('/images').reply(200, { data: [{ attributes: image }], meta });
 
     const result = await fetchFavoriteImages(2);
 
@@ -49,7 +49,7 @@ describe('fetchSearchImages', () => {
   beforeEach(() => mock.reset());
 
   it('sends the filters and page, and returns the images with their meta', async () => {
-    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }], meta });
+    mock.onGet('/images').reply(200, { data: [{ attributes: image }], meta });
 
     const result = await fetchSearchImages({ q: 'lentes', tag: 'family' }, 2);
 
@@ -58,7 +58,7 @@ describe('fetchSearchImages', () => {
   });
 
   it('asks for page 1 by default and sends albumId as album_id', async () => {
-    mock.onGet('/api/images').reply(200, { data: [], meta });
+    mock.onGet('/images').reply(200, { data: [], meta });
 
     await fetchSearchImages({ q: 'lentes', albumId: 7 });
 
@@ -69,8 +69,8 @@ describe('fetchSearchImages', () => {
 describe('uploadImage', () => {
   beforeEach(() => mock.reset());
 
-  it('posts FormData to /api/images and returns the created image', async () => {
-    mock.onPost('/api/images').reply(201, { data: { attributes: image } });
+  it('posts FormData to /api/v1/images and returns the created image', async () => {
+    mock.onPost('/images').reply(201, { data: { attributes: image } });
 
     const file = new File(['pixels'], 'photo.jpg', { type: 'image/jpeg' });
     const result = await uploadImage(file, 'Beach', 1, vi.fn());
@@ -80,7 +80,7 @@ describe('uploadImage', () => {
   });
 
   it('calls onProgress with percentage when e.total is defined', async () => {
-    mock.onPost('/api/images').reply(201, { data: { attributes: image } });
+    mock.onPost('/images').reply(201, { data: { attributes: image } });
 
     const onProgress = vi.fn();
     const file = new File(['pixels'], 'photo.jpg', { type: 'image/jpeg' });
@@ -94,7 +94,7 @@ describe('uploadImage', () => {
   });
 
   it('does not call onProgress when e.total is falsy', async () => {
-    mock.onPost('/api/images').reply(201, { data: { attributes: image } });
+    mock.onPost('/images').reply(201, { data: { attributes: image } });
 
     const onProgress = vi.fn();
     const file = new File(['pixels'], 'photo.jpg', { type: 'image/jpeg' });
@@ -111,19 +111,19 @@ describe('uploadImage', () => {
 describe('updateImage', () => {
   beforeEach(() => mock.reset());
 
-  it('patches /api/images/:id and returns the updated image', async () => {
+  it('patches /api/v1/images/:id and returns the updated image', async () => {
     const updated: Image = { ...image, title: 'New Beach' };
-    mock.onPatch('/api/images/1').reply(200, { data: { attributes: updated } });
+    mock.onPatch('/images/1').reply(200, { data: { attributes: updated } });
 
     const result = await updateImage(1, { title: 'New Beach' });
 
     expect(result).toEqual(updated);
-    expect(mock.history.patch[0].url).toBe('/api/images/1');
+    expect(mock.history.patch[0].url).toBe('/images/1');
     expect(JSON.parse(mock.history.patch[0].data as string)).toEqual({ image: { title: 'New Beach' } });
   });
 
   it('sends tags as an array inside the image wrapper', async () => {
-    mock.onPatch('/api/images/1').reply(200, { data: { attributes: image } });
+    mock.onPatch('/images/1').reply(200, { data: { attributes: image } });
 
     await updateImage(1, { tags: ['sea', 'sun'] });
 
@@ -132,7 +132,7 @@ describe('updateImage', () => {
 
   it('sends description and album_id when provided', async () => {
     const updated: Image = { ...image, description: 'Sunny day', album_id: 2 };
-    mock.onPatch('/api/images/1').reply(200, { data: { attributes: updated } });
+    mock.onPatch('/images/1').reply(200, { data: { attributes: updated } });
 
     const result = await updateImage(1, { description: 'Sunny day', album_id: 2 });
 
@@ -146,16 +146,16 @@ describe('updateImage', () => {
 describe('deleteImage', () => {
   beforeEach(() => mock.reset());
 
-  it('sends DELETE to /api/images/:id', async () => {
-    mock.onDelete('/api/images/1').reply(204);
+  it('sends DELETE to /api/v1/images/:id', async () => {
+    mock.onDelete('/images/1').reply(204);
 
     await deleteImage(1);
 
-    expect(mock.history.delete[0].url).toBe('/api/images/1');
+    expect(mock.history.delete[0].url).toBe('/images/1');
   });
 
   it('throws when the server responds with an error', async () => {
-    mock.onDelete('/api/images/1').reply(500);
+    mock.onDelete('/images/1').reply(500);
 
     await expect(deleteImage(1)).rejects.toThrow();
   });

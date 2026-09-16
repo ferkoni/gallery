@@ -4,7 +4,7 @@ class Api::AlbumsController < ApplicationController
   before_action :authorize_resource!, only: [ :show, :create, :update, :destroy ]
   before_action :guard_parent!, only: %i[create update]
 
-  # PATCH /api/albums/:id
+  # PATCH /api/v1/albums/:id
   # The only action that can move a folder, and so the only one that needs the tree lock.
   # resource is loaded before it, which is fine: the cycle check re-reads the tree inside
   # the lock, and ownership cannot change.
@@ -13,7 +13,7 @@ class Api::AlbumsController < ApplicationController
     render json: serializer.new(resource, params: serializer_params).serializable_hash.to_json
   end
 
-  # DELETE /api/albums/:id
+  # DELETE /api/v1/albums/:id
   # Delegates to Images::AlbumDestroy, which batch-deletes the S3 objects of the whole
   # subtree first and then deletes its rows. If the subtree has no images, S3 is not
   # touched. Missing credentials with images → 422, and so does a subtree that changed

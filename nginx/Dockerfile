@@ -5,9 +5,10 @@ WORKDIR /app
 COPY gallery-app/package.json gallery-app/package-lock.json ./
 RUN npm ci
 COPY gallery-app/ .
-# Empty on purpose: the SPA is served from the same origin as the API, and the
-# request paths in src/ already carry the /api prefix (e.g. `/api/albums`).
-# Setting this to "/api" would produce `/api/api/albums`.
+# The API's origin, empty on purpose: the SPA is served from the same origin as
+# the API. It is an origin, not a path: the client adds /api/v1 itself
+# (src/lib/api/client.ts), so setting this to "/api" would produce
+# `/api/api/v1/albums`.
 ARG VITE_API_URL=
 ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
