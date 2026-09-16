@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import {
-  fetchImages,
   fetchAlbumImages,
   fetchFavoriteImages,
   fetchSearchImages,
@@ -13,12 +13,20 @@ import type { PaginatedResponse } from '@/lib/api/createCrudApi';
 
 const PRESIGNED_URL_STALE_MS = 50 * 60 * 1000;
 
-export function useImages(albumId?: number) {
-  return useQuery({
-    queryKey: ['images', albumId],
-    queryFn: () => fetchImages(albumId),
-    staleTime: PRESIGNED_URL_STALE_MS,
-  });
+type ImagePages = InfiniteData<PaginatedResponse<Image>>;
+
+export function nextImagePage(last: PaginatedResponse<Image>) {
+  return last.meta.current_page < last.meta.total_pages ? last.meta.current_page + 1 : undefined;
+}
+
+// One list out of every loaded page, each photo once. Every page request runs the query
+// again on the server, so a photo indexed or favourited between two requests shifts the
+// rows after it, and the same photo can come back on both sides of a page boundary.
+export function flattenImagePages(data: ImagePages): Image[] {
+  const seen = new Set<number>();
+  return data.pages
+    .flatMap(page => page.data)
+    .filter(image => !seen.has(image.id) && seen.add(image.id));
 }
 
 export function useAlbumImages(albumId: number, page: number, filters?: AlbumImageFilters, options?: { enabled?: boolean }) {
@@ -33,9 +41,15 @@ export function useAlbumImages(albumId: number, page: number, filters?: AlbumIma
 export function useSearchImages(params: SearchParams) {
   const isEmpty = (v: unknown) => v === undefined || v === '';
   const enabled = !Object.values(params).every(isEmpty);
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['images', 'search', params],
-    queryFn: () => fetchSearchImages(params),
+    queryFn: ({ pageParam }) => fetchSearchImages(params, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: nextImagePage,
+    select: flattenImagePages,
+    // Every debounced keystroke is a new key with no cache entry. Without this the results
+    // would blank for each round trip and refill.
+    placeholderData: keepPreviousData,
     staleTime: PRESIGNED_URL_STALE_MS,
     enabled,
   });
@@ -58,9 +72,12 @@ export function useUpdateImage(albumId: number) {
 }
 
 export function useFavoriteImages() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['images', 'favorites'],
-    queryFn: fetchFavoriteImages,
+    queryFn: ({ pageParam }) => fetchFavoriteImages(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: nextImagePage,
+    select: flattenImagePages,
     staleTime: PRESIGNED_URL_STALE_MS,
   });
 }
@@ -80,7 +97,7 @@ export function useFavoriteImage() {
       const prevAlbumPages = queryClient.getQueriesData<PaginatedResponse<Image>>({
         predicate: (q) => q.queryKey[0] === 'albums' && q.queryKey[2] === 'images',
       });
-      const prevFavorites = queryClient.getQueryData<Image[]>(['images', 'favorites']);
+      const prevFavorites = queryClient.getQueryData<ImagePages>(['images', 'favorites']);
 
       queryClient.setQueriesData<PaginatedResponse<Image>>(
         { predicate: (q) => q.queryKey[0] === 'albums' && q.queryKey[2] === 'images' },
@@ -90,21 +107,18 @@ export function useFavoriteImage() {
         }
       );
 
+      // Unfavouriting removes the photo from whichever loaded page holds it. Favouriting
+      // adds nothing: the list is ordered by upload date, so the photo belongs somewhere in
+      // the middle, possibly on a page not loaded yet. The invalidation in onSettled puts it
+      // where the server says.
       if (!favorited && prevFavorites) {
-        queryClient.setQueryData<Image[]>(
-          ['images', 'favorites'],
-          prevFavorites.filter((img) => img.id !== id),
-        );
-      } else if (favorited && prevFavorites) {
-        const image = prevAlbumPages
-          .flatMap(([, page]) => page?.data ?? [])
-          .find((img) => img.id === id);
-        if (image) {
-          queryClient.setQueryData<Image[]>(['images', 'favorites'], [
-            ...prevFavorites.filter((img) => img.id !== id),
-            { ...image, favorited: true },
-          ]);
-        }
+        queryClient.setQueryData<ImagePages>(['images', 'favorites'], {
+          ...prevFavorites,
+          pages: prevFavorites.pages.map((page) => ({
+            ...page,
+            data: page.data.filter((img) => img.id !== id),
+          })),
+        });
       }
 
       return { prevAlbumPages, prevFavorites };

@@ -77,8 +77,12 @@ class Api::ImagesController < ApplicationController
   # Scoped to the current user; album-filtered when :album_id is present.
   # album raises RecordNotFound (→ 404) if the album doesn't exist or belongs
   # to another user, so no images from other users can ever leak.
+  #
+  # id breaks created_at ties, so every page has a total order: Search and Favourites load
+  # page after page into one list, and OFFSET over a tie can repeat or skip a photo. ?q=
+  # replaces this order with its ranking (Images::Search#order_by_ids).
   def resources
-    scope = Image.with_user(current_user).includes(:album).order(created_at: :desc)
+    scope = Image.with_user(current_user).includes(:album).order(created_at: :desc, id: :desc)
     scope = scope.where(album_id: album_ids) if album
     scope = scope.where(favorited: true) if params[:favorited] == "true"
     apply_filters(scope).page(params[:page])

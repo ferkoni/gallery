@@ -2,7 +2,7 @@ import MockAdapter from 'axios-mock-adapter';
 import { afterAll, beforeEach, describe, it, expect, vi } from 'vitest';
 import type { AxiosRequestConfig, AxiosProgressEvent } from 'axios';
 import apiClient from '@/lib/api/client';
-import { fetchImages, fetchFavoriteImages, uploadImage, updateImage, deleteImage } from '@/features/images/api/imagesApi';
+import { fetchFavoriteImages, fetchSearchImages, uploadImage, updateImage, deleteImage } from '@/features/images/api/imagesApi';
 import type { Image } from '@/features/images/types/image';
 
 const mock = new MockAdapter(apiClient);
@@ -22,38 +22,47 @@ const image: Image = {
 
 afterAll(() => mock.restore());
 
-describe('fetchImages', () => {
-  beforeEach(() => mock.reset());
-
-  it('returns images for the given albumId and sends album_id param', async () => {
-    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }] });
-
-    const result = await fetchImages(1);
-
-    expect(result).toEqual([image]);
-    expect(mock.history.get[0].params).toEqual({ album_id: 1 });
-  });
-
-  it('returns all images with empty params when no albumId is provided', async () => {
-    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }] });
-
-    const result = await fetchImages();
-
-    expect(result).toEqual([image]);
-    expect(mock.history.get[0].params).toEqual({});
-  });
-});
+const meta = { current_page: 1, total_pages: 2, total_count: 26, per_page: 25 };
 
 describe('fetchFavoriteImages', () => {
   beforeEach(() => mock.reset());
 
-  it('fetches images with favorited=true param', async () => {
-    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }] });
+  it('asks for page 1 of favorited images by default', async () => {
+    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }], meta });
 
-    const result = await fetchFavoriteImages();
+    await fetchFavoriteImages();
 
-    expect(result).toEqual([image]);
-    expect(mock.history.get[0].params).toEqual({ favorited: true });
+    expect(mock.history.get[0].params).toEqual({ favorited: true, page: 1 });
+  });
+
+  it('sends the page it is given and returns the images with their meta', async () => {
+    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }], meta });
+
+    const result = await fetchFavoriteImages(2);
+
+    expect(result).toEqual({ data: [image], meta });
+    expect(mock.history.get[0].params).toEqual({ favorited: true, page: 2 });
+  });
+});
+
+describe('fetchSearchImages', () => {
+  beforeEach(() => mock.reset());
+
+  it('sends the filters and page, and returns the images with their meta', async () => {
+    mock.onGet('/api/images').reply(200, { data: [{ attributes: image }], meta });
+
+    const result = await fetchSearchImages({ q: 'lentes', tag: 'family' }, 2);
+
+    expect(result).toEqual({ data: [image], meta });
+    expect(mock.history.get[0].params).toEqual({ q: 'lentes', tag: 'family', page: 2 });
+  });
+
+  it('asks for page 1 by default and sends albumId as album_id', async () => {
+    mock.onGet('/api/images').reply(200, { data: [], meta });
+
+    await fetchSearchImages({ q: 'lentes', albumId: 7 });
+
+    expect(mock.history.get[0].params).toEqual({ q: 'lentes', album_id: 7, page: 1 });
   });
 });
 

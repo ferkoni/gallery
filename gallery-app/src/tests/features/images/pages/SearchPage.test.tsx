@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router-dom';
 import { SearchPage } from '@/features/images/pages/SearchPage';
 import { useSearchImages } from '@/features/images/hooks/useImages';
@@ -50,6 +50,25 @@ const images: Image[] = [
   { id: 1, title: 'Sunset Beach', description: null, tags: ['beach'], s3_key: 'k1', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1', thumbnail_url: 'https://thumb1' },
   { id: 2, title: 'Mountain Trail', description: null, tags: ['nature'], s3_key: 'k2', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url2', thumbnail_url: 'https://thumb2' },
 ];
+
+let intersect: () => void;
+// The no-op observer from setup.ts never fires. This one hands the test a trigger for the
+// element it is observing, as SubfolderSection.test.tsx does.
+function installIntersectionObserver() {
+  intersect = () => {};
+  vi.stubGlobal('IntersectionObserver', class {
+    callback: IntersectionObserverCallback;
+    constructor(callback: IntersectionObserverCallback) { this.callback = callback; }
+    observe(node: Element) {
+      intersect = () => this.callback(
+        [{ isIntersecting: true, target: node } as IntersectionObserverEntry],
+        this as unknown as IntersectionObserver
+      );
+    }
+    disconnect() { intersect = () => {}; }
+    unobserve() {}
+  });
+}
 
 function LocationProbe() {
   const [searchParams] = useSearchParams();
@@ -199,6 +218,64 @@ describe('SearchPage', () => {
       mockUseSearchImages.mockReturnValue({ data: [], isPending: false, isError: false });
       renderSearchPage('?q=elefante');
       expect(screen.getByTestId('search-empty')).toBeInTheDocument();
+    });
+  });
+
+  describe('loading more results', () => {
+    const fetchNextPage = vi.fn();
+    const results = (overrides: object) => ({
+      data: images, isPending: false, isError: false,
+      hasNextPage: true, isFetchingNextPage: false, fetchNextPage,
+      ...overrides,
+    });
+
+    beforeEach(() => installIntersectionObserver());
+    afterEach(() => vi.unstubAllGlobals());
+
+    // The regression test for bugs.md bug 2: only the first 25 results were ever reachable.
+    it('asks for the next page when the end of the results scrolls into view', () => {
+      mockUseSearchImages.mockReturnValue(results({}));
+      renderSearchPage('?q=lentes');
+
+      intersect();
+
+      expect(fetchNextPage).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows that more are loading, and stops watching until they arrive', () => {
+      mockUseSearchImages.mockReturnValue(results({ isFetchingNextPage: true }));
+      renderSearchPage('?q=lentes');
+
+      intersect();
+
+      expect(screen.getByTestId('search-loading-more')).toBeInTheDocument();
+      expect(fetchNextPage).not.toHaveBeenCalled();
+    });
+
+    it('has nothing to watch once the last page is loaded', () => {
+      mockUseSearchImages.mockReturnValue(results({ hasNextPage: false }));
+      renderSearchPage('?q=lentes');
+
+      expect(screen.queryByTestId('search-sentinel')).not.toBeInTheDocument();
+    });
+
+    // The live title narrowing can empty the loaded pages while a later one holds a match.
+    it('does not say nothing matches while more pages remain', () => {
+      mockUseSearchImages.mockReturnValue(results({}));
+      renderSearchPage('?title=nomatch');
+
+      expect(screen.queryByTestId('search-empty')).not.toBeInTheDocument();
+      expect(screen.getByTestId('search-sentinel')).toBeInTheDocument();
+    });
+
+    // The hook keeps the previous results as placeholder data after the filters are cleared.
+    it('shows neither results nor a sentinel once every filter is cleared', () => {
+      mockUseSearchImages.mockReturnValue(results({}));
+      renderSearchPage();
+
+      expect(screen.getByTestId('search-prompt')).toBeInTheDocument();
+      expect(screen.queryByTestId('search-results')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('search-sentinel')).not.toBeInTheDocument();
     });
   });
 });

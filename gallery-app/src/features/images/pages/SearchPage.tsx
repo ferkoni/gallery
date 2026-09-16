@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
 import { useSearchImages } from '../hooks/useImages';
 import { AlbumPicker } from '@/features/albums/components/AlbumPicker';
 import { ImageCard } from '../components/ImageCard';
@@ -52,7 +53,9 @@ export function SearchPage() {
     }, { replace: true });
   }, [debouncedQ, debouncedTitle, debouncedTag, debouncedFrom, debouncedAlbumId, setSearchParams]);
 
-  const { data: images = [], isPending, isError } = useSearchImages({
+  const {
+    data: images = [], isPending, isError, hasNextPage, isFetchingNextPage, fetchNextPage,
+  } = useSearchImages({
     q: debouncedQ || undefined,
     title: debouncedTitle || undefined,
     tag: debouncedTag || undefined,
@@ -83,6 +86,18 @@ export function SearchPage() {
   }, [images, debouncedTitle, debouncedTag]);
 
   const hasAnyFilter = q || title || tag || from || albumId !== undefined;
+
+  // Below the results, so it only comes into view once they have been scrolled through.
+  // A query can match up to 400 photos, 16 pages.
+  //
+  // hasAnyFilter is in `enabled` as well as around the element: the hook only starts
+  // observing when `enabled` changes, so a sentinel remounted under an unchanged value
+  // would never be watched.
+  const canLoadMore = Boolean(hasAnyFilter) && hasNextPage;
+  const sentinelRef = useInfiniteSentinel<HTMLDivElement>(
+    canLoadMore && !isFetchingNextPage,
+    fetchNextPage
+  );
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-10">
@@ -162,11 +177,15 @@ export function SearchPage() {
         <p className="text-red-500 text-sm" data-testid="search-error">Failed to load results.</p>
       )}
 
-      {hasAnyFilter && !isPending && !isError && filtered.length === 0 && (
+      {/* Only once nothing is left to load: the live title and tag narrowing can empty the
+          loaded pages while a later page still holds a match. */}
+      {hasAnyFilter && !isPending && !isError && !hasNextPage && filtered.length === 0 && (
         <p className="text-gray-400 text-sm" data-testid="search-empty">No images match your filters.</p>
       )}
 
-      {filtered.length > 0 && (
+      {/* hasAnyFilter too, because the previous results stay as placeholder data after the
+          filters are cleared. */}
+      {hasAnyFilter && filtered.length > 0 && (
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4" data-testid="search-results">
           {filtered.map(image => (
             <li key={image.id}>
@@ -174,6 +193,16 @@ export function SearchPage() {
             </li>
           ))}
         </ul>
+      )}
+
+      {canLoadMore && (
+        <div ref={sentinelRef} className="h-4" data-testid="search-sentinel" />
+      )}
+
+      {hasAnyFilter && isFetchingNextPage && (
+        <p className="text-gray-400 text-sm text-center mt-4" data-testid="search-loading-more">
+          Loading more…
+        </p>
       )}
     </main>
   );
