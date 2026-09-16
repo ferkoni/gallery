@@ -38,15 +38,25 @@ class Image < ApplicationRecord
   # images:backfill_thumbnails failed on.
   scope :without_thumbnail, -> { where(thumb_key: nil) }
 
+  validates :title, presence: true
+  validates :s3_key, presence: true, uniqueness: true
+  validates :thumb_key, uniqueness: true, allow_nil: true
+
+  validate :album_belongs_to_owner
+  validates :user, presence: true
+  validates :album, presence: true
+
+  validate :tags_length
+
   # Every object this row owns in S3. The destroy paths delete what this returns, so an
   # object added here is deleted from the day it exists — and one added anywhere else is
   # orphaned silently, since nothing ever lists the bucket to notice.
   def s3_keys = [ s3_key, thumb_key ].compact
 
-  # The entry point the controller reaches through BaseApi#apply_filters. Which
-  # strategy answers it is decided by adapter availability inside the service, never
-  # by a request parameter: the client sends the same ?q= whether or not this install
-  # has AI, so INFERENCE_MODE=none behaves exactly as it did before 07.
+  # The entry point Api::ImagesController#apply_filters reaches for ?q=. Which strategy
+  # answers it is decided by adapter availability inside the service, never by a request
+  # parameter: the client sends the same ?q= whether or not this install has AI, so
+  # INFERENCE_MODE=none behaves exactly as it did before 07.
   def self.global_search(q)
     Images::Search.call(scope: all, query: q)
   end
@@ -66,16 +76,6 @@ class Image < ApplicationRecord
   def self.search_by_tag(tag)
     where("? = ANY(tags)", tag)
   end
-
-  validates :title, presence: true
-  validates :s3_key, presence: true, uniqueness: true
-  validates :thumb_key, uniqueness: true, allow_nil: true
-
-  validate :album_belongs_to_owner
-  validates :user, presence: true
-  validates :album, presence: true
-
-  validate :tags_length
 
   private
 

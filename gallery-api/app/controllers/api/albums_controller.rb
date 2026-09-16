@@ -51,6 +51,12 @@ class Api::AlbumsController < ApplicationController
     end
   end
 
+  # ?q= is the only filter a folder has.
+  def apply_filters(scope)
+    scope = scope.name_search(params[:q]) if params[:q].present?
+    scope
+  end
+
   # Member actions reach any folder the user owns, at any depth — not `resources`, which is
   # one level of the tree and would answer 404 for everything below it.
   def resource

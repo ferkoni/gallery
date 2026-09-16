@@ -122,6 +122,22 @@ RSpec.describe Images::Search do
       expect(search("gato")).not_to include(intruder)
     end
 
+    # The controller hands in a scope already ordered newest first. Appending the ranking
+    # to that order let created_at decide and the ranking only break ties, so a page of
+    # results was the newest candidates rather than the best ones.
+    it "ranks by relevance even when the scope arrives already ordered" do
+      best = image("IMG_0001")
+      worse = image("IMG_0002")
+      embed(best, 0)
+      embed(worse, 1)
+      best.update!(created_at: 2.days.ago)
+
+      allow(Inference).to receive(:adapter).and_return(adapter_returning(0))
+
+      result = described_class.call(scope: scope.order(created_at: :desc), query: "un gato")
+      expect(result.to_a).to eq([ best, worse ])
+    end
+
     it "returns a relation the caller can keep chaining" do
       match = image("gato-teclado")
       embed(match, 0)

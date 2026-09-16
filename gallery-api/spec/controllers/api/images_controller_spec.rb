@@ -147,6 +147,33 @@ RSpec.describe Api::ImagesController, type: :controller do
         ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
         expect(ids).to match_array([ match.id ])
       end
+
+      # The index orders newest first. With a query that order must give way to the
+      # search ranking, or page 1 holds the newest candidates instead of the best ones.
+      it "returns images in search rank order, not newest first" do
+        width = ImageEmbedding.column_dimensions
+        towards = ->(axis) {
+          raw = Array.new(width, 0.01).tap { |v| v[axis] = 1.0 }
+          norm = Math.sqrt(raw.sum { |x| x * x })
+          raw.map { |x| x / norm }
+        }
+        model_id = "clip-vit-b-32/openai/v1"
+
+        best = create(:image, user: user, album: album, title: "IMG_0001", created_at: 2.days.ago)
+        worse = create(:image, user: user, album: album, title: "IMG_0002", created_at: Time.current)
+        create(:image_embedding, image: best, model_id: model_id, embedding: towards.(0))
+        create(:image_embedding, image: worse, model_id: model_id, embedding: towards.(1))
+
+        adapter = instance_double(Inference::Local, available?: true, model_id: model_id,
+                                  embed_text: Inference::Embedding.new(
+                                    vector: towards.(0), model_id: model_id, dimensions: width))
+        allow(Inference).to receive(:adapter).and_return(adapter)
+
+        get :index, params: { q: "lentes" }, as: :json
+
+        ids = JSON.parse(response.body)["data"].map { |i| i["id"].to_i }
+        expect(ids).to eq([ best.id, worse.id ])
+      end
     end
 
     context "with title param" do
