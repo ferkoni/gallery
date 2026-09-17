@@ -107,12 +107,41 @@ RSpec.describe "API routes", type: :request do
     end
   end
 
-  # Accept: application/json, not axios's default "application/json, text/plain, */*": with the
-  # default, Devise answers 302 instead of 401 (docs: bugs.md, bug 7).
   it "answers 401 to a request without a token, so these specs go through authentication" do
     get "#{prefix}/albums", headers: { "Accept" => "application/json" }
 
     expect(response).to have_http_status(:unauthorized)
+  end
+
+  # Before navigational_formats was emptied, only Accept: application/json got a 401. Axios's
+  # default Accept, or none at all, resolved to HTML and Devise redirected to /, which the SPA saw
+  # as a 200, so it never went back to /login (docs: bugs.md, bug 7).
+  describe "an unauthenticated request in any format" do
+    let(:axios_accept) { "application/json, text/plain, */*" }
+
+    it "answers 401 to axios's default Accept header" do
+      get "#{prefix}/albums", headers: { "Accept" => axios_accept }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "answers 401 without an Accept header" do
+      get "#{prefix}/albums"
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    # A real token whose only fault is its age, as in a tab left open past jwt.expiration_time.
+    it "answers 401 to an expired token" do
+      token, = Warden::JWTAuth::UserEncoder.new.call(user, :user, nil)
+      secret = Rails.application.secret_key_base
+      payload, = JWT.decode(token, secret, true, algorithms: [ "HS256" ])
+      expired = JWT.encode(payload.merge("exp" => 1.hour.ago.to_i), secret, "HS256")
+
+      get "#{prefix}/albums", headers: { "Accept" => axios_accept, "Authorization" => "Bearer #{expired}" }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
   end
 
   # Nothing is left behind at the unversioned paths (docs: api-versioning/02, decision 4).
