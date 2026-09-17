@@ -89,4 +89,59 @@ describe('ImageCard', () => {
     await userEvent.click(screen.getByTestId('favorite-button'));
     expect(onUnfavorite).not.toHaveBeenCalled();
   });
+
+  describe('selection', () => {
+    type Toggle = (image: Image, shiftKey: boolean) => void;
+    const selection = (over: Partial<{ selected: boolean; showCheckbox: boolean }> = {}) => ({
+      selected: false,
+      showCheckbox: false,
+      onToggle: vi.fn<Toggle>(),
+      ...over,
+    });
+
+    it('renders no checkbox without the prop, so Search and Favorites are untouched', () => {
+      render(<ImageCard image={image} />);
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    });
+
+    it('renders a checkbox labelled with the photo when selection is given', () => {
+      render(<ImageCard image={image} selection={selection()} />);
+      expect(screen.getByRole('checkbox', { name: 'Select Beach' })).toBeInTheDocument();
+    });
+
+    it('calls onToggle without shift on a plain click, and not the card onClick', async () => {
+      const props = selection();
+      const onClick = vi.fn();
+      render(<ImageCard image={image} onClick={onClick} selection={props} />);
+
+      await userEvent.click(screen.getByRole('checkbox'));
+
+      expect(props.onToggle).toHaveBeenCalledWith(image, false);
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('passes shiftKey when the click held Shift', async () => {
+      const props = selection();
+      render(<ImageCard image={image} selection={props} />);
+
+      fireEvent.click(screen.getByRole('checkbox'), { shiftKey: true });
+
+      expect(props.onToggle).toHaveBeenCalledWith(image, true);
+    });
+
+    it('keeps the checkbox visible once anything is selected', () => {
+      const { rerender } = render(<ImageCard image={image} selection={selection()} />);
+      expect(screen.getByRole('checkbox').parentElement).toHaveClass('opacity-0');
+
+      rerender(<ImageCard image={image} selection={selection({ showCheckbox: true })} />);
+      expect(screen.getByRole('checkbox').parentElement).toHaveClass('opacity-100');
+    });
+
+    it('marks a selected card, in the checkbox and in the styling', () => {
+      render(<ImageCard image={image} selection={selection({ selected: true, showCheckbox: true })} />);
+
+      expect(screen.getByRole('checkbox')).toBeChecked();
+      expect(screen.getByTestId('image-card-1')).toHaveClass('ring-2', 'ring-focus');
+    });
+  });
 });

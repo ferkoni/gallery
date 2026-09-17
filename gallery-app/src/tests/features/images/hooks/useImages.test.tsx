@@ -11,8 +11,11 @@ import {
   useUpdateImage,
   useDeleteImage,
   useFavoriteImage,
+  useMoveImages,
+  useMovingImages,
   flattenImagePages,
 } from '@/features/images/hooks/useImages';
+import { useSelectionStore } from '@/features/images/store/selectionStore';
 import type { Image } from '@/features/images/types/image';
 
 const mock = new MockAdapter(apiClient);
@@ -483,5 +486,147 @@ describe('useFavoriteImage', () => {
       await waitFor(() => expect(result.current.isError).toBe(true));
       expect(cachedIds()).toEqual([[1, 2], [3]]);
     });
+  });
+});
+
+describe('useMoveImages', () => {
+  type Pages = { pageParams: number[]; pages: { data: Image[]; meta: ReturnType<typeof meta> }[] };
+
+  const to = { id: 2, name: 'Trips' };
+
+  beforeEach(() => {
+    mock.reset();
+    useSelectionStore.getState().reset();
+  });
+
+  function setup(filters: Record<string, unknown> = {}) {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const key = ['albums', 1, 'images', filters];
+    queryClient.setQueryData<Pages>(key, {
+      pageParams: [1, 2],
+      pages: [
+        { data: [photo(1), photo(2)], meta: { ...meta(1, 2), total_count: 3 } },
+        { data: [photo(3)], meta: { ...meta(2, 2), total_count: 3 } },
+      ],
+    });
+    const cached = () => queryClient.getQueryData<Pages>(key)!;
+    return { wrapper, cached, queryClient };
+  }
+
+  it('sends the ids and the target folder to PATCH /images/move', async () => {
+    mock.onPatch('/images/move').reply(204);
+    const { wrapper } = setup();
+
+    const { result } = renderHook(() => useMoveImages(), { wrapper });
+    act(() => { result.current.mutate({ ids: [1, 2], from: 1, to }); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ ids: [1, 2], album_id: 2 });
+  });
+
+  it('takes the photos out of every loaded page at once, and lowers the count by that many', async () => {
+    mock.onPatch('/images/move').reply(() => new Promise(() => {}));
+    const { wrapper, cached } = setup();
+
+    const { result } = renderHook(() => useMoveImages(), { wrapper });
+    act(() => { result.current.mutate({ ids: [2, 3], from: 1, to }); });
+
+    await waitFor(() => expect(cached().pages.map(p => p.data.map(i => i.id))).toEqual([[1], []]));
+    expect(cached().pages.map(p => p.meta.total_count)).toEqual([1, 1]);
+  });
+
+  it('reaches a page cached under a filter, not only the unfiltered grid', async () => {
+    mock.onPatch('/images/move').reply(() => new Promise(() => {}));
+    const { wrapper, cached } = setup({ title: 'beach' });
+
+    const { result } = renderHook(() => useMoveImages(), { wrapper });
+    act(() => { result.current.mutate({ ids: [1], from: 1, to }); });
+
+    await waitFor(() => expect(cached().pages[0].data.map(i => i.id)).toEqual([2]));
+  });
+
+  it('never lowers the count below 0', async () => {
+    mock.onPatch('/images/move').reply(() => new Promise(() => {}));
+    const { wrapper, cached } = setup();
+
+    const { result } = renderHook(() => useMoveImages(), { wrapper });
+    act(() => { result.current.mutate({ ids: [1, 2, 3, 4, 5], from: 1, to }); });
+
+    await waitFor(() => expect(cached().pages[0].meta.total_count).toBe(0));
+  });
+
+  // No snapshot to restore: the refetch that follows every move is what puts them back. It is
+  // the grid's own observer that makes the invalidated query refetch, so the test mounts one —
+  // invalidateQueries leaves a query with no observer stale but untouched.
+  it('puts the photos back when the server refuses, once the refetch answers', async () => {
+    mock.onPatch('/images/move').reply(404);
+    mock.onGet('/albums/1/images').reply(200, page([photo(1), photo(2)], 1, 1));
+    const { wrapper, cached } = setup();
+
+    const { result } = renderHook(
+      () => ({ move: useMoveImages(), grid: useAlbumImages(1) }),
+      { wrapper }
+    );
+    act(() => { result.current.move.mutate({ ids: [1], from: 1, to }); });
+
+    await waitFor(() => expect(result.current.move.isError).toBe(true));
+    await waitFor(() => expect(cached().pages[0].data.map(i => i.id)).toEqual([1, 2]));
+  });
+
+  it('clears the selection and records the move for the toast', async () => {
+    mock.onPatch('/images/move').reply(204);
+    const { wrapper } = setup();
+    act(() => { useSelectionStore.getState().selectAll(1, [1, 2]); });
+
+    const { result } = renderHook(() => useMoveImages(), { wrapper });
+    act(() => { result.current.mutate({ ids: [1, 2], from: 1, to }); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect([...useSelectionStore.getState().ids]).toEqual([]);
+    expect(useSelectionStore.getState().lastMove).toEqual({ ids: [1, 2], from: 1, to });
+  });
+
+  it('records nothing for an undo, so the toast does not offer to redo it', async () => {
+    mock.onPatch('/images/move').reply(204);
+    const { wrapper } = setup();
+
+    const { result } = renderHook(() => useMoveImages(), { wrapper });
+    act(() => { result.current.mutate({ ids: [1], from: 2, to: { id: 1, name: '' }, isUndo: true }); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(useSelectionStore.getState().lastMove).toBeNull();
+  });
+
+  it('invalidates the source folder, the target folder and search', async () => {
+    mock.onPatch('/images/move').reply(204);
+    const { wrapper, queryClient } = setup();
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useMoveImages(), { wrapper });
+    act(() => { result.current.mutate({ ids: [1], from: 1, to }); });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(invalidate.mock.calls.map(([arg]) => arg?.queryKey)).toEqual([
+      ['albums', 1, 'images'],
+      ['albums', 2, 'images'],
+      ['images', 'search'],
+    ]);
+  });
+
+  it('tells every caller that a move is running, not only the one that started it', async () => {
+    mock.onPatch('/images/move').reply(() => new Promise(() => {}));
+    const { wrapper } = setup();
+
+    const { result } = renderHook(() => ({ move: useMoveImages(), moving: useMovingImages() }), { wrapper });
+    expect(result.current.moving).toBe(false);
+
+    act(() => { result.current.move.mutate({ ids: [1], from: 1, to }); });
+
+    await waitFor(() => expect(result.current.moving).toBe(true));
   });
 });

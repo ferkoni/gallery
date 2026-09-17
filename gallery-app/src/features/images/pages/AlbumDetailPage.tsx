@@ -1,11 +1,17 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useGetAlbum, useInfiniteAlbums } from '@/features/albums/albums';
 import { AlbumBreadcrumbs } from '@/features/albums/components/AlbumBreadcrumbs';
 import { SubfolderSection } from '@/features/albums/components/SubfolderSection';
 import { ImageGrid } from '../components/ImageGrid';
 import { ImageUploadButton } from '../components/ImageUploadButton';
-import { useAlbumImageCount } from '../hooks/useImages';
+import { useAlbumImageCount, useMoveImages } from '../hooks/useImages';
+import { UndoToast } from '../components/UndoToast';
+import { useSelectionStore } from '../store/selectionStore';
+import { apiErrorMessage } from '@/lib/api/errorMessage';
 import { DownloadAlbumButton } from '@/features/downloads/components/DownloadAlbumButton';
+
+const UNDO_TIMEOUT_MS = 7000; // 7 seconds
 
 export function AlbumDetailPage() {
   const { id } = useParams();
@@ -15,6 +21,43 @@ export function AlbumDetailPage() {
   const { data: imageCount } = useAlbumImageCount(albumId, { enabled: !!id });
   // The same query SubfolderSection runs, so react-query serves both from one request.
   const { data: subfolders } = useInfiniteAlbums({ parentId: albumId });
+
+  const lastMove = useSelectionStore((s) => s.lastMove);
+  const setLastMove = useSelectionStore((s) => s.setLastMove);
+  const reset = useSelectionStore((s) => s.reset);
+  // A second error slot, because a move started outside the dialog — PR 3's drops, and Undo —
+  // has nowhere else to report (docs: select-and-move/02, decision 12).
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const { mutate: move } = useMoveImages();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const dismissUndo = useCallback(() => {
+    setLastMove(null);
+    clearTimeout(timerRef.current);
+  }, [setLastMove]);
+
+  const undo = useCallback(() => {
+    if (!lastMove) return;
+    const { ids, from, to } = lastMove;
+    dismissUndo();
+    // The reverse move, in one call. Its own success records nothing, so there's no toast
+    // offering to redo it.
+    move(
+      { ids, from: to.id, to: { id: from, name: '' }, isUndo: true },
+      { onError: (err) => setMoveError(apiErrorMessage(err, "Couldn't move the photos. Try again.")) }
+    );
+  }, [lastMove, dismissUndo, move]);
+
+  // Restarted whenever a new move replaces the last, so the pill always shows for its full 7 s.
+  useEffect(() => {
+    if (!lastMove) return;
+    timerRef.current = setTimeout(() => setLastMove(null), UNDO_TIMEOUT_MS);
+    return () => clearTimeout(timerRef.current);
+  }, [lastMove, setLastMove]);
+
+  // Leaving the folder, or switching to another one, drops the selection and the toast: its
+  // Undo names a folder that is no longer on screen.
+  useEffect(() => () => reset(), [albumId, reset]);
 
   if (!id) return <p className="p-6 text-danger">Invalid folder.</p>;
   if (isPending) return <p className="p-6 text-muted">Loading...</p>;
@@ -54,6 +97,18 @@ export function AlbumDetailPage() {
       {/* Subfolders before photos, as everywhere else folders and photos sit together. */}
       <SubfolderSection albumId={albumId} />
       <ImageGrid albumId={albumId} />
+
+      {lastMove && (
+        <UndoToast
+          message={`Moved ${lastMove.ids.length} photo${lastMove.ids.length === 1 ? '' : 's'} to ${lastMove.to.name}`}
+          onUndo={undo}
+          onDismiss={dismissUndo}
+        />
+      )}
+
+      {moveError && !lastMove && (
+        <UndoToast message={moveError} onDismiss={() => setMoveError(null)} />
+      )}
     </main>
   );
 }

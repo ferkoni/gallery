@@ -1,10 +1,13 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useAlbumImages } from '../hooks/useImages';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAlbumImages, useMovingImages } from '../hooks/useImages';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
 import { ImageCard } from './ImageCard';
 import { ImageEditModal } from './ImageEditModal';
 import { Lightbox } from './Lightbox';
+import { MoveImagesModal } from './MoveImagesModal';
+import { SelectionToolbar } from './SelectionToolbar';
+import { useSelectionStore } from '../store/selectionStore';
 import type { Image } from '../types/image';
 
 type Props = { albumId: number };
@@ -12,6 +15,7 @@ type Props = { albumId: number };
 export function ImageGrid({ albumId }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [modal, setModal] = useState<{ image: Image; mode: 'edit' | 'delete' } | null>(null);
+  const [moveOpen, setMoveOpen] = useState(false);
 
   const [title, setTitle] = useState('');
   const [tag, setTag] = useState('');
@@ -36,12 +40,51 @@ export function ImageGrid({ albumId }: Props) {
 
   const clickHandlers = useMemo(() => images.map((_, i) => () => setSelectedIndex(i)), [images]);
 
+  const ids = useSelectionStore((s) => s.ids);
+  const toggle = useSelectionStore((s) => s.toggle);
+  const selectRange = useSelectionStore((s) => s.selectRange);
+  const selectAll = useSelectionStore((s) => s.selectAll);
+  const clear = useSelectionStore((s) => s.clear);
+  const moving = useMovingImages();
+
+  // Always the stored ids intersected with what is loaded, so a photo deleted from the
+  // Lightbox, or moved away in another tab, can't be part of the next move.
+  const selectedIds = useMemo(() => images.filter(i => ids.has(i.id)).map(i => i.id), [images, ids]);
+  const orderedIds = useMemo(() => images.map(i => i.id), [images]);
+  const anySelected = selectedIds.length > 0;
+
+  const onToggle = useCallback((image: Image, shiftKey: boolean) =>
+    shiftKey ? selectRange(albumId, orderedIds, image.id) : toggle(albumId, image.id),
+    [albumId, orderedIds, selectRange, toggle]);
+
+  // One object per card, rebuilt only when something it holds changes, so memo still bites.
+  const selections = useMemo(
+    () => images.map(image => ({ selected: ids.has(image.id), showCheckbox: anySelected, onToggle })),
+    [images, ids, anySelected, onToggle]
+  );
+
+  // A filter change hides photos, and a selection that outlived it would move photos that
+  // aren't on screen (docs: select-and-move/02, decision 4).
+  useEffect(() => { clear(); }, [albumId, debouncedTitle, debouncedTag, debouncedFrom, clear]);
+
+  // The Lightbox and the modals own Esc while they're open: one keypress shouldn't close the
+  // Lightbox and drop a 40-photo selection with it (decision 13).
+  useEffect(() => {
+    if (selectedIndex !== null || modal !== null || moveOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') clear(); };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedIndex, modal, moveOpen, clear]);
+
   // Below the grid, the last thing on the page, so unlike the subfolder sentinel above it
   // nothing scrolls past it on the way somewhere else. Not while showing the previous filter's
   // photos (the next page would belong to the new filter), and not after a failed page: the
   // failure would re-arm it, and a sentinel still in view would retry in a loop.
+  // Not while a move is in flight either: the server has already moved the photos, so every
+  // later page has shifted up by that many, and a page fetched by number in the gap before
+  // the refetch would skip them (docs: select-and-move/02, decision 10).
   const sentinelRef = useInfiniteSentinel<HTMLDivElement>(
-    hasNextPage && !isFetchingNextPage && !isPlaceholderData && !isFetchNextPageError,
+    hasNextPage && !isFetchingNextPage && !isPlaceholderData && !isFetchNextPageError && !moving,
     fetchNextPage
   );
 
@@ -89,6 +132,15 @@ export function ImageGrid({ albumId }: Props) {
         />
       </div>
 
+      <SelectionToolbar
+        count={selectedIds.length}
+        loadedCount={images.length}
+        onSelectAll={() => selectAll(albumId, orderedIds)}
+        onClear={clear}
+        onMove={() => setMoveOpen(true)}
+        moving={moving}
+      />
+
       {images.length === 0 ? (
         <p className="text-faint text-sm mt-4" data-testid="images-empty">
           No images yet. Upload one above.
@@ -100,6 +152,7 @@ export function ImageGrid({ albumId }: Props) {
               <ImageCard
                 image={image}
                 onClick={clickHandlers[index]}
+                selection={selections[index]}
               />
             </li>
           ))}
@@ -147,6 +200,14 @@ export function ImageGrid({ albumId }: Props) {
             onDelete={(image) => { setSelectedIndex(null); setModal({ image, mode: 'delete' }); }}
           />
         </Lightbox>
+      )}
+
+      {moveOpen && (
+        <MoveImagesModal
+          ids={selectedIds}
+          from={albumId}
+          onClose={() => setMoveOpen(false)}
+        />
       )}
 
       {modal && (

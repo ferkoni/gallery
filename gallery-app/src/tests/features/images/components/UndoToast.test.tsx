@@ -16,6 +16,12 @@ describe('UndoToast', () => {
     expect(onUndo).toHaveBeenCalledOnce();
   });
 
+  it('renders no Undo button without onUndo, for a message nothing can undo', () => {
+    render(<UndoToast message="Couldn't move the photos. Try again." onDismiss={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /undo/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /dismiss/i })).toBeInTheDocument();
+  });
+
   it('calls onDismiss when the dismiss button is clicked', async () => {
     const onDismiss = vi.fn();
     render(<UndoToast message="Removed from favorites" onUndo={vi.fn()} onDismiss={onDismiss} />);
