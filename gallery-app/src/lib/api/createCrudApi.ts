@@ -18,13 +18,6 @@ export function createCrudApi<T>(path: string) {
       const res = await apiClient.get(path);
       return res.data.data.map((item: { attributes: T }) => item.attributes);
     },
-    fetchPaginated: async (page = 1): Promise<PaginatedResponse<T>> => {
-      const res = await apiClient.get(path, { params: { page } });
-      return {
-        data: res.data.data.map((item: { attributes: T }) => item.attributes),
-        meta: res.data.meta as PaginationMeta,
-      };
-    },
     fetchOne: async (id: number): Promise<T> => {
       const res = await apiClient.get(`${path}/${id}`);
       return res.data.data.attributes;
