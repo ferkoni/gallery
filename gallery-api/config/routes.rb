@@ -22,7 +22,13 @@ Rails.application.routes.draw do
     end
     resource :s3_credentials, only: [ :update, :destroy ]
     resources :async_tasks, only: [ :index, :show, :create ]
-    resources :images, only: [ :index, :show, :create, :update, :destroy ]
+    resources :images, only: [ :index, :show, :create, :update, :destroy ] do
+      # Many photos into one folder, all or nothing (docs: select-and-move/02, decision 9).
+      # A collection route, so it's matched before /images/:id.
+      collection do
+        patch :move
+      end
+    end
 
     resources :users, only: [ :create ] do
       collection do
