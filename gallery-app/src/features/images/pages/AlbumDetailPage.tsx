@@ -25,8 +25,8 @@ export function AlbumDetailPage() {
   const lastMove = useSelectionStore((s) => s.lastMove);
   const setLastMove = useSelectionStore((s) => s.setLastMove);
   const reset = useSelectionStore((s) => s.reset);
-  // A second error slot, because a move started outside the dialog — PR 3's drops, and Undo —
-  // has nowhere else to report (docs: select-and-move/02, decision 12).
+  // A second error slot, because Undo runs outside the dialog and has nowhere else to report a
+  // failure (docs: select-and-move/02, decision 12).
   const [moveError, setMoveError] = useState<string | null>(null);
   const { mutate: move } = useMoveImages();
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);

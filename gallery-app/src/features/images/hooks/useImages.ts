@@ -167,9 +167,9 @@ export function useFavoriteImage() {
   });
 }
 
-// A move is started from the toolbar's dialog and, in PR 3, from a drop target, while the
-// toolbar, the grid's sentinel and those targets all need to know one is running. Each caller
-// gets its own useMutation, so isPending is per-caller: this key is what lets them agree.
+// A move is started from the toolbar's dialog, and an undo from the page's toast, while the
+// toolbar and the grid's sentinel need to know one is running. Each caller gets its own
+// useMutation, so isPending is per-caller: this key is what lets them agree.
 export const MOVE_KEY = ['images', 'move'];
 
 export function useMovingImages() {
@@ -187,8 +187,8 @@ export function useMoveImages() {
     mutationKey: MOVE_KEY,
     mutationFn: ({ ids, to }: MoveVars) => moveImages(ids, to.id),
     // The photos leave the source grid at once. Without this they would sit there until every
-    // loaded page had refetched in turn, which is the worst feedback there is right after a
-    // drop (docs: select-and-move/02, decision 10). No snapshot and no onError: a failed move
+    // loaded page had refetched in turn, right after the user asked for them to go (docs:
+    // select-and-move/02, decision 10). No snapshot and no onError: a failed move
     // is put back by the refetch below, which decision 12 needs anyway.
     onMutate: async ({ ids, from }) => {
       await queryClient.cancelQueries({ queryKey: ['albums', from, 'images'] });
