@@ -9,8 +9,9 @@
 # database (gallery-api_postgres_data). Never point TEST_DIR at the repo.
 #
 # Usage:
-#   ./test-install.sh              # build, start, seed a user
+#   ./test-install.sh              # build, start, seed a user, smoke-test
 #   ./test-install.sh --skip-build # reuse the images already built
+#   ./test-install.sh smoke        # assert against a stack that is already up
 #   ./test-install.sh down         # stop and delete the test stack + its volume
 #
 # Overrides: TEST_DIR, SEED_EMAIL, SEED_PASSWORD, HOST_PORT
@@ -51,8 +52,52 @@ teardown() {
   echo "Done."
 }
 
+# Two assertions about the deployed shape, both unauthenticated on purpose: no bucket, no
+# login, no photo, no S3 spend. 401 means the body crossed nginx and reached Rails, because
+# authentication is decided before the body is read (spec/requests/api_routes_spec.rb).
+# Booting the stack proves nothing about uploads on its own, which is how the 1 MB default in
+# nginx.conf survived a release (docs: upload-size-limit/).
+smoke() {
+  # The port comes from Compose, not from HOST_PORT: docker-compose.yml publishes 8080:80
+  # literally, so HOST_PORT only drives the conflict check and the summary below. Asking the
+  # running stack is right whatever that file says.
+  local addr code
+  addr="$(compose port nginx 80)"
+  local url="http://localhost:${addr##*:}/api/v1/images"
+
+  # 3 MB: over nginx's 1 MB default, under the 30m ceiling. A 413 here is the bug.
+  head -c 3000000 /dev/zero > "$TEST_DIR/3mb.bin"
+  # --max-time so a wedged stack fails the check instead of hanging it; a timeout prints 000.
+  code="$(curl -s -o /dev/null -m 60 -w '%{http_code}' -X POST --data-binary "@$TEST_DIR/3mb.bin" "$url" || true)"
+  if [ "$code" != "401" ]; then
+    echo "Smoke: expected 401 for a 3 MB body, got $code" >&2
+    [ "$code" = "413" ] && echo "  413 means nginx refused it: check client_max_body_size in nginx/nginx.conf." >&2
+    rm -f "$TEST_DIR/3mb.bin"
+    exit 1
+  fi
+
+  # And the ceiling still exists.
+  head -c 40000000 /dev/zero > "$TEST_DIR/40mb.bin"
+  code="$(curl -s -o /dev/null -m 60 -w '%{http_code}' -X POST --data-binary "@$TEST_DIR/40mb.bin" "$url" || true)"
+  if [ "$code" != "413" ]; then
+    echo "Smoke: expected 413 for a 40 MB body, got $code" >&2
+    rm -f "$TEST_DIR/3mb.bin" "$TEST_DIR/40mb.bin"
+    exit 1
+  fi
+
+  rm -f "$TEST_DIR/3mb.bin" "$TEST_DIR/40mb.bin"
+  echo "Smoke: a 3 MB body reaches the API (401) and a 40 MB body is refused (413)."
+}
+
 if [ "${1:-}" = "down" ]; then
   teardown
+  exit 0
+fi
+
+# Assert against a stack that is already up, without rebuilding or reseeding.
+if [ "${1:-}" = "smoke" ]; then
+  stack_running || { echo "No stack at $TEST_DIR. Run ${BASH_SOURCE[0]} first." >&2; exit 1; }
+  smoke
   exit 0
 fi
 
@@ -103,6 +148,8 @@ compose exec -T -e SEED_EMAIL="$SEED_EMAIL" -e SEED_PASSWORD="$SEED_PASSWORD" ap
   bin/rails runner \
   'User.any? ? print("user already exists") : (User.create!(email: ENV.fetch("SEED_EMAIL"), password: ENV.fetch("SEED_PASSWORD")); print("user created"))'
 echo ""
+
+smoke
 
 echo ""
 echo "Gallery is running at http://localhost:${HOST_PORT}"

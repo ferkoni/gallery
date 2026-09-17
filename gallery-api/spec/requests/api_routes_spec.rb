@@ -142,6 +142,17 @@ RSpec.describe "API routes", type: :request do
 
       expect(response).to have_http_status(:unauthorized)
     end
+
+    # The invariant test-install.sh's smoke check leans on: authentication is decided before the
+    # body is looked at, so even a large unauthenticated upload answers 401. That is what lets
+    # the check prove a body crossed nginx with no bucket, no login and no photo — 413 there
+    # means nginx refused it (docs: upload-size-limit/03, step 6).
+    it "answers 401 to an upload, whatever the body" do
+      post "#{prefix}/images", params: "x" * 3000,
+           headers: { "CONTENT_TYPE" => "application/x-www-form-urlencoded" }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
   end
 
   # Nothing is left behind at the unversioned paths (docs: api-versioning/02, decision 4).
