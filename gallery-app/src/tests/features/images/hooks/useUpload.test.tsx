@@ -7,7 +7,13 @@ import { uploadImage } from '@/features/images/api/imagesApi';
 import { useUploadStore } from '@/features/images/store/uploadStore';
 import type { Image } from '@/features/images/types/image';
 
-vi.mock('@/features/images/api/imagesApi');
+// Only the network call is mocked. MAX_UPLOAD_BYTES and ALLOWED_UPLOAD_TYPES are the real
+// constants the hook enforces — automocking the whole module empties the array and leaves the
+// limit undefined, so the checks would pass or fail for reasons the test invented.
+vi.mock('@/features/images/api/imagesApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/images/api/imagesApi')>()),
+  uploadImage: vi.fn(),
+}));
 const mockUploadImage = vi.mocked(uploadImage);
 
 const image: Image = {
@@ -24,6 +30,13 @@ const image: Image = {
 };
 
 const file = new File(['pixels'], 'photo.jpg', { type: 'image/jpeg' });
+
+// 26 MB without allocating 26 MB: the hook reads .size, and nothing reads the bytes.
+function sized(bytes: number, type = 'image/jpeg') {
+  const big = new File(['x'], 'huge.jpg', { type });
+  Object.defineProperty(big, 'size', { value: bytes });
+  return big;
+}
 
 function makeWrapper() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -110,5 +123,69 @@ describe('useUpload', () => {
     const item = useUploadStore.getState().queue[0];
     expect(item.status).toBe('error');
     expect(item.error).toBe('Upload failed. Please try again.');
+  });
+
+  // Refused before the request rather than after 25 MB of transfer. The queue is where a
+  // rejected upload is reported, whoever rejected it, so this reads like a 422 would.
+  it('refuses a file over the limit without sending it', async () => {
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useUpload(1), { wrapper });
+    await act(() => result.current.upload(sized(26 * 1024 * 1024), 'Huge'));
+
+    const item = useUploadStore.getState().queue[0];
+    expect(mockUploadImage).not.toHaveBeenCalled();
+    expect(item.status).toBe('error');
+    expect(item.error).toBe('Too large (26.0 MB). The limit is 25 MB.');
+    // Never 'uploading', so no progress bar appears for a file that never left.
+    expect(item.progress).toBe(0);
+  });
+
+  // accept="image/*" is wider than Images::Upload::ALLOWED_TYPES, so the picker lets these
+  // through and the API would answer 422 after the whole transfer.
+  it('refuses a file whose type the API would reject, without sending it', async () => {
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useUpload(1), { wrapper });
+    await act(() => result.current.upload(sized(1000, 'application/pdf'), 'Not a photo'));
+
+    const item = useUploadStore.getState().queue[0];
+    expect(mockUploadImage).not.toHaveBeenCalled();
+    expect(item.status).toBe('error');
+    expect(item.error).toBe('Not a JPEG, PNG, WebP or GIF.');
+  });
+
+  // An empty type is the browser declining to guess — some Android pickers send nothing — and
+  // that is not evidence about the file. The server reads the bytes, so it decides.
+  it('sends a file whose type the browser did not report', async () => {
+    mockUploadImage.mockResolvedValue(image);
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useUpload(1), { wrapper });
+    await act(() => result.current.upload(sized(1000, ''), 'Unknown type'));
+
+    expect(mockUploadImage).toHaveBeenCalled();
+    expect(useUploadStore.getState().queue[0].status).toBe('done');
+  });
+
+  // Our own nginx allows more than the limit, and the check above keeps requests away from it
+  // anyway, so a 413 always comes from a proxy the user put in front of Gallery. Saying
+  // "try again" to that is a loop.
+  it('explains a 413 from a proxy in front of Gallery', async () => {
+    mockUploadImage.mockRejectedValue(
+      new AxiosError('Request failed with status code 413', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 413,
+        data: '<html><head><title>413 Request Entity Too Large</title></head></html>',
+      } as AxiosResponse),
+    );
+
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useUpload(1), { wrapper });
+    await act(() => result.current.upload(file, 'Beach'));
+
+    const item = useUploadStore.getState().queue[0];
+    expect(item.status).toBe('error');
+    expect(item.error).toBe(
+      'Refused as too large before it reached Gallery. If you run a proxy in front of Gallery, ' +
+        'raise its body-size limit.',
+    );
   });
 });
