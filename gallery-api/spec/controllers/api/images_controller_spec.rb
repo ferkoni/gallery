@@ -676,4 +676,77 @@ RSpec.describe Api::ImagesController, type: :controller do
       end
     end
   end
+  describe "PATCH #move" do
+    before { sign_in user }
+
+    let(:target) { create(:album, user: user) }
+    let!(:images) { create_list(:image, 2, user: user, album: album) }
+
+    def move(ids:, album_id: target.id)
+      patch :move, params: { ids: ids, album_id: album_id }, as: :json
+    end
+
+    context "when the owner moves their own photos into their own folder" do
+      it "returns http no content" do
+        move(ids: images.map(&:id))
+        expect(response).to have_http_status(:no_content)
+      end
+
+      it "files every photo under the new folder" do
+        move(ids: images.map(&:id))
+        expect(images.each(&:reload).map(&:album_id)).to all(eq(target.id))
+      end
+    end
+
+    context "when the target folder belongs to another user" do
+      it "returns http not found" do
+        move(ids: images.map(&:id), album_id: create(:album, user: other_user).id)
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it "moves nothing" do
+        move(ids: images.map(&:id), album_id: create(:album, user: other_user).id)
+        expect(images.each(&:reload).map(&:album_id)).to all(eq(album.id))
+      end
+    end
+
+    context "when one of the ids is another user's photo" do
+      let(:theirs) { create(:image, user: other_user) }
+
+      it "returns http not found with the batch's message" do
+        move(ids: images.map(&:id) + [ theirs.id ])
+        expect(response).to have_http_status(:not_found)
+        expect(JSON.parse(response.body)).to eq("errors" => "Not found")
+      end
+
+      it "moves nothing, including the photos that were the owner's" do
+        move(ids: images.map(&:id) + [ theirs.id ])
+        expect(images.each(&:reload).map(&:album_id)).to all(eq(album.id))
+      end
+    end
+
+    context "when ids is empty" do
+      it "returns http unprocessable content with the sentence" do
+        move(ids: [])
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(JSON.parse(response.body)["errors"]).to eq("Choose between 1 and 500 photos to move")
+      end
+    end
+
+    context "when album_id is missing" do
+      it "returns http not found" do
+        patch :move, params: { ids: images.map(&:id) }, as: :json
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context "without a token" do
+      before { sign_out user }
+
+      it "returns http unauthorized" do
+        move(ids: images.map(&:id))
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
 end

@@ -70,6 +70,27 @@ class Api::ImagesController < ApplicationController
     end
   end
 
+  # PATCH /api/v1/images/move   { ids: [1, 2, 3], album_id: 7 }
+  # 204 when every photo moved. 404 when the folder, or any photo, isn't the user's or is gone,
+  # and then nothing moved: a batch can't say which without confirming that the rest exist.
+  # 422 for an empty or oversized list.
+  #
+  # Not in the authorize_resource! before_action: ownership is the with_user scopes, as for
+  # #index. The local is `target` because #album already names the filter's folder.
+  def move
+    # find(nil) raises too, so a missing album_id is a 404 like someone else's folder.
+    target = Album.with_user(current_user).find(params[:album_id])
+    result = Images::Move.call(user: current_user, ids: params[:ids], album: target)
+
+    if result.success?
+      head :no_content
+    elsif result.error == Images::Move::NOT_FOUND
+      render_not_found_response
+    else
+      render json: { errors: result.error }, status: :unprocessable_content
+    end
+  end
+
   protected
 
   # GET /api/v1/images?album_id=&page=          — the album and everything under it

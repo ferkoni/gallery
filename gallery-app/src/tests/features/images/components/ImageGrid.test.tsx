@@ -2,11 +2,14 @@ import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
 import { ImageGrid } from '@/features/images/components/ImageGrid';
-import { useAlbumImages } from '@/features/images/hooks/useImages';
+import { useAlbumImages, useMovingImages } from '@/features/images/hooks/useImages';
+import { useSelectionStore } from '@/features/images/store/selectionStore';
 import type { Image } from '@/features/images/types/image';
 
 vi.mock('@/features/images/hooks/useImages', () => ({
   useAlbumImages: vi.fn(),
+  useMoveImages: vi.fn(() => ({ mutate: vi.fn(), isPending: false, error: null })),
+  useMovingImages: vi.fn(() => false),
   useUpdateImage: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false, isSuccess: false })),
   useDeleteImage: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false })),
   useFavoriteImage: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
@@ -29,6 +32,7 @@ vi.mock('@/features/albums/albums', () => ({
 }));
 
 const mockUseAlbumImages = useAlbumImages as Mock;
+const mockUseMovingImages = useMovingImages as Mock;
 
 const images: Image[] = [
   { id: 1, title: 'Beach', description: null, tags: [], s3_key: 'k1', album_id: 1, favorited: false, created_at: '2026-01-01T00:00:00.000Z', url: 'https://url1', thumbnail_url: 'https://thumb1' },
@@ -64,7 +68,11 @@ function installIntersectionObserver() {
 }
 
 describe('ImageGrid', () => {
-  beforeEach(() => fetchNextPage.mockReset());
+  beforeEach(() => {
+    fetchNextPage.mockReset();
+    mockUseMovingImages.mockReturnValue(false);
+    useSelectionStore.getState().reset();
+  });
 
   it('shows skeleton loaders while pending', () => {
     mockUseAlbumImages.mockReturnValue(grid({ isPending: true, data: undefined }));
@@ -270,6 +278,135 @@ describe('ImageGrid', () => {
       act(() => { vi.advanceTimersByTime(300); });
 
       expect(mockUseAlbumImages).toHaveBeenLastCalledWith(1, { title: undefined, tag: undefined, from: '2026-01-01' });
+    });
+  });
+
+  describe('selecting photos', () => {
+    const check = (title: string) => screen.getByRole('checkbox', { name: `Select ${title}` });
+
+    beforeEach(() => mockUseAlbumImages.mockReturnValue(grid()));
+
+    it('shows no toolbar until something is selected', () => {
+      render(<ImageGrid albumId={1} />);
+      expect(screen.queryByTestId('selection-toolbar')).not.toBeInTheDocument();
+    });
+
+    it('counts what is checked', async () => {
+      render(<ImageGrid albumId={1} />);
+
+      await userEvent.click(check('Beach'));
+      await userEvent.click(check('Mountain'));
+
+      expect(screen.getByTestId('selection-toolbar')).toHaveTextContent('2 selected');
+    });
+
+    it('extends the selection to the shift-clicked photo', async () => {
+      const three = [...images, { ...images[0], id: 3, title: 'Forest' }];
+      mockUseAlbumImages.mockReturnValue(grid({ data: three }));
+      render(<ImageGrid albumId={1} />);
+
+      await userEvent.click(check('Beach'));
+      fireEvent.click(check('Forest'), { shiftKey: true });
+
+      expect(screen.getByTestId('selection-toolbar')).toHaveTextContent('3 selected');
+    });
+
+    it('selects every loaded photo from the toolbar', async () => {
+      render(<ImageGrid albumId={1} />);
+      await userEvent.click(check('Beach'));
+
+      await userEvent.click(screen.getByRole('button', { name: 'Select all (2)' }));
+
+      expect(screen.getByTestId('selection-toolbar')).toHaveTextContent('2 selected');
+    });
+
+    it('clears from the toolbar', async () => {
+      render(<ImageGrid albumId={1} />);
+      await userEvent.click(check('Beach'));
+
+      await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
+
+      expect(screen.queryByTestId('selection-toolbar')).not.toBeInTheDocument();
+    });
+
+    // A filter hides photos, and a move must never include one that isn't on screen.
+    it('clears when a filter changes', async () => {
+      render(<ImageGrid albumId={1} />);
+      await userEvent.click(check('Beach'));
+
+      fireEvent.change(screen.getByPlaceholderText('Filter by title…'), { target: { value: 'be' } });
+      await act(async () => { await new Promise(r => setTimeout(r, 350)); });
+
+      expect(screen.queryByTestId('selection-toolbar')).not.toBeInTheDocument();
+    });
+
+    it('drops a selected photo that is no longer loaded', async () => {
+      const { rerender } = render(<ImageGrid albumId={1} />);
+      await userEvent.click(check('Beach'));
+      await userEvent.click(check('Mountain'));
+
+      mockUseAlbumImages.mockReturnValue(grid({ data: [images[1]] }));
+      rerender(<ImageGrid albumId={1} />);
+
+      expect(screen.getByTestId('selection-toolbar')).toHaveTextContent('1 selected');
+    });
+
+    it('clears on Escape', async () => {
+      render(<ImageGrid albumId={1} />);
+      await userEvent.click(check('Beach'));
+
+      fireEvent.keyDown(window, { key: 'Escape' });
+
+      expect(screen.queryByTestId('selection-toolbar')).not.toBeInTheDocument();
+    });
+
+    // The Lightbox owns Escape while it is open: one keypress shouldn't close it and drop a
+    // whole selection with it.
+    it('keeps the selection when Escape closes the lightbox', async () => {
+      render(<ImageGrid albumId={1} />);
+      await userEvent.click(check('Beach'));
+      await userEvent.click(screen.getByRole('img', { name: 'Beach' }));
+
+      fireEvent.keyDown(window, { key: 'Escape' });
+
+      expect(screen.getByTestId('selection-toolbar')).toHaveTextContent('1 selected');
+    });
+
+    it('opens the move dialog with the selected photos', async () => {
+      render(<ImageGrid albumId={1} />);
+      await userEvent.click(check('Beach'));
+
+      await userEvent.click(screen.getByTestId('move-images-button'));
+
+      expect(screen.getByTestId('move-images-modal')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Move 1 photo' })).toBeInTheDocument();
+    });
+  });
+
+  describe('while a move is running', () => {
+    beforeEach(() => installIntersectionObserver());
+    afterEach(() => vi.unstubAllGlobals());
+
+    // The server has already moved the photos, so every later page has shifted up by that
+    // many: a page fetched by number in the gap before the refetch would skip them.
+    it('stops watching the end of the grid', () => {
+      mockUseMovingImages.mockReturnValue(true);
+      mockUseAlbumImages.mockReturnValue(grid({ hasNextPage: true }));
+      render(<ImageGrid albumId={1} />);
+
+      intersect();
+
+      expect(fetchNextPage).not.toHaveBeenCalled();
+    });
+
+    it('watches again once the move settles', () => {
+      mockUseMovingImages.mockReturnValue(false);
+      mockUseAlbumImages.mockReturnValue(grid({ hasNextPage: true }));
+      render(<ImageGrid albumId={1} />);
+
+      intersect();
+
+      expect(fetchNextPage).toHaveBeenCalledTimes(1);
     });
   });
 });

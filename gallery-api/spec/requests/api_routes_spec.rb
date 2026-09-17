@@ -43,6 +43,7 @@ RSpec.describe "API routes", type: :request do
     [ :post,   "/async_tasks",            201 ],
     [ :get,    "/async_tasks/:id",        200 ],
     [ :get,    "/images",                 200 ],
+    [ :patch,  "/images/move",            204 ],
     [ :post,   "/images",                 201 ],
     [ :get,    "/images/:id",             200 ],
     [ :patch,  "/images/:id",             200 ],
@@ -80,6 +81,9 @@ RSpec.describe "API routes", type: :request do
     in [ :post, "/images" ]
       allow(Images::Upload).to receive(:call).and_return(done.with(record: image))
       [ pattern, { image: { file: "stub", title: "Beach", album_id: album.id } } ]
+    in [ :patch, "/images/move" ]
+      # A bare JSON body, no image wrapper: this also covers ParamsWrapper leaving ids alone.
+      [ pattern, { ids: [ image.id ], album_id: create(:album, user: user).id } ]
     in [ :get | :patch | :put | :delete, "/images/:id" ]
       allow(Images::Destroy).to receive(:call).and_return(done)
       [ "/images/#{image.id}", { image: { title: "Renamed" } } ]

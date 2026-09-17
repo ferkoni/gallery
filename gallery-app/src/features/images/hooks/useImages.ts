@@ -1,4 +1,4 @@
-import { infiniteQueryOptions, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { infiniteQueryOptions, useInfiniteQuery, useIsMutating, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import type { InfiniteData } from '@tanstack/react-query';
 import {
   fetchAlbumImages,
@@ -6,9 +6,11 @@ import {
   fetchSearchImages,
   updateImage,
   deleteImage,
+  moveImages,
 } from '../api/imagesApi';
 import type { SearchParams, AlbumImageFilters } from '../api/imagesApi';
 import type { Image, UpdateImagePayload } from '../types/image';
+import { useSelectionStore } from '../store/selectionStore';
 import type { PaginatedResponse } from '@/lib/api/createCrudApi';
 
 const PRESIGNED_URL_STALE_MS = 50 * 60 * 1000;
@@ -160,6 +162,60 @@ export function useFavoriteImage() {
         predicate: (q) => q.queryKey[0] === 'albums' && q.queryKey[2] === 'images',
       });
       queryClient.invalidateQueries({ queryKey: ['images', 'favorites'] });
+      queryClient.invalidateQueries({ queryKey: ['images', 'search'] });
+    },
+  });
+}
+
+// A move is started from the toolbar's dialog, and an undo from the page's toast, while the
+// toolbar and the grid's sentinel need to know one is running. Each caller gets its own
+// useMutation, so isPending is per-caller: this key is what lets them agree.
+export const MOVE_KEY = ['images', 'move'];
+
+export function useMovingImages() {
+  return useIsMutating({ mutationKey: MOVE_KEY }) > 0;
+}
+
+type MoveVars = { ids: number[]; from: number; to: { id: number; name: string }; isUndo?: boolean };
+
+export function useMoveImages() {
+  const queryClient = useQueryClient();
+  const clear = useSelectionStore((s) => s.clear);
+  const setLastMove = useSelectionStore((s) => s.setLastMove);
+
+  return useMutation({
+    mutationKey: MOVE_KEY,
+    mutationFn: ({ ids, to }: MoveVars) => moveImages(ids, to.id),
+    // The photos leave the source grid at once. Without this they would sit there until every
+    // loaded page had refetched in turn, right after the user asked for them to go (docs:
+    // select-and-move/02, decision 10). No snapshot and no onError: a failed move
+    // is put back by the refetch below, which decision 12 needs anyway.
+    onMutate: async ({ ids, from }) => {
+      await queryClient.cancelQueries({ queryKey: ['albums', from, 'images'] });
+      const gone = new Set(ids);
+      // The prefix, not one key: every filter variant of this folder holds the same photos.
+      queryClient.setQueriesData<ImagePages>(
+        { queryKey: ['albums', from, 'images'] },
+        (old) => old && {
+          ...old,
+          pages: old.pages.map((page) => ({
+            data: page.data.filter((img) => !gone.has(img.id)),
+            // Every page carries the count and the download guard reads the first, as in
+            // useDeleteImage: moving a folder's last photos away greys out Download at once.
+            meta: { ...page.meta, total_count: Math.max(0, page.meta.total_count - ids.length) },
+          })),
+        }
+      );
+    },
+    onSuccess: (_data, { ids, from, to, isUndo }) => {
+      clear();
+      // An undo has nothing to undo, and showing a toast for one would offer to redo it.
+      setLastMove(isUndo ? null : { ids, from, to });
+    },
+    onSettled: (_data, _err, { from, to }) => {
+      queryClient.invalidateQueries({ queryKey: ['albums', from, 'images'] });
+      queryClient.invalidateQueries({ queryKey: ['albums', to.id, 'images'] });
+      // A search scoped to either folder changes too.
       queryClient.invalidateQueries({ queryKey: ['images', 'search'] });
     },
   });

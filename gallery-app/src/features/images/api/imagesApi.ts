@@ -77,3 +77,11 @@ export async function updateImage(id: number, data: UpdateImagePayload): Promise
 export async function deleteImage(id: number): Promise<void> {
   await apiClient.delete(`/images/${id}`);
 }
+
+// Images::Move::MAX_IDS. The toolbar disables Move to… above it rather than splitting a batch.
+export const MAX_MOVE = 500;
+
+// PATCH /api/v1/images/move — every photo moves, or none do (204).
+export async function moveImages(ids: number[], albumId: number): Promise<void> {
+  await apiClient.patch('/images/move', { ids, album_id: albumId });
+}

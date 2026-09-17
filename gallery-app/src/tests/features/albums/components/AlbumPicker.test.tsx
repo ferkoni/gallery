@@ -307,6 +307,125 @@ describe('AlbumPicker', () => {
       expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders');
     });
 
+    describe('opening somewhere other than the top', () => {
+      const trips = { id: 1, name: 'Trips' };
+      const madrid = { id: 2, name: 'Madrid' };
+
+      it('asks for the given level and names it', async () => {
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} initialPath={[ trips, madrid ]} />);
+        await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+        expect(lastRequest()).toMatchObject({ parentId: 2 });
+        expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Trips › Madrid');
+      });
+
+      it('goes up from there like from anywhere else', async () => {
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} initialPath={[ trips, madrid ]} />);
+        await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+        await userEvent.click(screen.getByTestId('album-picker-up'));
+
+        expect(lastRequest()).toMatchObject({ parentId: 1 });
+      });
+    });
+
+    describe('the path as links', () => {
+      const trips = { id: 1, name: 'Trips' };
+      const madrid = { id: 2, name: 'Madrid' };
+      const day2 = { id: 3, name: 'Day 2' };
+
+      it('jumps straight back to the top from any depth', async () => {
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} initialPath={[ trips, madrid, day2 ]} />);
+        await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+        await userEvent.click(screen.getByTestId('album-picker-crumb-root'));
+
+        expect(lastRequest()).toMatchObject({ parentId: undefined });
+        expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders');
+        // Still open: the jump is browsing, not choosing.
+        expect(screen.getByTestId('album-picker-menu')).toBeVisible();
+      });
+
+      it('jumps to an ancestor in between', async () => {
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} initialPath={[ trips, madrid ]} />);
+        await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+        await userEvent.click(screen.getByTestId('album-picker-crumb-1'));
+
+        expect(lastRequest()).toMatchObject({ parentId: 1 });
+        expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Trips');
+      });
+
+      it('does not link the level being browsed, nor the top while at the top', async () => {
+        const { unmount } = render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} initialPath={[ trips ]} />);
+        await userEvent.click(screen.getByTestId('album-picker-toggle'));
+        expect(screen.queryByTestId('album-picker-crumb-1')).not.toBeInTheDocument();
+        unmount();
+
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+        await userEvent.click(screen.getByTestId('album-picker-toggle'));
+        expect(screen.queryByTestId('album-picker-crumb-root')).not.toBeInTheDocument();
+      });
+
+      it('collapses the middle past two levels, keeping the top and the last two', async () => {
+        const deep = [ trips, madrid, day2, { id: 4, name: 'Morning' } ];
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} initialPath={deep} />);
+        await userEvent.click(screen.getByTestId('album-picker-toggle'));
+
+        const header = screen.getByTestId('album-picker-path');
+        expect(header).toHaveTextContent('Folders › … › Day 2 › Morning');
+        expect(header).toHaveAttribute('title', 'Folders › Trips › Madrid › Day 2 › Morning');
+        expect(screen.getByTestId('album-picker-crumb-3')).toBeInTheDocument();
+        expect(screen.queryByTestId('album-picker-crumb-1')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('the left arrow key', () => {
+      const trips = { id: 1, name: 'Trips' };
+      const madrid = { id: 2, name: 'Madrid' };
+
+      it('goes up one level while browsing', async () => {
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} initialPath={[ trips, madrid ]} />);
+        await userEvent.click(screen.getByTestId('album-picker-input'));
+
+        await userEvent.keyboard('{ArrowLeft}');
+
+        expect(lastRequest()).toMatchObject({ parentId: 1 });
+      });
+
+      it('has nowhere to go from the top', async () => {
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
+        await userEvent.click(screen.getByTestId('album-picker-input'));
+
+        await userEvent.keyboard('{ArrowLeft}');
+
+        expect(lastRequest()).toMatchObject({ parentId: undefined });
+      });
+
+      // Closed, the box holds the chosen folder's name, where the key moves the caret.
+      it('leaves the caret alone while the menu is closed', async () => {
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} initialPath={[ trips ]} />);
+        screen.getByTestId('album-picker-input').focus();
+        await userEvent.keyboard('{ArrowLeft}');
+
+        // Reopened, it's still inside Trips.
+        await userEvent.click(screen.getByTestId('album-picker-toggle'));
+        expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Trips');
+        expect(lastRequest()).toMatchObject({ parentId: 1 });
+      });
+
+      it('leaves the caret alone once a name is being typed', async () => {
+        render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} initialPath={[ trips ]} />);
+
+        await userEvent.type(screen.getByTestId('album-picker-input'), 'ma{ArrowLeft}');
+        expect(screen.getByTestId('album-picker-input')).toHaveValue('ma');
+
+        // Searching sends no level, so the level only shows again once the name is cleared.
+        await userEvent.clear(screen.getByTestId('album-picker-input'));
+        expect(lastRequest()).toMatchObject({ parentId: 1, q: undefined });
+      });
+    });
+
     it('says when a level holds nothing, which is not the same as nothing matching', async () => {
       stubPages([[]]);
       render(<AlbumPicker label="Folder" value={undefined} onChange={vi.fn()} />);
@@ -355,7 +474,9 @@ describe('AlbumPicker', () => {
       await userEvent.click(screen.getByTestId('album-picker-enter-9'));
 
       expect(lastRequest()).toMatchObject({ parentId: 9, q: undefined });
-      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Trips › Madrid › Day 2');
+      // Three levels deep, so the header collapses the middle; the whole path is still its title.
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › … › Madrid › Day 2');
+      expect(screen.getByTestId('album-picker-path')).toHaveAttribute('title', 'Folders › Trips › Madrid › Day 2');
     });
 
     it('returns to the level that was being browsed when the query is cleared', async () => {

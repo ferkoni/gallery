@@ -1,18 +1,25 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AlbumDetailPage } from '@/features/images/pages/AlbumDetailPage';
 import { useGetAlbum, useInfiniteAlbums } from '@/features/albums/albums';
 import { useAlbumImageCount } from '@/features/images/hooks/useImages';
+import { useSelectionStore } from '@/features/images/store/selectionStore';
 import type { Album } from '@/features/albums/types/album';
+
+const { mockMove } = vi.hoisted(() => ({ mockMove: vi.fn() }));
 
 vi.mock('@/features/albums/albums', () => ({
   useGetAlbum: vi.fn(),
   useInfiniteAlbums: vi.fn(),
   useUpdateAlbum: vi.fn(() => ({ mutate: vi.fn(), isPending: false, isError: false })),
 }));
-vi.mock('@/features/images/hooks/useImages', () => ({ useAlbumImageCount: vi.fn() }));
+vi.mock('@/features/images/hooks/useImages', () => ({
+  useAlbumImageCount: vi.fn(),
+  useMoveImages: vi.fn(() => ({ mutate: mockMove })),
+}));
 // The photo grid has its own tests; here it only needs to be findable, to check that the
 // subfolders come before it.
 vi.mock('@/features/images/components/ImageGrid', () => ({
@@ -67,6 +74,7 @@ function renderPage() {
 describe('AlbumDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useSelectionStore.getState().reset();
     stubImageCount(0);
     stubSubfolders([]);
     mockUseGetAlbum.mockReturnValue({ isPending: false, isError: false, data: album });
@@ -189,6 +197,88 @@ describe('AlbumDetailPage', () => {
       mockUseAlbumImageCount.mockReturnValue({ data: undefined });
       renderPage();
       expect(screen.getByTestId('download-button')).not.toBeDisabled();
+    });
+  });
+
+  describe('the undo toast', () => {
+    const move = { ids: [1, 2], from: 1, to: { id: 2, name: 'Trips' } };
+    const record = (over: Partial<typeof move> = {}) =>
+      act(() => { useSelectionStore.getState().setLastMove({ ...move, ...over }); });
+
+    it('shows nothing until a move has happened', () => {
+      renderPage();
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('names the count and the folder', () => {
+      renderPage();
+      record();
+      expect(screen.getByRole('status')).toHaveTextContent('Moved 2 photos to Trips');
+    });
+
+    it('says "1 photo" for one', () => {
+      renderPage();
+      record({ ids: [1] });
+      expect(screen.getByRole('status')).toHaveTextContent('Moved 1 photo to Trips');
+    });
+
+    it('sends the reverse move on Undo and takes the toast away', async () => {
+      renderPage();
+      record();
+
+      await userEvent.click(screen.getByRole('button', { name: /undo/i }));
+
+      expect(mockMove).toHaveBeenCalledWith(
+        { ids: [1, 2], from: 2, to: { id: 1, name: '' }, isUndo: true },
+        expect.anything()
+      );
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('dismisses without undoing', async () => {
+      renderPage();
+      record();
+
+      await userEvent.click(screen.getByRole('button', { name: /dismiss/i }));
+
+      expect(mockMove).not.toHaveBeenCalled();
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('times out after 7 seconds', () => {
+      vi.useFakeTimers();
+      try {
+        renderPage();
+        record();
+
+        act(() => { vi.advanceTimersByTime(7000); });
+
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('reports a failed undo on a toast of its own, with nothing to undo', async () => {
+      mockMove.mockImplementation((_vars, { onError }) => onError({ message: 'nope' }));
+      renderPage();
+      record();
+
+      await userEvent.click(screen.getByRole('button', { name: /undo/i }));
+
+      expect(screen.getByRole('status')).toHaveTextContent("Couldn't move the photos. Try again.");
+      expect(screen.queryByRole('button', { name: /undo/i })).not.toBeInTheDocument();
+    });
+
+    it('drops the selection and the toast when the folder is left', () => {
+      const { unmount } = renderPage();
+      act(() => { useSelectionStore.getState().selectAll(1, [1, 2]); });
+      record();
+
+      unmount();
+
+      expect(useSelectionStore.getState().lastMove).toBeNull();
+      expect([...useSelectionStore.getState().ids]).toEqual([]);
     });
   });
 });
