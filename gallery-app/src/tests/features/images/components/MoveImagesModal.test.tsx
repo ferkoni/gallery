@@ -204,6 +204,20 @@ describe('MoveImagesModal', () => {
       expect(JSON.parse(mock.history.patch[0].data)).toEqual({ ids: [7], album_id: 1 });
     });
 
+    // show always sends ancestors today; the dialog shouldn't depend on it to open.
+    it('inside a folder whose ancestors did not come back, as if it were at the top', async () => {
+      // The by-id handler stubFolders registered would answer first, so start over without it.
+      mock.reset();
+      const bare: Album = { ...HOLIDAYS, ancestors: undefined };
+      stubFolders([ bare, TRIPS, BEACH, MADRID, DAY_2 ]);
+      renderModal({ from: 1 });
+
+      await userEvent.click(await screen.findByTestId('album-picker-toggle'));
+
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Holidays');
+      expect(await screen.findByText('Beach')).toBeInTheDocument();
+    });
+
     it('says it is loading until it knows the current folder', () => {
       mock.onGet(/^\/albums\/\d+$/).reply(() => new Promise(() => {}));
       renderModal({ from: 1 });
