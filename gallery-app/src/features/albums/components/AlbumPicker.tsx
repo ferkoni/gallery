@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useCombobox } from 'downshift';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
@@ -29,15 +29,19 @@ type Props = {
   // at a label of its own, so a label outside the component is announced by nobody.
   label: string;
   labelClassName?: string;
+  // The level to open at, root first, instead of the top. Moving photos starts inside the
+  // folder they're in, where its subfolders are already loaded for the page.
+  initialPath?: AlbumCrumb[];
 };
 
 export function AlbumPicker({
   value, onChange, placeholder, allowClear, allowTopLevel, disabledId, label, labelClassName,
+  initialPath,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   // The level being browsed, root last. Empty is the top level.
-  const [path, setPath] = useState<AlbumCrumb[]>([]);
+  const [path, setPath] = useState<AlbumCrumb[]>(initialPath ?? []);
   const debouncedQuery = useDebounce(query, 300);
 
   const level = path.at(-1)?.id;
@@ -124,9 +128,17 @@ export function AlbumPicker({
           {...getInputProps({
             placeholder,
             onFocus: (e) => e.currentTarget.select(),
-            // Right arrow walks into the highlighted folder. Safe to take: in browse mode
-            // the input is empty, so the key has no caret meaning to steal.
+            // Right arrow walks into the highlighted folder, and left arrow back out of the
+            // level. Safe to take: in browse mode the input is empty, so neither key has a
+            // caret meaning to steal. Left checks the box itself rather than `searching`,
+            // which lags a keystroke behind the debounce.
             onKeyDown: (e) => {
+              if (e.key === 'ArrowLeft') {
+                if (!isOpen || query !== '' || path.length === 0) return;
+                e.preventDefault();
+                setPath(path.slice(0, -1));
+                return;
+              }
               if (e.key !== 'ArrowRight' || searching) return;
               const option = options[highlightedIndex];
               if (option && !isTopLevel(option)) {
@@ -165,8 +177,30 @@ export function AlbumPicker({
             {searching ? (
               <span data-testid="album-picker-searching">Searching every folder</span>
             ) : (
-              <span data-testid="album-picker-path">
-                {[ 'Folders', ...path.map(c => c.name) ].join(' › ')}
+              <span data-testid="album-picker-path" title={[ 'Folders', ...path.map(c => c.name) ].join(' › ')}>
+                {visibleDepths(path.length).map((depth, i) => (
+                  <Fragment key={depth ?? 'hidden'}>
+                    {i > 0 && ' › '}
+                    {depth === null ? (
+                      '…'
+                    ) : depth === path.length ? (
+                      // Where you are: nothing to jump to.
+                      <span className="text-secondary">{depth === 0 ? 'Folders' : path[depth - 1].name}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        // As for the up row: without it the input blurs and the popup closes
+                        // before the click lands.
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setPath(path.slice(0, depth))}
+                        className="text-link hover:text-link-strong cursor-pointer"
+                        data-testid={depth === 0 ? 'album-picker-crumb-root' : `album-picker-crumb-${path[depth - 1].id}`}
+                      >
+                        {depth === 0 ? 'Folders' : path[depth - 1].name}
+                      </button>
+                    )}
+                  </Fragment>
+                ))}
               </span>
             )}
           </div>
@@ -255,3 +289,11 @@ export function AlbumPicker({
 }
 
 const crumb = (album: Album): AlbumCrumb => ({ id: album.id, name: album.name });
+
+// Which levels the header names, by depth (0 is the top, `length` is where you are). The
+// dialog is narrow, so past two levels the middle collapses to one `…` (null): the top and the
+// last two always show, which keeps both "back to the top" and "up one" a click away.
+function visibleDepths(length: number): (number | null)[] {
+  if (length <= 2) return Array.from({ length: length + 1 }, (_, depth) => depth);
+  return [0, null, length - 1, length];
+}

@@ -9,6 +9,8 @@ type Props = { ids: number[]; from: number; onClose: () => void };
 export function MoveImagesModal({ ids, from, onClose }: Props) {
   const [target, setTarget] = useState<number | undefined>(undefined);
   const { mutate, isPending, error } = useMoveImages();
+  // The folder the photos are in, already cached by the page, ancestors and all.
+  const { data: current, isPending: currentPending } = useGetAlbum(from);
   // Already cached by the picker that just listed it, so this costs no request.
   const { data: targetAlbum } = useGetAlbum(target ?? 0, { enabled: target !== undefined });
 
@@ -39,7 +41,20 @@ export function MoveImagesModal({ ids, from, onClose }: Props) {
           Move {n} photo{n === 1 ? '' : 's'}
         </h2>
 
-        <AlbumPicker label="Folder" value={target} onChange={setTarget} />
+        {/* The picker opens inside the current folder, where its subfolders are already loaded
+            for the page. It waits for the folder so that it opens there rather than at the top:
+            its level is only read once, when it mounts. If the folder can't be loaded, it opens
+            at the top as it always did. */}
+        {currentPending ? (
+          <p className="text-sm text-muted" data-testid="move-images-loading">Loading folders…</p>
+        ) : (
+          <AlbumPicker
+            label="Folder"
+            value={target}
+            onChange={setTarget}
+            initialPath={current && [ ...(current.ancestors ?? []), { id: current.id, name: current.name } ]}
+          />
+        )}
 
         {sameFolder && (
           <p className="text-sm text-muted mt-2" data-testid="move-same-folder">

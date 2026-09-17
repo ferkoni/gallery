@@ -11,24 +11,38 @@ import type { Album } from '@/features/albums/types/album';
 const mock = new MockAdapter(apiClient);
 afterAll(() => mock.restore());
 
-const folder = (id: number, name: string): Album => ({
-  id, name, description: null, parent_id: null, created_at: '2026-01-01T00:00:00.000Z',
+const folder = (id: number, name: string, ancestors: { id: number; name: string }[] = []): Album => ({
+  id, name, description: null, parent_id: ancestors.at(-1)?.id ?? null,
+  created_at: '2026-01-01T00:00:00.000Z', ancestors,
 });
 
-const FOLDERS = [folder(1, 'Holidays'), folder(2, 'Trips')];
+// Holidays and Trips at the top; Beach inside Holidays; Day 2 inside Trips › Madrid.
+const HOLIDAYS = folder(1, 'Holidays');
+const TRIPS = folder(2, 'Trips');
+const BEACH = folder(3, 'Beach', [ { id: 1, name: 'Holidays' } ]);
+const MADRID = folder(4, 'Madrid', [ { id: 2, name: 'Trips' } ]);
+const DAY_2 = folder(5, 'Day 2', [ { id: 2, name: 'Trips' }, { id: 4, name: 'Madrid' } ]);
+const FOLDERS = [ HOLIDAYS, TRIPS, BEACH, MADRID, DAY_2 ];
 
-// The picker pages through GET /api/v1/albums and resolves a chosen folder by id, as in
-// ImageEditModal's tests.
+// The picker pages through GET /api/v1/albums one level at a time (parent_id), and the
+// dialog and picker resolve folders by id, as in ImageEditModal's tests.
 function stubFolders(albums = FOLDERS) {
-  mock.onGet('/albums').reply(200, {
-    data: albums.map(attributes => ({ attributes })),
-    meta: { current_page: 1, total_pages: 1, total_count: albums.length, per_page: 25 },
+  mock.onGet('/albums').reply(config => {
+    const parentId = config.params?.parent_id ?? null;
+    const level = albums.filter(a => a.parent_id === (parentId === null ? null : Number(parentId)));
+    return [200, {
+      data: level.map(attributes => ({ attributes })),
+      meta: { current_page: 1, total_pages: 1, total_count: level.length, per_page: 25 },
+    }];
   });
   mock.onGet(/^\/albums\/\d+$/).reply(config => {
     const found = albums.find(a => a.id === Number(config.url!.split('/').pop()));
     return found ? [200, { data: { attributes: found } }] : [404, { errors: 'Not found' }];
   });
 }
+
+const levelsAsked = () =>
+  mock.history.get.filter(r => r.url === '/albums').map(r => r.params?.parent_id ?? null);
 
 function makeWrapper() {
   const queryClient = new QueryClient({
@@ -44,10 +58,11 @@ function renderModal({ ids = [1, 2], from = 1, onClose = vi.fn() } = {}) {
   return { onClose };
 }
 
+// Opens the picker, which only appears once the current folder has loaded, and picks a
+// folder at the level it opens on.
 async function choose(name: string) {
-  await userEvent.click(screen.getByTestId('album-picker-toggle'));
-  await waitFor(() => expect(screen.getByText(name)).toBeInTheDocument());
-  await userEvent.click(screen.getByText(name));
+  await userEvent.click(await screen.findByTestId('album-picker-toggle'));
+  await userEvent.click(await screen.findByText(name));
 }
 
 describe('MoveImagesModal', () => {
@@ -73,9 +88,12 @@ describe('MoveImagesModal', () => {
   });
 
   it('refuses the folder the photos are already in', async () => {
-    renderModal({ from: 2 });
+    renderModal({ from: 1 });
 
-    await choose('Trips');
+    // Inside Holidays, so its own row is one level up.
+    await userEvent.click(await screen.findByTestId('album-picker-toggle'));
+    await userEvent.click(await screen.findByTestId('album-picker-crumb-root'));
+    await userEvent.click(await screen.findByText('Holidays'));
 
     expect(screen.getByTestId('move-same-folder')).toBeInTheDocument();
     expect(screen.getByTestId('move-confirm-button')).toBeDisabled();
@@ -85,22 +103,22 @@ describe('MoveImagesModal', () => {
     mock.onPatch('/images/move').reply(204);
     const { onClose } = renderModal({ ids: [7, 8], from: 1 });
 
-    await choose('Trips');
+    await choose('Beach');
     await userEvent.click(screen.getByTestId('move-confirm-button'));
 
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
-    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ ids: [7, 8], album_id: 2 });
+    expect(JSON.parse(mock.history.patch[0].data)).toEqual({ ids: [7, 8], album_id: 3 });
   });
 
   it('records the target folder name for the toast', async () => {
     mock.onPatch('/images/move').reply(204);
     renderModal({ ids: [7], from: 1 });
 
-    await choose('Trips');
+    await choose('Beach');
     await userEvent.click(screen.getByTestId('move-confirm-button'));
 
     await waitFor(() =>
-      expect(useSelectionStore.getState().lastMove).toEqual({ ids: [7], from: 1, to: { id: 2, name: 'Trips' } })
+      expect(useSelectionStore.getState().lastMove).toEqual({ ids: [7], from: 1, to: { id: 3, name: 'Beach' } })
     );
   });
 
@@ -108,7 +126,7 @@ describe('MoveImagesModal', () => {
     mock.onPatch('/images/move').reply(404, { errors: 'Not found' });
     const { onClose } = renderModal();
 
-    await choose('Trips');
+    await choose('Beach');
     await userEvent.click(screen.getByTestId('move-confirm-button'));
 
     await waitFor(() => expect(screen.getByTestId('move-images-error')).toHaveTextContent('Not found'));
@@ -120,7 +138,7 @@ describe('MoveImagesModal', () => {
     mock.onPatch('/images/move').networkError();
     renderModal();
 
-    await choose('Trips');
+    await choose('Beach');
     await userEvent.click(screen.getByTestId('move-confirm-button'));
 
     await waitFor(() =>
@@ -132,7 +150,7 @@ describe('MoveImagesModal', () => {
     mock.onPatch('/images/move').reply(() => new Promise(() => {}));
     renderModal();
 
-    await choose('Trips');
+    await choose('Beach');
     await userEvent.click(screen.getByTestId('move-confirm-button'));
 
     await waitFor(() => expect(screen.getByTestId('move-confirm-button')).toHaveTextContent('Moving…'));
@@ -148,6 +166,60 @@ describe('MoveImagesModal', () => {
     fireEvent.click(screen.getByTestId('move-confirm-button'));
 
     await waitFor(() => expect(mock.history.patch).toHaveLength(0));
+  });
+
+  describe('where the folder list opens', () => {
+    it('inside the folder the photos are in, showing its subfolders', async () => {
+      renderModal({ from: 1 });
+
+      await userEvent.click(await screen.findByTestId('album-picker-toggle'));
+
+      expect(await screen.findByText('Beach')).toBeInTheDocument();
+      expect(screen.queryByText('Trips')).not.toBeInTheDocument();
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Holidays');
+      expect(levelsAsked()).toEqual([1]);
+    });
+
+    it('with the whole path to a nested folder, so each level above is a click away', async () => {
+      renderModal({ from: 5 });
+
+      await userEvent.click(await screen.findByTestId('album-picker-toggle'));
+
+      expect(screen.getByTestId('album-picker-path')).toHaveAttribute('title', 'Folders › Trips › Madrid › Day 2');
+      await userEvent.click(screen.getByTestId('album-picker-crumb-4'));
+      expect(await screen.findByText('Day 2')).toBeInTheDocument();
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders › Trips › Madrid');
+    });
+
+    it('back at the top in one click, for a folder elsewhere', async () => {
+      mock.onPatch('/images/move').reply(204);
+      renderModal({ ids: [7], from: 5 });
+
+      await userEvent.click(await screen.findByTestId('album-picker-toggle'));
+      await userEvent.click(screen.getByTestId('album-picker-crumb-root'));
+      await userEvent.click(await screen.findByText('Holidays'));
+      await userEvent.click(screen.getByTestId('move-confirm-button'));
+
+      await waitFor(() => expect(mock.history.patch).toHaveLength(1));
+      expect(JSON.parse(mock.history.patch[0].data)).toEqual({ ids: [7], album_id: 1 });
+    });
+
+    it('says it is loading until it knows the current folder', () => {
+      mock.onGet(/^\/albums\/\d+$/).reply(() => new Promise(() => {}));
+      renderModal({ from: 1 });
+
+      expect(screen.getByTestId('move-images-loading')).toBeInTheDocument();
+      expect(screen.queryByTestId('album-picker-toggle')).not.toBeInTheDocument();
+    });
+
+    it('at the top, as before, when the current folder cannot be loaded', async () => {
+      renderModal({ from: 99 });
+
+      await userEvent.click(await screen.findByTestId('album-picker-toggle'));
+
+      expect(await screen.findByText('Holidays')).toBeInTheDocument();
+      expect(screen.getByTestId('album-picker-path')).toHaveTextContent('Folders');
+    });
   });
 
   it('closes from Cancel and from the overlay', async () => {
