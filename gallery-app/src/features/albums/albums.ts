@@ -7,7 +7,6 @@ import type { Album } from "@/features/albums/types/album.ts";
 
 const albumsApi = createCrudApi<Album>('/albums');
 export const {
-  usePagedList: usePagedListAlbum,
   useGet: useGetAlbum,
   useCreate: useCreateAlbum,
   useUpdate: useUpdateAlbum,
