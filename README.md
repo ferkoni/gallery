@@ -26,6 +26,8 @@ The app is then at **http://localhost:8080**. Log in and add your S3 credentials
 
 Four containers start: `nginx` (serves the built frontend and proxies the API, the only one with a published port), `api`, `worker` (background jobs such as album downloads), and `db` (PostgreSQL, storing its data in a `postgres_data` volume). A fifth, `inference`, runs the optional AI search and does not start by default — see [Enabling AI search](#enabling-ai-search).
 
+**Photo size.** Uploads are capped at 25 MB per photo, and a larger file is refused with a message naming the limit. If you put your own reverse proxy in front of Gallery, give it a body-size limit of at least that: an out-of-the-box nginx allows 1 MB, which refuses most photos taken on a phone (`client_max_body_size 30m;`).
+
 ### Reaching it from another machine
 
 If you browse the app from anywhere other than the host itself — the usual case for a home server — set `CORS_ALLOWED_ORIGINS` in `.env` to the address you actually type, then restart:

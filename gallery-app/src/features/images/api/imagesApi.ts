@@ -78,6 +78,15 @@ export async function deleteImage(id: number): Promise<void> {
   await apiClient.delete(`/images/${id}`);
 }
 
+// Images::Upload::MAX_SIZE_BYTES. Checked in useUpload before the request, so an oversized
+// photo costs no transfer. nginx allows a little more (client_max_body_size 30m), so a file
+// just over this gets the API's 422 rather than a proxy's 413.
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+// Images::Upload::ALLOWED_TYPES. accept="image/*" on the input is a hint, and it is wider than
+// this: HEIC, AVIF and TIFF all pass the picker and would fail server-side.
+export const ALLOWED_UPLOAD_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
 // Images::Move::MAX_IDS. The toolbar disables Move to… above it rather than splitting a batch.
 export const MAX_MOVE = 500;
 

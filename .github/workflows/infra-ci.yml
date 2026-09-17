@@ -1,0 +1,85 @@
+name: Infra CI
+
+# The deploy layer had no workflow at all, which is how a missing client_max_body_size shipped
+# and survived a release: nothing triggered on nginx/, so CI had nothing to run and a reviewer
+# had nothing to check (docs: upload-size-limit/02, decision 11).
+#
+# Builds only gallery-nginx and stubs the api container, so there is no Rails build, no
+# database and no compose stack: it tests the proxy's own config and nothing else.
+
+on:
+  pull_request:
+    paths:
+      - 'nginx/**'
+      - 'docker-compose*.yml'
+      - 'install.sh'
+      - 'setup.sh'
+      - 'test-install.sh'
+      - '.github/workflows/infra-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'nginx/**'
+      - 'docker-compose*.yml'
+      - 'install.sh'
+      - 'setup.sh'
+      - 'test-install.sh'
+      - '.github/workflows/infra-ci.yml'
+
+jobs:
+  nginx:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Validate the compose files
+        env:
+          GHCR_OWNER: local
+          VERSION: test
+        run: |
+          docker compose config -q
+          docker compose -f docker-compose.yml -f docker-compose.cpu.yml config -q
+
+      - name: Build the nginx image
+        run: docker build -f nginx/Dockerfile -t gallery-nginx:ci .
+
+      # The api container is stubbed by pointing its hostname at nginx itself, so a forwarded
+      # request comes back as an error from the resulting proxy loop rather than reaching
+      # Rails. That is enough, because the assertions are about which bodies nginx ACCEPTS,
+      # and a 413 can only come from the config under test. Any other status — or a timeout —
+      # means the body was accepted and forwarded, which is what is being guarded.
+      - name: Start nginx with a stubbed upstream
+        run: |
+          docker run -d --name ci-nginx -p 18080:80 --add-host api:127.0.0.1 gallery-nginx:ci
+          for _ in $(seq 1 20); do
+            curl -sf -o /dev/null http://localhost:18080/ && break
+            sleep 1
+          done
+
+      - name: A 3 MB upload is not refused by the proxy
+        run: |
+          head -c 3000000 /dev/zero > 3mb.bin
+          # --max-time so the stub's proxy loop cannot hang the job; a timeout prints 000,
+          # which is not 413 and so passes. || true because curl exits non-zero on a timeout.
+          code="$(curl -s -o /dev/null -m 30 -w '%{http_code}' -X POST --data-binary @3mb.bin \
+            http://localhost:18080/api/v1/images || true)"
+          echo "3 MB body -> $code"
+          if [ "$code" = "413" ]; then
+            echo "nginx refused a 3 MB upload: check client_max_body_size in nginx/nginx.conf." >&2
+            exit 1
+          fi
+
+      - name: A 40 MB upload is refused
+        run: |
+          head -c 40000000 /dev/zero > 40mb.bin
+          # Refused on Content-Length, before the body is read, so this answers at once.
+          code="$(curl -s -o /dev/null -m 30 -w '%{http_code}' -X POST --data-binary @40mb.bin \
+            http://localhost:18080/api/v1/images || true)"
+          echo "40 MB body -> $code"
+          test "$code" = "413"
+
+      - name: Stop nginx
+        if: always()
+        run: docker rm -f ci-nginx
