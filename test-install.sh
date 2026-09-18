@@ -142,12 +142,14 @@ for i in $(seq 1 36); do
   sleep 5
 done
 
-# Passed through the environment rather than interpolated into the Ruby
-# string, so quotes in the password cannot break or inject into it.
-compose exec -T -e SEED_EMAIL="$SEED_EMAIL" -e SEED_PASSWORD="$SEED_PASSWORD" api \
-  bin/rails runner \
-  'User.any? ? print("user already exists") : (User.create!(email: ENV.fetch("SEED_EMAIL"), password: ENV.fetch("SEED_PASSWORD")); print("user created"))'
-echo ""
+# The same command install.sh runs, so this exercises it in a real container.
+# By exit status, as install.sh asks: a production boot logs to stdout (docs: closed-signup/01).
+if compose exec -T api bin/rails runner 'exit(User.exists? ? 0 : 2)' </dev/null >/dev/null 2>&1; then
+  echo "user already exists"
+else
+  EMAIL="$SEED_EMAIL" PASSWORD="$SEED_PASSWORD" \
+    compose exec -T -e EMAIL -e PASSWORD api bin/rails users:create </dev/null
+fi
 
 smoke
 

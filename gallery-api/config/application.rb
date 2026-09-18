@@ -22,6 +22,12 @@ module GalleryApi
     config.active_record.encryption.deterministic_key  = ENV["ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY"]
     config.active_record.encryption.key_derivation_salt = ENV["ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT"]
 
+    # Nothing here uses Active Storage variants: thumbnails are made by Images::Thumbnail with
+    # ruby-vips directly. Without this, every boot since image_processing left (#40) logs a
+    # warning asking for it — to stdout in production, where it landed in front of the
+    # answer install.sh was reading (docs: closed-signup/01).
+    config.active_storage.variant_processor = :disabled
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files
