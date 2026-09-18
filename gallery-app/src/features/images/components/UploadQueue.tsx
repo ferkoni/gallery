@@ -1,8 +1,23 @@
+import { useEffect } from 'react';
 import { useUploadStore } from '../store/uploadStore';
 import { UploadQueueItem } from './UploadQueueItem';
 
 export function UploadQueue() {
   const { queue, clearCompleted } = useUploadStore();
+  const active = queue.some((i) => i.status === 'pending' || i.status === 'uploading');
+
+  // Queued files live only in this tab: closing it or reloading drops them, and the one being
+  // sent with them. Ask first, the way the browser does for an unsaved form
+  // (docs: upload-queue/02, decision 5).
+  useEffect(() => {
+    if (!active) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = ''; // Safari and older Chromium still need it set
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [active]);
 
   if (queue.length === 0) return null;
 

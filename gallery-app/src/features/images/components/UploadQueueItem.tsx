@@ -1,7 +1,7 @@
 import type { UploadItem, UploadStatus } from '../store/uploadStore';
 
 const statusLabel: Record<UploadStatus, string> = {
-  pending: 'Pending',
+  pending: 'Waiting',
   uploading: 'Uploading',
   done: 'Done',
   error: 'Error',

@@ -15,9 +15,10 @@ describe('UploadQueueItem', () => {
     expect(screen.getByText('photo.jpg')).toBeInTheDocument();
   });
 
-  it('shows Pending badge and no progress bar', () => {
+  // 'pending' now means waiting for a slot, not about to start (docs: upload-queue/02).
+  it('shows a Waiting badge and no progress bar', () => {
     render(<UploadQueueItem item={makeItem({ status: 'pending' })} />);
-    expect(screen.getByText('Pending')).toBeInTheDocument();
+    expect(screen.getByText('Waiting')).toBeInTheDocument();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
 
