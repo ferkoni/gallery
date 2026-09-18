@@ -136,15 +136,20 @@ RSpec.describe Images::Upload, type: :service do
   # These assert against the bytes handed to the gateway, which is the closest a
   # spec can get to the object at rest without a live S3.
   describe "EXIF stripping" do
-    def uploaded_bytes
+    def stored_bytes(upload_file = file)
       captured = nil
       allow(storage).to receive(:upload) do |body, **|
         captured = body.read
         "images/uuid/vacation.jpg"
       end
-      call
-      Vips::Image.new_from_buffer(captured, "")
+      call(upload_file: upload_file)
+      captured
     end
+
+    def uploaded_bytes = Vips::Image.new_from_buffer(stored_bytes, "")
+
+    # The compressed image data: first SOS to EOI. Byte-identical means never re-encoded.
+    def scan(data) = data.byteslice(data.index("\xFF\xDA".b)..data.rindex("\xFF\xD9".b))
 
     it "sends bytes with no GPS coordinates to S3" do
       expect(uploaded_bytes.get_fields.grep(/gps/i)).to be_empty
@@ -169,6 +174,50 @@ RSpec.describe Images::Upload, type: :service do
       ).and_return("images/uuid/vacation.jpg")
 
       call
+    end
+
+    # What reaches the bucket is the photo that was uploaded, less its metadata: Exif::Scrub
+    # rewrites the container and never re-encodes (docs: lossless-exif-strip/02).
+    it "stores the JPEG's compressed data unchanged" do
+      expect(scan(stored_bytes)).to eq(scan(File.binread(fixture_file("gps_tagged.jpg"))))
+    end
+
+    it "keeps every frame of an animated GIF" do
+      gif = uploaded_file("animated.gif", filename: "wave.gif", type: "image/gif")
+
+      expect(Vips::Image.new_from_buffer(stored_bytes(gif), "", n: -1).get("n-pages")).to eq(2)
+    end
+
+    it "keeps a portrait photo portrait, in the original and in its thumbnail" do
+      thumbnail = nil
+      allow(storage).to receive(:put) do |key, body, **|
+        thumbnail = body.read
+        key
+      end
+
+      stored = Vips::Image.new_from_buffer(stored_bytes(uploaded_file("rotated.jpg", filename: "tall.jpg")), "")
+
+      expect(stored.get("orientation")).to eq(6)
+      expect(stored.autorot.height).to be > stored.autorot.width
+      tile = Vips::Image.new_from_buffer(thumbnail, "")
+      expect(tile.height).to be > tile.width
+    end
+
+    context "when the JPEG is cut short" do
+      let(:file) do
+        half = File.binread(fixture_file("gps_tagged.jpg")).then { |b| b.byteslice(0, b.bytesize / 2) }
+        ActionDispatch::Http::UploadedFile.new(
+          tempfile: Tempfile.new([ "cut", ".jpg" ], binmode: true).tap { |f| f.write(half) && f.rewind },
+          filename: "cut.jpg",
+          type: "image/jpeg"
+        )
+      end
+
+      it "fails as unprocessable, and writes nothing" do
+        expect(storage).not_to receive(:upload)
+
+        expect(call.error).to include("could not be processed")
+      end
     end
 
     context "when the bytes are corrupt despite an allowed MIME type" do
