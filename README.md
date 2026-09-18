@@ -39,6 +39,23 @@ docker compose up -d
 
 Skipping this is a quiet failure: pages load and uploads work, but album downloads never finish, because the browser's WebSocket is refused.
 
+If you put your own reverse proxy in front of Gallery (for TLS, say), Gallery sees every request as coming from that proxy, so login throttling applies to everyone behind it at once.
+
+### Adding people
+
+There is no sign-up page: every account is made on the host. `install.sh` makes the first one. To add another:
+
+```bash
+EMAIL=them@example.com PASSWORD='a password' \
+  docker compose exec -T -e EMAIL -e PASSWORD api bin/rails users:create
+```
+
+`-e EMAIL -e PASSWORD` with no values copies them from the command's environment, so the password never appears on the `docker` command line. Each person sees only their own folders and photos, and connects their own S3 bucket in Settings. To see who has an account:
+
+```bash
+docker compose exec api bin/rails runner 'puts User.pluck(:email)'
+```
+
 ### Enabling AI search
 
 By default, search matches photo titles and tags. AI search also finds photos by what is in them — "dog on a beach" finds that photo whatever it is called. On a 235-photo personal library it moved P@5 from 0.05 to 0.62 against a hand-judged answer key ([`eval/README.md`](eval/README.md)).

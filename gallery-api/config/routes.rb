@@ -30,7 +30,9 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :users, only: [ :create ] do
+    # No :create. Accounts are made with bin/rails users:create; there is no self-service
+    # signup (docs: closed-signup/02, decision 1).
+    resources :users, only: [] do
       collection do
         post :login
         delete :logout

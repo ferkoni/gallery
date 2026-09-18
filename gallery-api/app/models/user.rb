@@ -9,7 +9,9 @@ class User < ApplicationRecord
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   has_one :s3_credential, dependent: :destroy
 
-  devise :database_authenticatable, :registerable,
+  # No :registerable: accounts are made with bin/rails users:create, never by the public
+  # (docs: closed-signup/02, decision 3).
+  devise :database_authenticatable,
          :recoverable, :rememberable, :validatable,
          :jwt_authenticatable, jwt_revocation_strategy: self
 end

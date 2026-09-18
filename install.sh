@@ -54,36 +54,79 @@ done
 # `< /dev/null` on every exec: under `curl ... | bash` stdin is the remaining
 # script text, and `docker compose exec` would otherwise swallow it, silently
 # ending the install partway through.
-USER_EXISTS="$(docker compose exec -T api bin/rails runner "print(User.any?)" </dev/null 2>/dev/null || true)"
-if [ "$USER_EXISTS" = "false" ]; then
-  # This script is normally run as `curl ... | bash`, where stdin is the
-  # script text itself — a bare `read` hits EOF and returns empty instead of
-  # prompting. Read from the terminal explicitly.
-  if ! ( : < /dev/tty ) 2>/dev/null; then
-    echo "" >&2
-    echo "No users found, and there is no terminal to prompt on." >&2
-    echo "Create the first account with:" >&2
-    echo "  docker compose exec -T -e E=you@example.com -e P=yourpassword api \\" >&2
-    echo "    bin/rails runner 'User.create!(email: ENV.fetch(\"E\"), password: ENV.fetch(\"P\"))'" >&2
-    exit 1
-  fi
+#
+# Answered by exit status, never by parsing output: a production Rails boot logs to
+# stdout, so anything it prints arrives mixed with log lines. (It did: an Active
+# Storage warning in front of "false" meant the prompt below never ran, and the
+# install finished with no account — docs: closed-signup/01.) 0 = accounts exist,
+# 2 = none, anything else = the check itself failed.
+USERS_STATUS=0
+docker compose exec -T api bin/rails runner 'exit(User.exists? ? 0 : 2)' </dev/null >/dev/null 2>&1 || USERS_STATUS=$?
 
-  echo ""
-  echo "No users found. Create your first account:"
-  read -rp "Email: " EMAIL < /dev/tty
-  read -rsp "Password: " PASSWORD < /dev/tty
-  echo ""
+# There is no sign-up page: an account is made on this machine or not at all
+# (docs: closed-signup/02). Printed wherever the prompt below cannot finish.
+first_account_help() {
+  echo "Create the first account with:" >&2
+  echo "  EMAIL=you@example.com PASSWORD='your password' \\" >&2
+  echo "    docker compose exec -T -e EMAIL -e PASSWORD api bin/rails users:create" >&2
+}
 
-  # Passed through the environment rather than interpolated into the Ruby
-  # string, so quotes in the password cannot break or inject into it.
-  docker compose exec -T -e SEED_EMAIL="$EMAIL" -e SEED_PASSWORD="$PASSWORD" api \
-    bin/rails runner \
-    'User.create!(email: ENV.fetch("SEED_EMAIL"), password: ENV.fetch("SEED_PASSWORD"))' </dev/null || {
+case "$USERS_STATUS" in
+  0) ;;
+  2)
+    # This script is normally run as `curl ... | bash`, where stdin is the
+    # script text itself — a bare `read` hits EOF and returns empty instead of
+    # prompting. Read from the terminal explicitly.
+    if ! ( : < /dev/tty ) 2>/dev/null; then
+      echo "" >&2
+      echo "No users found, and there is no terminal to prompt on." >&2
+      first_account_help
+      exit 1
+    fi
+
+    echo ""
+    echo "No users found. Create your first account:"
+    created=false
+    for attempt in 1 2 3; do
+      read -rp "Email: " EMAIL < /dev/tty
+      # Hidden, so asked twice: a typo here is an account nobody can log in to.
+      read -rsp "Password: " PASSWORD < /dev/tty
+      echo ""
+      read -rsp "Password again: " CONFIRM < /dev/tty
+      echo ""
+      if [ "$PASSWORD" != "$CONFIRM" ]; then
+        echo "The passwords did not match." >&2
+        continue
+      fi
+
+      # Passed through the environment, never interpolated, so quotes in the
+      # password cannot break anything; and `-e NAME` with no value copies it from
+      # this command's environment, so the password is not in docker's argv either.
+      # users:create explains a refusal itself ("Password is too short ...").
+      if EMAIL="$EMAIL" PASSWORD="$PASSWORD" \
+           docker compose exec -T -e EMAIL -e PASSWORD api bin/rails users:create </dev/null; then
+        created=true
+        break
+      fi
+    done
+
+    if [ "$created" != true ]; then
+      echo "" >&2
+      echo "No account was created." >&2
+      first_account_help
+      exit 1
+    fi
+    ;;
+  *)
+    # The check itself failed. Carrying on would finish an install with no account
+    # and no way to make one from the browser.
     echo "" >&2
-    echo "Failed to create account. Re-run this script to try again." >&2
+    echo "Could not check for existing accounts: the api did not answer." >&2
+    echo "Its logs: docker compose logs api" >&2
+    first_account_help
     exit 1
-  }
-fi
+    ;;
+esac
 
 echo ""
 echo "Gallery is running at http://localhost:8080"

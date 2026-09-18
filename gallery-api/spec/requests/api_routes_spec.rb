@@ -49,7 +49,6 @@ RSpec.describe "API routes", type: :request do
     [ :patch,  "/images/:id",             200 ],
     [ :put,    "/images/:id",             200 ],
     [ :delete, "/images/:id",             204 ],
-    [ :post,   "/users",                  200 ],
     [ :post,   "/users/login",            200 ],
     [ :delete, "/users/logout",           204 ]
   ].freeze
@@ -87,8 +86,6 @@ RSpec.describe "API routes", type: :request do
     in [ :get | :patch | :put | :delete, "/images/:id" ]
       allow(Images::Destroy).to receive(:call).and_return(done)
       [ "/images/#{image.id}", { image: { title: "Renamed" } } ]
-    in [ :post, "/users" ]
-      [ pattern, { user: { email: "new@example.com", password: "password123", password_confirmation: "password123" } } ]
     in [ :post, "/users/login" ]
       [ pattern, { user: { email: user.email, password: "password123" } } ]
     in [ :delete, "/users/logout" ]

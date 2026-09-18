@@ -57,9 +57,7 @@ RSpec.describe "Login throttling", type: :request do
   it "does not throttle other requests from an IP that is throttled on login" do
     6.times { attempt(email: "someone-#{SecureRandom.hex(4)}@example.com") }
 
-    post "/api/v1/users", params: { user: { email: "new@example.com", password: "password123",
-                                         password_confirmation: "password123" } },
-                       as: :json, env: { "REMOTE_ADDR" => "203.0.113.1" }
+    get "/api/v1/albums", headers: auth_headers_for(user), env: { "REMOTE_ADDR" => "203.0.113.1" }
     expect(response).to have_http_status(:ok)
   end
 end

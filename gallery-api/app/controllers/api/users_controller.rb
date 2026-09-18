@@ -1,6 +1,6 @@
 class Api::UsersController < ApplicationController
   include BaseApi
-  skip_before_action :authenticate_user!, only: [ :create, :login ]
+  skip_before_action :authenticate_user!, only: [ :login ]
 
   def login
     user = User.includes(:s3_credential).find_by(email: params[:user][:email])
@@ -17,14 +17,4 @@ class Api::UsersController < ApplicationController
     current_user.update!(jti: SecureRandom.uuid)
     head :no_content
   end
-
-  protected
-
-  def new_resource_params
-    params.require(:user).permit(:email, :password, :password_confirmation)
-  end
-
-  def resource_class = User
-
-  def serializer = UserSerializer
 end
