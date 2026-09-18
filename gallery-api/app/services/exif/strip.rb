@@ -4,15 +4,18 @@ module Exif
   # before the tag that described it is dropped.
   #
   # Returns a rewound StringIO in the same format it was given.
+  #
+  # For pixels that leave the app for inference, which need orientation applied and do not
+  # need fidelity: the output is re-encoded at libvips' defaults. What a user keeps goes
+  # through Exif::Scrub instead, which never re-encodes (docs: lossless-exif-strip/02,
+  # decision 1).
   class Strip
     # Raised when the bytes are not a decodable image.
     #
     # Deliberately NOT Inference::InvalidInput, which is what the design document
-    # proposed. This service has a second caller coming — the upload path, which is
-    # not an AI feature at all — and an operator with INFERENCE_MODE=none should not
-    # see an inference error because they uploaded a corrupt JPEG. Inference::Base
-    # translates this into its own taxonomy at the point where it becomes an
-    # inference concern, which is what keeps Exif ignorant of Inference.
+    # proposed. Inference::Base translates this into its own taxonomy at the point
+    # where it becomes an inference concern, which is what keeps Exif ignorant of
+    # Inference.
     class UndecodableImage < StandardError; end
 
     # What to retain. Everything not named here — the whole EXIF IFD including GPS,
@@ -56,12 +59,9 @@ module Exif
 
     private
 
-    # Raises rather than defaulting to JPEG for an unrecognized format. A default
-    # would silently re-encode, say, a TIFF into a JPEG while the object it is stored
-    # under keeps the caller's declared content type — a format/label mismatch that
-    # breaks inline display with nothing failing loudly. Unreachable through the
-    # upload path, which validates ALLOWED_TYPES first; reachable through the adapter,
-    # which is exactly why it should not guess.
+    # Raises rather than defaulting to JPEG for an unrecognized format. The adapter can
+    # be handed bytes of any kind, which is exactly why this should not guess: a default
+    # would quietly re-encode, say, a TIFF, and hide that it was ever given one.
     def suffix_for(image)
       loader = image.get("vips-loader").to_s.sub(/_buffer\z/, "")
       SUFFIXES.fetch(loader) { raise UndecodableImage, "unsupported image format: #{loader}" }

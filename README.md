@@ -120,13 +120,17 @@ metres, the capture timestamp, the camera make, model and serial number, and an
 embedded thumbnail that is a full second copy of the image. Shared as a link, a photo
 shares all of it.
 
-**Gallery strips EXIF from every photo as it is uploaded.** What reaches your bucket is
-the image and nothing else. Two things are deliberately kept:
+**Gallery strips metadata from every photo as it is uploaded** — EXIF, XMP, IPTC,
+comments, and anything appended after the image, such as a motion photo's video. What
+reaches your bucket is the image exactly as it was encoded, and nothing else: the photo
+is never re-compressed, and animations keep every frame. Two things are deliberately
+kept:
 
 - **The ICC colour profile.** Removing it would make wide-gamut photos render as sRGB —
   a visible desaturation, with no error to explain it.
-- **Orientation**, applied to the pixels rather than left as a tag. Portrait photos stay
-  portrait.
+- **Orientation**, as the one tag left in a JPEG, so that a portrait photo stays portrait
+  without being re-compressed. (A PNG or WebP carrying an orientation is rotated instead,
+  losslessly.)
 
 Two limits worth stating plainly:
 

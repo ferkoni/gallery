@@ -29,26 +29,29 @@ class Images::Upload < Images::Base
     # This avoids prompting the user per file during bulk uploads.
     title = @title.presence || File.basename(@file.original_filename, ".*")
 
-    # Strip between validation and the S3 write, so the bytes at rest carry no GPS,
-    # no camera serial and no embedded thumbnail. Filename and content type come
-    # from the multipart object rather than from the stripped bytes, which are a
-    # bare StringIO — see S3::Storage#upload.
+    # Scrub between validation and the S3 write, so the bytes at rest carry no GPS,
+    # no camera serial and no embedded thumbnail — and are otherwise the photo that
+    # was uploaded: same encoding, every frame (docs: lossless-exif-strip/02). Not
+    # Exif::Strip, which re-encodes and is for pixels sent to inference. Filename and
+    # content type come from the multipart object rather than from the scrubbed
+    # bytes, which are a bare StringIO — see S3::Storage#upload.
     #
     # This protects new uploads only. Objects already in the bucket keep their
     # metadata; backfilling them rewrites the user's files and is out of scope.
-    stripped = Exif::Strip.call(@file)
+    scrubbed = Exif::Scrub.call(@file)
 
-    # Generated before anything is written, from the stripped bytes, so a photo vips
-    # cannot thumbnail costs no S3 round-trip and needs no rollback.
+    # Generated before anything is written, from the scrubbed bytes, so a photo vips
+    # cannot thumbnail costs no S3 round-trip and needs no rollback. This is also the
+    # one full decode an upload gets: Scrub reads only the header.
     #
     # A thumbnail failure fails the upload, deliberately: a photo is stored with its
     # thumbnail or not at all, so there is no new photo the grid has to fall back to
     # the full-size original for.
-    thumbnail = Images::Thumbnail.generate(stripped)
+    thumbnail = Images::Thumbnail.generate(scrubbed)
 
     s3_key = write do
       @storage.upload(
-        stripped,
+        scrubbed,
         filename: @file.original_filename,
         content_type: @file.content_type
       )
@@ -63,7 +66,7 @@ class Images::Upload < Images::Base
     enqueue_embedding(image)
 
     success(record: image)
-  rescue Exif::Strip::UndecodableImage, Images::Thumbnail::GenerationFailed => e
+  rescue Exif::Scrub::UndecodableImage, Images::Thumbnail::GenerationFailed => e
     # Declared an allowed type but the bytes are not decodable — a truncated or
     # corrupt file. Both run before the first write, so there is nothing to roll
     # back. A user error, so it reports like the other validation failures rather

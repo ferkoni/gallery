@@ -1,4 +1,4 @@
-# Regenerates the spec fixtures for Exif::Strip.
+# Regenerates the spec fixtures for Exif::Strip and Exif::Scrub.
 #
 # The fixtures are committed, so this task is not part of any test run — it exists
 # so the files can be rebuilt and reviewed rather than being opaque binaries nobody
@@ -14,7 +14,7 @@
 # compensate by asserting on the raw JPEG marker segments rather than only on what
 # vips reports back, so a bug confined to vips' own reader cannot hide a failure.
 namespace :exif do
-  desc "Regenerate the Exif::Strip spec fixtures (committed; run only when they change)"
+  desc "Regenerate the Exif::Strip and Exif::Scrub spec fixtures (committed; run only when they change)"
   task fixtures: :environment do
     require "vips"
 
@@ -82,7 +82,76 @@ namespace :exif do
     # 500, and that nothing reaches S3 for it.
     File.binwrite(dir.join("corrupt.jpg"), "\xFF\xD8\xFF\xE0".b + ("\x00".b * 64))
 
-    dir.glob("{gps_tagged,wide_gamut,rotated,plain,corrupt}.jpg").sort.each do |path|
+    # --- Exif::Scrub (docs: lossless-exif-strip/03) --------------------------------------
+    #
+    # These exist to catch a re-encode as much as a leak, so between them they cover every
+    # way the old decode-and-save degraded a photo: progressive and restart-marker JPEGs,
+    # CMYK, palette PNG, lossless WebP, and animation in both formats that have it. The
+    # payloads libvips cannot write — a comment, a JFIF thumbnail, bytes after the end,
+    # GIF extensions — are spliced in as bytes.
+    tag = lambda do |img|
+      img.mutate do |m|
+        {
+          "exif-ifd3-GPSLatitude" => "51/1 30/1 26/1 (51, 30, 26, Rational, 3)",
+          "exif-ifd3-GPSLatitudeRef" => "N (N, ASCII, 2)",
+          "exif-ifd0-Make" => "FixtureCam (FixtureCam, ASCII, 11)",
+          "exif-ifd2-BodySerialNumber" => "SN-0042 (SN-0042, ASCII, 8)"
+        }.each { |field, value| m.set_type!(GObject::GSTR_TYPE, field, value) }
+        m.set_type!(Vips::BLOB_TYPE, "xmp-data", "<x:xmpmeta xmlns:x='adobe:ns:meta/'>SECRET-XMP</x:xmpmeta>")
+      end
+    end
+    oriented = ->(img) { img.mutate { |m| m.set_type!(GObject::GINT_TYPE, "orientation", 6) } }
+
+    # Two frames, stacked as libvips expects: page-height tells the savers where they split.
+    animation = lambda do
+      frame = base.call(64, 48)
+      Vips::Image.arrayjoin([ frame, frame.invert ], across: 1).copy.mutate do |m|
+        m.set_type!(GObject::GINT_TYPE, "page-height", frame.height)
+        m.set_type!(Vips::ARRAY_INT_TYPE, "delay", [ 100, 100 ])
+        m.set_type!(GObject::GINT_TYPE, "loop", 0)
+      end
+    end
+
+    # Everything on the JPEG drop list at once, plus orientation 6, progressive. The JFIF
+    # header is replaced by one carrying a 2×1 thumbnail ("THUMB!"), a comment goes in
+    # after it, and a trailer after EOI stands in for a motion photo's video.
+    hostile = oriented.call(tag.call(base.call(160, 120).icc_transform("p3"))).mutate do |m|
+      m.set_type!(Vips::BLOB_TYPE, "iptc-data", "Photoshop 3.0\x00SECRET-IPTC".b)
+    end.write_to_buffer(".jpg[Q=95,interlace]")
+    # libvips writes no JFIF segment when it writes EXIF, so this one is inserted, not
+    # swapped for an existing one — which would have overwritten the EXIF instead.
+    rest = hostile.byteslice(2, 2) == "\xFF\xE0".b ? 4 + hostile.byteslice(4, 2).unpack1("n") : 2
+    jfif = "JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x02\x01THUMB!".b
+    comment = "SECRET-COMMENT".b
+    File.binwrite(dir.join("hostile.jpg"),
+                  "\xFF\xD8\xFF\xE0".b + [ jfif.bytesize + 2 ].pack("n") + jfif +
+                  "\xFF\xFE".b + [ comment.bytesize + 2 ].pack("n") + comment +
+                  hostile.byteslice(rest..) + "SECRET-TRAILER-AFTER-EOI".b)
+
+    base.call(160, 120).write_to_file(dir.join("restart.jpg").to_s, Q: 95, interlace: true, restart_interval: 2)
+    # keep: :none because the CMYK profile is ~900 KB; libjpeg writes the Adobe segment for
+    # CMYK regardless, and that segment is what this fixture is for.
+    base.call(160, 120).icc_transform("cmyk").write_to_file(dir.join("cmyk.jpg").to_s, Q: 95, keep: :none)
+
+    tag.call(base.call(160, 120).icc_transform("p3")).write_to_file(dir.join("tagged.png").to_s, palette: true)
+    oriented.call(base.call(160, 120)).write_to_file(dir.join("rotated.png").to_s)
+
+    tag.call(base.call(160, 120).icc_transform("p3")).write_to_file(dir.join("lossless.webp").to_s, lossless: true)
+    tag.call(animation.call).write_to_file(dir.join("animated.webp").to_s)
+
+    # GIF has no EXIF; its metadata lives in extension blocks, which libvips does not write.
+    # Spliced in after the header and global colour table, before the first frame.
+    gif = animation.call.write_to_buffer(".gif")
+    packed = gif.getbyte(10)
+    header = 13 + (packed & 0x80 == 0 ? 0 : 3 * (2 << (packed & 0x07)))
+    sub_blocks = ->(data) { data.b.scan(/.{1,255}/mn).map { |c| c.bytesize.chr + c }.join + "\x00" }
+    File.binwrite(dir.join("animated.gif"),
+                  gif.byteslice(0, header) +
+                  "\x21\xFE".b + sub_blocks.call("SECRET-COMMENT") +
+                  "\x21\xFF\x0BXMP DataXMP".b + sub_blocks.call("<x:xmpmeta>SECRET-XMP</x:xmpmeta>") +
+                  gif.byteslice(header..))
+
+    dir.glob("*.{jpg,png,webp,gif}").sort.each do |path|
       puts format("%-40s %6dB", path.relative_path_from(Rails.root), path.size)
     end
   end
