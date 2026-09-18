@@ -5,6 +5,7 @@ import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
 import { useSearchImages } from '../hooks/useImages';
 import { AlbumPicker } from '@/features/albums/components/AlbumPicker';
 import { ImageCard } from '../components/ImageCard';
+import { PhotosLoadError } from '../components/PhotosLoadError';
 
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -54,7 +55,7 @@ export function SearchPage() {
   }, [debouncedQ, debouncedTitle, debouncedTag, debouncedFrom, debouncedAlbumId, setSearchParams]);
 
   const {
-    data: images = [], isPending, isError, hasNextPage, isFetchingNextPage, fetchNextPage,
+    data: images = [], error, isPending, isError, hasNextPage, isFetchingNextPage, fetchNextPage,
   } = useSearchImages({
     q: debouncedQ || undefined,
     title: debouncedTitle || undefined,
@@ -174,7 +175,7 @@ export function SearchPage() {
       )}
 
       {hasAnyFilter && isError && (
-        <p className="text-danger text-sm" data-testid="search-error">Failed to load results.</p>
+        <PhotosLoadError error={error} fallback="Failed to load results." className="text-danger text-sm" testId="search-error" />
       )}
 
       {/* Only once nothing is left to load: the live title and tag narrowing can empty the

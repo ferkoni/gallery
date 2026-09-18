@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { userEvent } from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+import { AxiosError, type AxiosResponse } from 'axios';
 import { ImageGrid } from '@/features/images/components/ImageGrid';
 import { useAlbumImages, useMovingImages } from '@/features/images/hooks/useImages';
 import { useSelectionStore } from '@/features/images/store/selectionStore';
@@ -84,6 +86,16 @@ describe('ImageGrid', () => {
     mockUseAlbumImages.mockReturnValue(grid({ isLoadingError: true, data: undefined }));
     render(<ImageGrid albumId={1} />);
     expect(screen.getByTestId('images-error')).toBeInTheDocument();
+  });
+
+  // The API refuses to list photos it cannot presign; the grid says why instead of "Failed".
+  it('points to Settings when the first page fails for want of S3 credentials', () => {
+    const error = new AxiosError('Request failed with status code 422', 'ERR_BAD_REQUEST', undefined, undefined,
+      { status: 422, data: { errors: 'No S3 credentials on file' } } as AxiosResponse);
+    mockUseAlbumImages.mockReturnValue(grid({ isLoadingError: true, data: undefined, error }));
+    render(<MemoryRouter><ImageGrid albumId={1} /></MemoryRouter>);
+    expect(within(screen.getByTestId('images-error')).getByRole('link', { name: 'Add them in Settings' }))
+      .toHaveAttribute('href', '/settings/s3_credential');
   });
 
   it('shows empty state when album has no images', () => {
