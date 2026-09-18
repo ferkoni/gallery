@@ -44,6 +44,10 @@ module Albums
       # than a random UUID, so a retry overwrites the same object instead of
       # orphaning a new zip in the bucket. The user-facing, date-stamped filename
       # lives in the Content-Disposition (see #call), not in the key.
+      #
+      # Nothing here deletes the zip, by design: the README's "Album downloads" section has
+      # every user put a lifecycle rule on their bucket that expires downloads/ after a day,
+      # well past the 15-minute link. Keep the prefix in step with that section.
       key = "downloads/#{@user.id}/#{@token}/album.zip"
       @storage.multipart_put(key, content_type: "application/zip") do |sink|
         ZipKit::Streamer.open(sink) do |zip|

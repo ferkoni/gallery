@@ -8,7 +8,7 @@ A self-hostable photo management app. Organise images into albums, tag and favou
 
 - Docker with the Compose plugin
 - `curl` and `openssl` — the install script uses both and exits early if either is missing
-- An S3 bucket for image storage, plus an access key that can read and write it
+- An S3 bucket for image storage, plus an access key that can read and write it, and a lifecycle rule that clears `downloads/` (see [Album downloads](#album-downloads))
 - Optional, for AI search: an x86-64 host, ideally with an NVIDIA GPU — see [Enabling AI search](#enabling-ai-search)
 
 > Image storage is **not** included. Each user enters their own S3 credentials on the Settings page, so an AWS account (or another S3-compatible provider) is required for now. Support for a bundled MinIO service, which would remove that dependency, is planned.
@@ -27,6 +27,27 @@ The app is then at **http://localhost:8080**. Log in and add your S3 credentials
 Four containers start: `nginx` (serves the built frontend and proxies the API, the only one with a published port), `api`, `worker` (background jobs such as album downloads), and `db` (PostgreSQL, storing its data in a `postgres_data` volume). A fifth, `inference`, runs the optional AI search and does not start by default — see [Enabling AI search](#enabling-ai-search).
 
 **Photo size.** Uploads are capped at 25 MB per photo, and a larger file is refused with a message naming the limit. If you put your own reverse proxy in front of Gallery, give it a body-size limit of at least that: an out-of-the-box nginx allows 1 MB, which refuses most photos taken on a phone (`client_max_body_size 30m;`).
+
+### Album downloads
+
+Downloading a folder builds a zip **in your own bucket**, under `downloads/<user id>/<download id>/album.zip`. The browser fetches it through a link that expires after 15 minutes. Gallery never deletes the zip afterwards, so without the rule below every download stays in the bucket for good, as a second copy of those photos that you pay to store.
+
+Give the bucket a lifecycle rule that expires objects under the `downloads/` prefix after **1 day**. That is long enough for any download to finish and short enough that a zip costs a day's storage. Each person using Gallery sets this on their own bucket, since that is where their zips go.
+
+In the AWS console: the bucket → **Management** → **Create lifecycle rule**, scope it to the prefix `downloads/`, and choose **Expire current versions of objects** after 1 day. With the AWS CLI:
+
+```bash
+aws s3api put-bucket-lifecycle-configuration --bucket YOUR-BUCKET --lifecycle-configuration '{
+  "Rules": [{
+    "ID": "gallery-downloads",
+    "Filter": { "Prefix": "downloads/" },
+    "Status": "Enabled",
+    "Expiration": { "Days": 1 }
+  }]
+}'
+```
+
+That command **replaces** any lifecycle rules the bucket already has, so on a bucket with rules of its own, add this one in the console instead. Other S3-compatible providers have an equivalent: look for "lifecycle" or "object expiration" in their settings. On a versioned bucket, expiring the current version leaves a noncurrent one behind; add a noncurrent-version expiration to the same rule if you want those gone too.
 
 ### Reaching it from another machine
 
