@@ -42,6 +42,17 @@ jobs:
           docker compose config -q
           docker compose -f docker-compose.yml -f docker-compose.cpu.yml config -q
 
+      # Not observable through the stub below, which loops back into nginx, so asserted on the
+      # config: appending to a client-supplied X-Forwarded-For lets a LAN client choose the IP
+      # the login throttle counts it as (docs: closed-signup/02, decision 7).
+      - name: nginx replaces X-Forwarded-For rather than appending to it
+        run: |
+          # Uncommented lines only: nginx.conf's own comment names the directive it replaced.
+          if grep -nE '^[^#]*proxy_add_x_forwarded_for' nginx/nginx.conf; then
+            echo "nginx appends to X-Forwarded-For: a LAN client could choose its throttle key." >&2
+            exit 1
+          fi
+
       - name: Build the nginx image
         run: docker build -f nginx/Dockerfile -t gallery-nginx:ci .
 

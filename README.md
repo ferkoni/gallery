@@ -39,6 +39,8 @@ docker compose up -d
 
 Skipping this is a quiet failure: pages load and uploads work, but album downloads never finish, because the browser's WebSocket is refused.
 
+If you put your own reverse proxy in front of Gallery (for TLS, say), Gallery sees every request as coming from that proxy, so login throttling applies to everyone behind it at once.
+
 ### Adding people
 
 There is no sign-up page: every account is made on the host. `install.sh` makes the first one. To add another:
