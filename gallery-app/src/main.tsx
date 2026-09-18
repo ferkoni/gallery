@@ -6,8 +6,11 @@ import './index.css';
 import App from './App.tsx';
 import { AuthProvider } from "./features/auth/components/AuthProvider";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { retryUnlessClientError } from './lib/api/queryRetry';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: retryUnlessClientError } },
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

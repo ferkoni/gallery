@@ -6,6 +6,7 @@ import { ImageCard } from './ImageCard';
 import { ImageEditModal } from './ImageEditModal';
 import { Lightbox } from './Lightbox';
 import { MoveImagesModal } from './MoveImagesModal';
+import { PhotosLoadError } from './PhotosLoadError';
 import { SelectionToolbar } from './SelectionToolbar';
 import { useSelectionStore } from '../store/selectionStore';
 import type { Image } from '../types/image';
@@ -34,7 +35,7 @@ export function ImageGrid({ albumId }: Props) {
   // A new filter is a new query, so it starts from its own first page. The previous filter's
   // photos stay on screen until it arrives.
   const {
-    data: images = [], isPending, isLoadingError, isFetchNextPageError,
+    data: images = [], error, isPending, isLoadingError, isFetchNextPageError,
     hasNextPage, isFetchingNextPage, isPlaceholderData, fetchNextPage,
   } = useAlbumImages(albumId, filters);
 
@@ -105,7 +106,9 @@ export function ImageGrid({ albumId }: Props) {
   }
 
   // Only when nothing loaded. A failed later page, or a failed refetch, keeps the photos.
-  if (isLoadingError) return <p className="text-danger" data-testid="images-error">Failed to load images.</p>;
+  if (isLoadingError) {
+    return <PhotosLoadError error={error} fallback="Failed to load images." className="text-danger" testId="images-error" />;
+  }
 
   return (
     <>

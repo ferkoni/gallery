@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
 import { useFavoriteImages, useFavoriteImage } from '../hooks/useImages';
 import { ImageCard } from '../components/ImageCard';
+import { PhotosLoadError } from '../components/PhotosLoadError';
 import { UndoToast } from '../components/UndoToast';
 import type { Image } from '../types/image';
 
@@ -9,7 +10,7 @@ const UNDO_TIMEOUT_MS = 7000; // 7 seconds
 
 export function FavoritesPage() {
   const {
-    data: images, isPending, isError, hasNextPage, isFetchingNextPage, fetchNextPage,
+    data: images, error, isPending, isError, hasNextPage, isFetchingNextPage, fetchNextPage,
   } = useFavoriteImages();
   const { mutate: toggleFavorite } = useFavoriteImage();
   const [undoImage, setUndoImage] = useState<Image | null>(null);
@@ -54,7 +55,7 @@ export function FavoritesPage() {
     );
   }
 
-  if (isError) return <p className="p-6 text-danger">Failed to load favorites.</p>;
+  if (isError) return <PhotosLoadError error={error} fallback="Failed to load favorites." className="p-6 text-danger" />;
 
   return (
     <>

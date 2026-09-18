@@ -2,6 +2,9 @@ class Api::ImagesController < ApplicationController
   include BaseApi
 
   before_action :authorize_resource!, only: %i[show update destroy]
+  # After authorization, so someone else's photo is still a 403 whatever the caller's
+  # credentials (docs: photos-without-credentials/02, decision 3).
+  before_action :require_storage!, only: %i[index show update]
 
   # POST /api/v1/images
   # Expects multipart/form-data with:
@@ -128,10 +131,24 @@ class Api::ImagesController < ApplicationController
     @album ||= Album.with_user(current_user).find(params[:album_id])
   end
 
-  # Passes the presigned-URL credential to the serializer.
+  # The gateway is nil until the user saves credentials — the state of every new account, and
+  # of anyone who deleted theirs from the Settings page. Every action that serializes a photo
+  # presigns, so without a gateway it answers what #create and #destroy already answer for the
+  # same state. Before #update's save, not after it, so a refused edit writes nothing.
+  #
+  # Tests the gateway rather than the credential: that is what presigning needs, and it is
+  # what api_routes_spec stubs (docs: photos-without-credentials/02, decisions 1–3).
+  def require_storage!
+    render json: { errors: "No S3 credentials on file" }, status: :unprocessable_content unless storage
+  end
+
+  def storage = @storage ||= S3::Storage.for(current_user.s3_credential)
+
+  # Passes the presigned-URL credential to the serializer. Only reached through an action
+  # require_storage! has already let through, or #create once Images::Upload succeeded — which
+  # it cannot without a gateway.
   # Presigning is a local crypto operation — no S3 network call is made per image.
   def serializer_params
-    storage = S3::Storage.for(current_user.s3_credential)
     { presigner: storage.presigner, bucket: storage.bucket }
   end
 
