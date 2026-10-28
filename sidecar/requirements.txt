@@ -1,8 +1,8 @@
 # Pinned exactly. An unpinned torch or open_clip is a silent re-embed waiting to
 # happen: a preprocessing change upstream moves the vector space without moving
 # model_id, and nothing in the system can detect that.
-fastapi==0.141.1
-uvicorn==0.52.3
+fastapi==0.162.0
+uvicorn==0.54.0
 open_clip_torch==3.3.0
 pillow==13.0.0
 # open_clip does NOT depend on transformers outside its `training` extra, but the
