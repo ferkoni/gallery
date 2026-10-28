@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# PreToolUse hook for Bash: ask before a shell command that may write a protected file.
+# docs: agent-guardrails/02, decision 2.
+#
+# The protected files are the Edit(...) ask rules in .claude/settings.json. Those rules prompt for
+# the edit tools, but in the first prove-it session a `sed -i` on ci.yml went through without a
+# prompt. This is a heuristic: it asks when a command names a protected path and contains a word
+# that can write a file. bin/agent-check backs it up at stop time, whatever made the change.
+#
+# Run by hand: echo '{"tool_input":{"command":"sed -i s/a/b/ CLAUDE.md"}}' | bin/agent-guard-bash
+
+set -uo pipefail
+
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$root" || exit 0
+
+cmd="$(jq -r '.tool_input.command // empty' 2>/dev/null)"
+[ -n "$cmd" ] || exit 0
+
+# Redirects to /dev/null and between streams (2>&1) are not writes.
+scrubbed="$(sed -E 's#[0-9]*>>?[[:space:]]*/dev/null##g; s#[0-9]*>&[0-9]+##g' <<<"$cmd")"
+write_re='>|\b(sed|perl)\b[^|;&]*[[:space:]]-[a-zA-Z]*i|\b(tee|mv|cp|rm|ln|install|truncate|dd|patch|chmod|python3?|ruby|node|awk)\b|\bgit[[:space:]]+(checkout|restore|apply|reset|stash|mv|rm|am|cherry-pick|revert|merge|rebase|pull)\b'
+grep -qE "$write_re" <<<"$scrubbed" || exit 0
+
+# A path matches as written from the root, or without its first directory (after a cd into it).
+hits=()
+while read -r p; do
+  p="${p%/\*\*}"
+  for form in "$p" "${p#*/}"; do
+    if grep -qF -- "$form" <<<"$cmd"; then hits+=("$p"); break; fi
+  done
+done < <(jq -r '.permissions.ask[]? | capture("^Edit\\(/(?<p>.+)\\)$").p' .claude/settings.json 2>/dev/null)
+
+[ "${#hits[@]}" -eq 0 ] && exit 0
+
+jq -n --arg r "This shell command may change a protected file (${hits[*]}). Protected files need your approval (agent-guardrails, decision 2)." \
+  '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "ask", permissionDecisionReason: $r}}'
+exit 0
