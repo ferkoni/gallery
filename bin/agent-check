@@ -6,6 +6,12 @@
 #   red, first stop              -> {"decision":"block"} with the failing tests; the agent goes back
 #   red, already sent back once  -> {"systemMessage"}; the agent stops and the user sees a warning
 #   over the time limit          -> {"systemMessage"}; the agent stops and the user sees a warning
+#   nothing changed since the
+#   last run                     -> no rerun: no output if it was green, a {"systemMessage"} if red
+#
+# Separately, on every stop: if a protected file (the Edit(...) ask rules in .claude/settings.json,
+# decision 2) changed since the last stop, the user gets a {"systemMessage"} naming it. Shell edits
+# can skip the approval prompt, so this catches them after the fact.
 #
 # Run by hand with no input to check the current branch: bin/agent-check </dev/null
 #
@@ -25,12 +31,35 @@ active="$(jq -r '.stop_hook_active // false' <<<"${input:-"{}"}" 2>/dev/null || 
 mkdir -p tmp
 branch="$(git rev-parse --abbrev-ref HEAD)"
 log="tmp/agent-check-${branch//\//-}.log"
-green="tmp/agent-check-${branch//\//-}.green"
+last="tmp/agent-check-${branch//\//-}.last"
 
 if [ -n "${AGENT_CHECK_LOG_INPUT:-}" ]; then
   printf '%s %s\n' "$(date -Is)" "${input:-"(no input)"}" >> tmp/agent-check-input.log
 fi
 
+# Protected files changed since the last stop. The snapshot is "path blob-hash" per file; with no
+# snapshot yet, compare against HEAD. A deleted file shows up because it is only in the old list.
+protected_patterns() {
+  jq -r '.permissions.ask[]? | capture("^Edit\\(/(?<p>.+)\\)$").p' .claude/settings.json 2>/dev/null |
+    sed 's#/\*\*$##'
+}
+snap="tmp/agent-check-${branch//\//-}.protected"
+if [ -f "$snap" ]; then
+  before="$(cat "$snap")"
+else
+  before="$(protected_patterns | xargs -r git ls-tree -r HEAD -- | awk -F'\t' '{split($1, a, " "); print $2 " " a[3]}' | sort -u)"
+fi
+now="$(protected_patterns | xargs -r git ls-files -co --exclude-standard -- | sort -u |
+  while read -r f; do [ -f "$f" ] && echo "$f $(git hash-object -- "$f")"; done)"
+echo "$now" > "$snap"
+touched="$(diff <(echo "$before") <(echo "$now") | sed -n 's/^[<>] \(.*\) [0-9a-f]*$/\1/p' | sort -u | paste -sd ' ')"
+protected_msg=""
+if [ -n "$touched" ]; then
+  printf '%s protect files=%s stop_hook_active=%s\n' "$(date -Is)" "$touched" "$active" >> "$log"
+  protected_msg="Protected files changed since the last stop: $touched. Edits through the edit tools asked you first; shell edits may not have. Check: git diff -- $touched"
+fi
+
+main() {
 # What this branch changed against main: commits, staged and unstaged edits, and new files.
 base="$(git merge-base HEAD origin/main 2>/dev/null || git merge-base HEAD main 2>/dev/null)" || exit 0
 changed="$({ git diff --name-only "$base"; git ls-files --others --exclude-standard; } | sort -u)"
@@ -41,10 +70,40 @@ grep -q '^gallery-app/' <<<"$changed" && areas+=(app)
 grep -q '^sidecar/' <<<"$changed" && areas+=(sidecar)
 [ "${#areas[@]}" -eq 0 ] && exit 0
 
-# Nothing changed since the last green run (a stop after answering a question): skip.
+failed=()
+
+note() { printf '%s %-7s areas=%s failed=%s stop_hook_active=%s %s\n' \
+  "$(date -Is)" "$1" "${areas[*]}" "${failed[*]:-}" "$active" "${2:-}" >> "$log"; }
+
+# Failing test names, for the log: RSpec, Vitest and pytest each print them differently.
+failing_names() {
+  for area in "${failed[@]}"; do
+    grep -hE '^rspec \./| FAIL |^FAILED ' "tmp/agent-check-$area.out" | head -5
+  done | tr '\n' ';' | cut -c1-500
+}
+
+stopped_red() {
+  note warning "$(failing_names)"
+  jq -n --arg m "Stopped with failing checks: ${failed[*]}. The agent was sent back once and the checks are still red. Full output: tmp/agent-check-<area>.out, log: $log." \
+    '{systemMessage: $m}'
+}
+
+# Nothing changed since the last run, green or red (for example a stop after answering a
+# question): do not run again. $last holds the fingerprint, then the areas that failed.
 key="$({ echo "$base ${areas[*]}"; git diff --binary "$base";
          git ls-files --others --exclude-standard -z | xargs -0 -r sha256sum; } | sha256sum)"
-[ -f "$green" ] && [ "$(cat "$green")" = "$key" ] && exit 0
+if [ -f "$last" ] && [ "$(head -n 1 "$last")" = "$key" ]; then
+  read -ra failed <<<"$(sed -n 2p "$last")"
+  [ "${#failed[@]}" -eq 0 ] && exit 0
+  if [ "$active" = "true" ]; then
+    stopped_red
+  else
+    note skip "$(failing_names)"
+    jq -n --arg m "Checks not rerun: nothing changed since the last run, which failed (${failed[*]}). Full output: tmp/agent-check-<area>.out, log: $log." \
+      '{systemMessage: $m}'
+  fi
+  exit 0
+fi
 
 limit="${AGENT_CHECK_TIMEOUT:-240}"
 deadline=$((SECONDS + limit))
@@ -58,7 +117,6 @@ run_area() {
   esac
 }
 
-failed=()
 timed_out=""
 for area in "${areas[@]}"; do
   left=$((deadline - SECONDS))
@@ -70,16 +128,6 @@ for area in "${areas[@]}"; do
   [ "$status" -ne 0 ] && failed+=("$area")
 done
 
-note() { printf '%s %-7s areas=%s failed=%s stop_hook_active=%s %s\n' \
-  "$(date -Is)" "$1" "${areas[*]}" "${failed[*]:-}" "$active" "${2:-}" >> "$log"; }
-
-# Failing test names, for the log: RSpec, Vitest and pytest each print them differently.
-failing_names() {
-  for area in "${failed[@]}"; do
-    grep -hE '^rspec \./| FAIL |^FAILED ' "tmp/agent-check-$area.out" | head -5
-  done | tr '\n' ';' | cut -c1-500
-}
-
 if [ -n "$timed_out" ]; then
   note timeout
   jq -n --arg m "Checks did not finish in time (limit ${limit}s, areas: ${areas[*]}). Nothing was verified; see $log." \
@@ -87,17 +135,12 @@ if [ -n "$timed_out" ]; then
   exit 0
 fi
 
-if [ "${#failed[@]}" -eq 0 ]; then
-  echo "$key" > "$green"
-  exit 0
-fi
-
-rm -f "$green"
+# A timed-out run saves nothing above, so the next stop runs the checks again.
+printf '%s\n%s\n' "$key" "${failed[*]:-}" > "$last"
+[ "${#failed[@]}" -eq 0 ] && exit 0
 
 if [ "$active" = "true" ]; then
-  note warning "$(failing_names)"
-  jq -n --arg m "Stopped with failing checks: ${failed[*]}. The agent was sent back once and the checks are still red. Full output: tmp/agent-check-<area>.out, log: $log." \
-    '{systemMessage: $m}'
+  stopped_red
   exit 0
 fi
 
@@ -121,4 +164,15 @@ reason="$(
   echo "If a failing test is wrong, or cannot pass without editing it or special-casing, stop and say so. Do not edit the test, hard-code expected values or override equality."
 )"
 jq -n --arg r "${reason:0:9000}" '{decision: "block", reason: $r}'
+}
+
+# main runs in a subshell, so its early exits end only main. Add the protected-files warning to
+# whatever it printed.
+out="$(main)"
+if [ -n "$protected_msg" ]; then
+  jq -n --arg p "$protected_msg" --argjson o "${out:-"{}"}" \
+    '$o + {systemMessage: ([$o.systemMessage, $p] | map(select(.)) | join("\n"))}'
+elif [ -n "$out" ]; then
+  printf '%s\n' "$out"
+fi
 exit 0
