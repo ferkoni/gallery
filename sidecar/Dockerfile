@@ -9,7 +9,7 @@
 #
 # amd64 only. There is no arm64 CUDA story for this service, which is why release.yml
 # builds this image on a single platform while the other two are multi-arch.
-FROM nvidia/cuda:13.0.3-cudnn-runtime-ubuntu24.04
+FROM nvidia/cuda:13.4.3-cudnn-runtime-ubuntu24.04
 
 # Baked at build time from the image tag, reported by /health. The model_id derivation
 # stops this service misreporting the model it loaded, but it cannot see version skew:
