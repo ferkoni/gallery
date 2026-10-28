@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 // jsdom implements no IntersectionObserver, and anything that lazily loads on scroll
 // constructs one on mount. This no-op keeps those components mountable; a test that
