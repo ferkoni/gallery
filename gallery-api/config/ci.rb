@@ -1,6 +1,6 @@
 # Run using bin/ci
 #
-# These steps mirror .github/workflows/gallery-api-ci.yml. Keep them in step: the
+# These steps mirror the api-* jobs in .github/workflows/ci.yml. Keep them in step: the
 # value of bin/ci is that a green run locally means a green run on the PR, and a
 # local suite that checks something different from the real one is just a slower
 # way to be surprised.

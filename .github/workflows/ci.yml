@@ -1,0 +1,473 @@
+# One workflow for every area, with one required check: `gate`.
+#
+# Before this there was a workflow per area, each filtered by `paths:`. That hid changes:
+# a pull request outside every filter ran nothing and showed as mergeable. The sidecar had
+# no CI until #35 (the model swap in #32 merged untested), the app's workflow never parsed
+# and nobody noticed (#20), and a change to a workflow could merge without that workflow
+# running. A required check can't fix that, because GitHub leaves a check skipped by
+# `paths:` as "Pending" and blocks the merge.
+#
+# So nothing here is filtered by `paths:`. The `changes` job works out which areas a push
+# or pull request touched, each area's jobs run only if their area changed, and `gate`
+# always runs and checks every job's result against what `changes` decided.
+# docs: agent-guardrails/02, decision 4.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.areas.outputs.api }}
+      app: ${{ steps.areas.outputs.app }}
+      sidecar: ${{ steps.areas.outputs.sidecar }}
+      infra: ${{ steps.areas.outputs.infra }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Plain git rather than a paths-filter action: one less third-party action to pin
+      # and trust, and the rules are all here to read.
+      - name: Work out which areas changed
+        id: areas
+        env:
+          EVENT: ${{ github.event_name }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          all=false
+          files=""
+          if [ "$EVENT" = pull_request ]; then
+            # A pull request checks out its merge commit, whose first parent is the base
+            # branch it was merged onto, so this is exactly what the PR changes.
+            files="$(git diff --name-only HEAD^1 HEAD)"
+          elif [ "$EVENT" = push ] && ! [[ "$PUSH_BEFORE" =~ ^0*$ ]] \
+               && git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
+            files="$(git diff --name-only "$PUSH_BEFORE" HEAD)"
+          else
+            # Manual run, new branch, or a force push that dropped the old commit:
+            # no reliable base, so check everything.
+            all=true
+          fi
+
+          # A here-string, not a pipe: with pipefail, `printf | grep -q` can report no match
+          # when grep exits early and printf dies of SIGPIPE.
+          changed() { [ "$all" = true ] || grep -qE "$1" <<<"$files"; }
+
+          # This file and the contract suite run every area: a change to either can break
+          # any of them, and the contract suite is not run here on its own (it needs a
+          # running backend).
+          if changed '^(\.github/workflows/ci\.yml$|contract/)'; then all=true; fi
+
+          area() { if changed "$2"; then echo "$1=true"; else echo "$1=false"; fi; }
+          areas="$(
+            area api     '^gallery-api/'
+            area app     '^gallery-app/'
+            area sidecar '^sidecar/'
+            area infra   '^(nginx/|docker-compose[^/]*\.yml$|install\.sh$|setup\.sh$|test-install\.sh$)'
+          )"
+          echo "$areas" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Areas"
+            echo
+            echo "Event: \`$EVENT\`, run everything: \`$all\`"
+            echo
+            sed 's/^/- /' <<<"$areas"
+            echo
+            echo "<details><summary>Changed files</summary>"
+            echo
+            printf '%s\n' "${files:-"(not computed)"}" | sed 's/^/    /'
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "$areas"
+
+  # ---------------------------------------------------------------- API (gallery-api/)
+
+  api-scan:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gallery-api
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          working-directory: gallery-api
+
+      - name: Scan for common Rails security vulnerabilities using static analysis
+        run: bin/brakeman --no-pager
+
+      - name: Scan for known security vulnerabilities in gems used
+        run: bin/bundler-audit
+
+  api-lint:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gallery-api
+    env:
+      RUBOCOP_CACHE_ROOT: tmp/rubocop
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          working-directory: gallery-api
+
+      - name: Prepare RuboCop cache
+        uses: actions/cache@v5
+        env:
+          DEPENDENCIES_HASH: ${{ hashFiles('gallery-api/.ruby-version', 'gallery-api/**/.rubocop.yml', 'gallery-api/**/.rubocop_todo.yml', 'gallery-api/Gemfile.lock') }}
+        with:
+          path: gallery-api/${{ env.RUBOCOP_CACHE_ROOT }}
+          key: rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-${{ github.ref_name == github.event.repository.default_branch && github.run_id || 'default' }}
+          restore-keys: |
+            rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
+
+      - name: Lint code for consistent style
+        run: bin/rubocop -f github
+
+  api-test:
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gallery-api
+
+    services:
+      postgres:
+        # Pinned to match both compose files. The database here is created fresh each run, so
+        # collation is not the concern it is for a persistent volume — the risk is CI
+        # silently testing a different pgvector version than development runs.
+        image: pgvector/pgvector:0.8.6-pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install packages
+        # libvips-dev pulls in the runtime that ruby-vips dlopens. Named rather
+        # than libvips42t64 because that package name is Ubuntu-release specific.
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libvips-dev
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          working-directory: gallery-api
+
+      - name: Set up database
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: SXfQ7DCcBD8Sqsav4DPVlxb3Rr7bvCrD
+          ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: nzMgfs3mYOtaITTmgLzwviWaMd9kPYbn
+          ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: AGLY8rjLJeBM7hiKIFYT3MZqTuILAhge
+        run: bin/rails db:test:prepare
+
+      - name: Run tests
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: SXfQ7DCcBD8Sqsav4DPVlxb3Rr7bvCrD
+          ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: nzMgfs3mYOtaITTmgLzwviWaMd9kPYbn
+          ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: AGLY8rjLJeBM7hiKIFYT3MZqTuILAhge
+        run: bundle exec rspec
+
+      - name: Verify the production environment boots
+        # No other job loads config/environments/production.rb, so anything it
+        # names — the Active Job adapter, the cache store, the Action Cable
+        # backend — is unverified until a container starts. A queue adapter that
+        # no bundled gem provided shipped undetected this way. Needs no database:
+        # boot resolves the adapter constant without connecting.
+        env:
+          RAILS_ENV: production
+          SECRET_KEY_BASE: dummy_key_for_boot_check_only
+          ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: SXfQ7DCcBD8Sqsav4DPVlxb3Rr7bvCrD
+          ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: nzMgfs3mYOtaITTmgLzwviWaMd9kPYbn
+          ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: AGLY8rjLJeBM7hiKIFYT3MZqTuILAhge
+        run: bin/rails runner 'puts "production boots, Active Job adapter=#{ActiveJob::Base.queue_adapter.class}"'
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: gallery-api/coverage/
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------- App (gallery-app/)
+
+  app-lint:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gallery-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: gallery-app/.nvmrc
+          cache: npm
+          cache-dependency-path: gallery-app/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint
+
+  app-test:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gallery-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: gallery-app/.nvmrc
+          cache: npm
+          cache-dependency-path: gallery-app/package-lock.json
+
+      - run: npm ci
+
+      - run: npx vitest run
+
+  app-build:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gallery-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: gallery-app/.nvmrc
+          cache: npm
+          cache-dependency-path: gallery-app/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build
+
+  # ---------------------------------------------------------------- Sidecar (sidecar/)
+
+  sidecar-test:
+    needs: changes
+    if: needs.changes.outputs.sidecar == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sidecar
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          # 3.12, matching what ubuntu:24.04 ships in the sidecar image. A different
+          # minor here would test a different interpreter than the one that runs.
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: sidecar/requirements-dev.txt
+
+      - name: Install torch from the CPU wheel channel
+        # The image builds against cu130 because it serves a GPU. CI has no GPU, and
+        # the CUDA wheels are several gigabytes of driver payload that nothing here
+        # would execute. Same pinned versions, CPU build.
+        #
+        # Installed in its own step, from --index-url rather than --extra-index-url,
+        # because with an extra index pip is free to prefer PyPI's default build —
+        # which is the CUDA one, and the whole point of this step is to not download it.
+        run: |
+          pip install --index-url https://download.pytorch.org/whl/cpu \
+            torch==2.13.0 torchvision==0.28.0
+
+      - name: Install dependencies
+        # This step is itself a test. open_clip does not declare transformers outside
+        # its `training` extra, but hf_model.py imports it unconditionally for the
+        # multilingual text tower — so a requirements.txt missing it produces a service
+        # that builds a model and then fails constructing the encoder. A resolution
+        # failure here is the cheapest place to find that.
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        # pyproject.toml carries `addopts = -m 'not model'`, so the weights-dependent
+        # tests are deselected by default and this needs no GPU and no download.
+        #
+        # What that leaves uncovered is worth naming rather than implying: the `model`
+        # tests are the only ones that can see wrong preprocessing constants, which
+        # produce perfectly shaped, unit-norm, quietly wrong vectors that every
+        # assertion below still passes. Run them locally with `pytest -m model` after
+        # any change to the model, its weights, or the preprocessing pipeline.
+        run: pytest -q
+
+  # ---------------------------------------------------------------- Infra (nginx, compose, scripts)
+
+  # A missing client_max_body_size shipped and survived a release because nothing ran on
+  # nginx/ (docs: upload-size-limit/02, decision 11).
+  #
+  # Builds only gallery-nginx and stubs the api container, so there is no Rails build, no
+  # database and no compose stack: it tests the proxy's own config and nothing else.
+  infra-nginx:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Validate the compose files
+        env:
+          GHCR_OWNER: local
+          VERSION: test
+        run: |
+          docker compose config -q
+          docker compose -f docker-compose.yml -f docker-compose.cpu.yml config -q
+
+      # Not observable through the stub below, which loops back into nginx, so asserted on the
+      # config: appending to a client-supplied X-Forwarded-For lets a LAN client choose the IP
+      # the login throttle counts it as (docs: closed-signup/02, decision 7).
+      - name: nginx replaces X-Forwarded-For rather than appending to it
+        run: |
+          # Uncommented lines only: nginx.conf's own comment names the directive it replaced.
+          if grep -nE '^[^#]*proxy_add_x_forwarded_for' nginx/nginx.conf; then
+            echo "nginx appends to X-Forwarded-For: a LAN client could choose its throttle key." >&2
+            exit 1
+          fi
+
+      - name: Build the nginx image
+        run: docker build -f nginx/Dockerfile -t gallery-nginx:ci .
+
+      # The api container is stubbed by pointing its hostname at nginx itself, so a forwarded
+      # request comes back as an error from the resulting proxy loop rather than reaching
+      # Rails. That is enough, because the assertions are about which bodies nginx ACCEPTS,
+      # and a 413 can only come from the config under test. Any other status — or a timeout —
+      # means the body was accepted and forwarded, which is what is being guarded.
+      - name: Start nginx with a stubbed upstream
+        run: |
+          docker run -d --name ci-nginx -p 18080:80 --add-host api:127.0.0.1 gallery-nginx:ci
+          for _ in $(seq 1 20); do
+            curl -sf -o /dev/null http://localhost:18080/ && break
+            sleep 1
+          done
+
+      - name: A 3 MB upload is not refused by the proxy
+        run: |
+          head -c 3000000 /dev/zero > 3mb.bin
+          # --max-time so the stub's proxy loop cannot hang the job; a timeout prints 000,
+          # which is not 413 and so passes. || true because curl exits non-zero on a timeout.
+          code="$(curl -s -o /dev/null -m 30 -w '%{http_code}' -X POST --data-binary @3mb.bin \
+            http://localhost:18080/api/v1/images || true)"
+          echo "3 MB body -> $code"
+          if [ "$code" = "413" ]; then
+            echo "nginx refused a 3 MB upload: check client_max_body_size in nginx/nginx.conf." >&2
+            exit 1
+          fi
+
+      - name: A 40 MB upload is refused
+        run: |
+          head -c 40000000 /dev/zero > 40mb.bin
+          # Refused on Content-Length, before the body is read, so this answers at once.
+          code="$(curl -s -o /dev/null -m 30 -w '%{http_code}' -X POST --data-binary @40mb.bin \
+            http://localhost:18080/api/v1/images || true)"
+          echo "40 MB body -> $code"
+          test "$code" = "413"
+
+      - name: Stop nginx
+        if: always()
+        run: docker rm -f ci-nginx
+
+  # ---------------------------------------------------------------- Gate
+
+  # The only required check. Always runs, and passes only if `changes` succeeded, every job
+  # for a changed area succeeded, and every job for an unchanged area was skipped. A skip is
+  # accepted only when `changes` said that area did not change; a failed, cancelled or
+  # unexpectedly skipped job fails the gate.
+  gate:
+    if: always()
+    needs:
+      - changes
+      - api-scan
+      - api-lint
+      - api-test
+      - app-lint
+      - app-test
+      - app-build
+      - sidecar-test
+      - infra-nginx
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check every job against the changed areas
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          changes="$(jq -r '.changes.result' <<<"$NEEDS")"
+          if [ "$changes" != success ]; then
+            echo "::error::The changes job did not succeed ($changes), so no area can be trusted."
+            exit 1
+          fi
+
+          fail=0
+          check() {
+            local job="$1" area="$2" result changed
+            result="$(jq -r --arg j "$job" '.[$j].result' <<<"$NEEDS")"
+            changed="$(jq -r --arg a "$area" '.changes.outputs[$a]' <<<"$NEEDS")"
+            if [ "$changed" = true ]; then
+              want=success
+            else
+              want=skipped
+            fi
+            if [ "$result" = "$want" ]; then
+              echo "ok    $job: $result ($area changed: $changed)"
+            else
+              echo "::error::$job: $result, expected $want ($area changed: $changed)"
+              fail=1
+            fi
+          }
+
+          check api-scan     api
+          check api-lint     api
+          check api-test     api
+          check app-lint     app
+          check app-test     app
+          check app-build    app
+          check sidecar-test sidecar
+          check infra-nginx  infra
+          exit "$fail"
