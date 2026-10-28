@@ -53,6 +53,11 @@ RSpec.configure do |config|
   # triggering implicit auto-inclusion in groups with matching metadata.
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
+  # A run that loads no examples fails instead of passing. Without this, a wrong
+  # path, pattern or tag runs nothing and reports "0 examples, 0 failures" as a
+  # success, which is how bin/ci once passed with zero tests (#27).
+  config.fail_if_no_examples = true
+
 # The settings below are suggested to provide a good initial experience
 # with RSpec, but feel free to customize to your heart's content.
 =begin
