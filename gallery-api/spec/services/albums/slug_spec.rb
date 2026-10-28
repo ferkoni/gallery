@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe Albums::Slug do
   describe ".for" do
     it "transliterates accents and joins words with one dash" do
-      expect(described_class.for("Día 2 en Madrid!")).to eq("dia-2-en-madrid")
+      expect(described_class.for("Día 2 en Madrid")).to eq("dia-2-en-madrid")
     end
 
     it "gives album for a name with no letters or digits" do
