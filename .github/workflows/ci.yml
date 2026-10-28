@@ -11,6 +11,7 @@
 # or pull request touched, each area's jobs run only if their area changed, and `gate`
 # always runs and checks every job's result against what `changes` decided.
 # docs: agent-guardrails/02, decision 4.
+# Throwaway edit: proves a ci.yml-only change runs every area.
 name: CI
 
 on:
