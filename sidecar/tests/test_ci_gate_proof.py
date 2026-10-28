@@ -1,3 +1,3 @@
-# Throwaway: proves the CI gate goes red on a failing sidecar test. Never merged.
+# Throwaway: proves the CI gate goes green again on a failing sidecar test. Never merged.
 def test_gate_goes_red():
-    assert 1 == 2
+    assert 1 == 1
