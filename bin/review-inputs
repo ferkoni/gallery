@@ -1,2 +1,78 @@
 #!/usr/bin/env bash
-# Stub: the real script comes with its test (agent-guardrails, slice 11.1).
+# Write everything the reviewer agent needs about the current branch into one file, and print its
+# path. The caller passes that path to the reviewer (.claude/agents/reviewer.md) instead of
+# pasting diffs into the prompt, so every review gets the same inputs.
+# docs: agent-guardrails/agent-workflow-plan.md, decision 3 and slice 11.1.
+#
+#   bin/review-inputs        -> tmp/review-inputs-<branch>.txt
+#
+# Environment:
+#   REVIEW_BASE  the branch to compare against (default origin/main, or main if there is no
+#                origin/main)
+#
+# Test: bin/test-review-inputs
+
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+base="${REVIEW_BASE:-}"
+if [ -z "$base" ]; then
+  if git rev-parse -q --verify origin/main >/dev/null; then base=origin/main; else base=main; fi
+fi
+merge_base="$(git merge-base "$base" HEAD)"
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+name="${branch//\//-}"
+hook_log="tmp/agent-check-$name.log"
+out="tmp/review-inputs-$name.txt"
+mkdir -p tmp
+
+# Where tests live in this repo. The per-commit history of these paths shows a test edited after
+# its red commit, which the plain diff hides.
+tests=(gallery-api/spec/ gallery-app/src/tests/ sidecar/tests/ contract/tests/ 'bin/test-*'
+  ':(glob)**/*.test.*' ':(glob)**/*_spec.rb' ':(glob)**/test_*.py')
+
+{
+  echo "# Review inputs: $branch against $base"
+  echo
+  echo "Generated $(date -Is). Merge base $merge_base. HEAD $(git rev-parse HEAD)."
+  echo
+  echo "## Changed files (git diff --name-status $base...HEAD)"
+  echo
+  git diff --name-status "$base...HEAD"
+  echo
+  echo "## git diff --stat $base...HEAD"
+  echo
+  git diff --stat "$base...HEAD"
+  echo
+  echo "## Commits (git log --stat $base..HEAD, newest first)"
+  echo
+  git log --stat "$base..HEAD"
+  echo
+  echo "## Test file history (git log -p $base..HEAD, test paths only)"
+  echo
+  git log -p "$base..HEAD" -- "${tests[@]}"
+  echo
+  echo "## Stop hook log"
+  echo
+  if [ -f "$hook_log" ]; then
+    echo "$hook_log ($(wc -l <"$hook_log") lines):"
+    echo
+    cat "$hook_log"
+  else
+    echo "no hook log at $hook_log"
+  fi
+  echo
+  echo "## Uncommitted changes (git status --porcelain)"
+  echo
+  status="$(git status --porcelain)"
+  echo "${status:-none}"
+  echo
+  echo "## Full diff (git diff $base...HEAD)"
+  echo
+  git diff "$base...HEAD"
+} >"$out"
+
+echo "$root/$out"
