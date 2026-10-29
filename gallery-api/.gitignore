@@ -41,3 +41,5 @@
 
 # Ignore coverage
 /coverage
+# mutant writes run results here
+/.mutant
