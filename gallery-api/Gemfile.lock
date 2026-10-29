@@ -241,6 +241,7 @@ GEM
     parser (3.3.11.1)
       ast (~> 2.4.1)
       racc
+    pbt (0.7.0)
     pg (1.7.0-aarch64-linux)
     pg (1.7.0-x86_64-linux)
     pp (0.6.4)
@@ -440,6 +441,7 @@ DEPENDENCIES
   kamal
   kaminari
   neighbor (~> 1.2)
+  pbt (~> 0.7)
   pg (~> 1.7)
   puma (>= 5.0)
   pundit (~> 2.5)
