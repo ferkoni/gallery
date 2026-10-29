@@ -13,6 +13,8 @@
       "Edit(/.claude/skills/**)",
       "Edit(/bin/agent-check)",
       "Edit(/bin/agent-guard-bash)",
+      "Edit(/bin/review-inputs)",
+      "Edit(/bin/test-review-inputs)",
       "Edit(/CLAUDE.md)"
     ],
     "deny": [
