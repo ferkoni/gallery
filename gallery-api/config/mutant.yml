@@ -1,0 +1,19 @@
+---
+# Mutation testing, run by hand on one module at a time (agent guardrails slice 8):
+#   bundle exec mutant run 'Images::Search'
+# Not part of CI or the Stop hook: a run takes minutes.
+#
+# Free use applies because the repo is public under the MIT licence (mutant EULA §1.2).
+usage: opensource
+requires:
+  - ./config/environment
+environment_variables:
+  RAILS_ENV: test
+integration:
+  name: rspec
+hooks:
+  - config/mutant/hooks.rb
+mutation:
+  # Above the property test's own runtime (about 5 s). At the default 5 s, half the
+  # mutations ended as timeouts, which mutant counts as killed without any test failing.
+  timeout: 60.0
