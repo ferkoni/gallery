@@ -191,6 +191,16 @@ RSpec.describe Images::Search do
 
     before { allow(Inference).to receive(:adapter).and_return(fake) }
 
+    # The tests embed photos with the bare word and expect the query to match it, which
+    # holds only with no prompt template (INFERENCE_PROMPT_TEMPLATE may be set in a shell).
+    around do |example|
+      original = Inference.config.prompt_template
+      Inference.config.prompt_template = nil
+      example.run
+    ensure
+      Inference.config.prompt_template = original
+    end
+
     def embed_as(image, text)
       create(:image_embedding, image: image, model_id: fake.model_id, dimensions: fake.dimensions,
                                embedding: fake.embed_text(text).vector)
@@ -253,11 +263,12 @@ RSpec.describe Images::Search do
     end
 
     describe "candidate lists" do
-      # Inserted in bulk: 201 factory-created rows would take seconds.
+      # Inserted in bulk, into one album: 201 factory-created rows would take seconds.
       def bulk_images(count, owner:, title:)
         now = Time.current
+        album_id = create(:album, user: owner).id
         rows = Array.new(count) do |i|
-          { user_id: owner.id, album_id: create(:album, user: owner).id, title: "#{title}-#{i}",
+          { user_id: owner.id, album_id: album_id, title: "#{title}-#{i}",
             s3_key: "uploads/#{SecureRandom.uuid}/x.jpg", created_at: now, updated_at: now }
         end
         Image.insert_all!(rows, returning: [ :id ]).map { |r| r["id"] }.sort
@@ -293,8 +304,10 @@ RSpec.describe Images::Search do
         expect(search_with("gato", strategy: :semantic)).to contain_exactly(own)
       end
 
-      # Updating a row moves it to the end of the table, so only ORDER BY id keeps the
-      # older photo first.
+      # Updating a row writes its new version later in the table, so without ORDER BY id the
+      # older photo usually comes back second. "Usually": physical order depends on the table's
+      # history, so this catches a missing ORDER BY on a fresh table but not reliably under
+      # mutant, whose worker databases have seen many rolled-back rows (slice 8 survivors, S44).
       it "orders the lexical list by id, not by table order" do
         older = image("gato-1")
         newer = image("gato-2")

@@ -26,6 +26,16 @@ module SearchPropertyCases
 end
 
 RSpec.describe Images::Search do
+  # The tests embed photos with the bare word and expect the query to match it, which
+  # holds only with no prompt template (INFERENCE_PROMPT_TEMPLATE may be set in a shell).
+  around do |example|
+    original = Inference.config.prompt_template
+    Inference.config.prompt_template = nil
+    example.run
+  ensure
+    Inference.config.prompt_template = original
+  end
+
   photo = Pbt.fixed_hash(
     owner: Pbt.integer(min: 0, max: SearchPropertyCases::USERS - 1),
     title: Pbt.one_of(*SearchPropertyCases::WORDS),
