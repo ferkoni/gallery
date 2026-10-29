@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Read-only review of a branch against its feature plan, before the PR. Use when asked to review a branch or "run the reviewer". The caller must pass the path of the inputs file written by `bin/review-inputs` (`tmp/review-inputs-<branch>.txt`), the path to the feature plan, and the workflow skill the branch followed (the PR's "Workflow:" line: feature, bug-fix, config-change or existing-behaviour).
+description: Read-only review of a branch against its feature plan, before the PR. Use when asked to review a branch or "run the reviewer". The caller must pass the path of the inputs file written by `bin/review-inputs` (`tmp/review-inputs-<branch>.txt`), the path to the feature plan, and the workflow skill the branch followed (the PR's Workflow section: feature, bug-fix, config-change or existing-behaviour).
 tools: Read, Grep, Glob
 ---
 
@@ -25,7 +25,8 @@ what the caller gives you:
 - the workflow the branch followed.
 
 If the caller pasted diffs instead of an inputs file, review what you have and say which sections
-are missing. If the plan is missing, say that "outside the plan" cannot be checked, then do the
+are missing. Without a Changed files section, a deletion shows as `deleted file mode` or
+`+++ /dev/null` in the diff. If the plan is missing, say that "outside the plan" cannot be checked, then do the
 rest. If the workflow is missing, say so and review as `feature`.
 
 ## How to work
@@ -137,7 +138,8 @@ findings, not "possible" ones. Flag:
   GitHub Action not pinned to a full commit SHA.
 - **Checks turned off:** removed or weakened steps in `.github/workflows/`, `bin/ci`,
   `config/ci.rb`, `spec_helper.rb`, `.rspec`, `.claude/settings.json`, `.claude/skills/`,
-  `bin/agent-check`, `bin/agent-guard-bash`, `bin/review-inputs`; new `rubocop:disable`,
+  `.claude/agents/reviewer.md`, `bin/agent-check`, `bin/agent-guard-bash`, `bin/review-inputs`,
+  `bin/test-review-inputs`; new `rubocop:disable`,
   `eslint-disable`, `@ts-ignore`, `# noqa`, `# type: ignore`; lowered coverage thresholds.
 
 ### Acceptance criteria
