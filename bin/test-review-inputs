@@ -85,6 +85,32 @@ REVIEW_BASE=main "$script" >/dev/null 2>&1
 check "includes the hook log" section_has "Stop hook log" "block areas=api failed=api" "$out"
 check "lists an untracked file" section_has "Uncommitted changes" "notes.txt" "$out"
 
+# 3. One file per test-path pattern, each matched by that pattern alone, and one code file that
+# none match.
+rm notes.txt
+files=(gallery-app/src/tests/helpers.ts sidecar/tests/conftest.py contract/tests/setup.ts
+  bin/test-thing gallery-app/src/components/Share.test.tsx gallery-api/lib/share_spec.rb
+  sidecar/app/test_share.py sidecar/app/share.py)
+for f in "${files[@]}"; do
+  mkdir -p "$(dirname "$f")"
+  echo "marker for $f" > "$f"
+done
+git add "${files[@]}" && git commit -q -m "Tests in every test path"
+REVIEW_BASE=main "$script" >/dev/null 2>&1
+for f in "${files[@]:0:7}"; do
+  check "test history has $f" section_has "Test file history" "+marker for $f" "$out"
+done
+check "test history leaves out sidecar/app/share.py" section_lacks "Test file history" "+marker for sidecar/app/share.py" "$out"
+
+# 4. The base: main with no origin/main, origin/main when it exists, REVIEW_BASE over both.
+"$script" >/dev/null 2>&1
+check "base is main with no origin/main" has "feature/slug against main" "$out"
+git update-ref refs/remotes/origin/main main
+"$script" >/dev/null 2>&1
+check "base is origin/main when it exists" has "feature/slug against origin/main" "$out"
+REVIEW_BASE=main "$script" >/dev/null 2>&1
+check "REVIEW_BASE overrides origin/main" has "feature/slug against main" "$out"
+
 echo
 echo "$passed passed, $failed failed"
 [ "$passed" -gt 0 ] && [ "$failed" -eq 0 ]
