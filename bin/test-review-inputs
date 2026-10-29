@@ -26,11 +26,12 @@ check() {
   fi
 }
 has() { grep -qF -- "$1" "$2" 2>/dev/null; }
-lacks() { [ -f "$2" ] && ! grep -qF -- "$1" "$2"; }
 # The text between a section heading and the next heading.
 section() { awk -v h="## $1" 'index($0, h) == 1 {on = 1; next} /^## / {on = 0} on' "$2" 2>/dev/null; }
 section_has() { section "$1" "$3" | grep -qF -- "$2"; }
 section_lacks() { [ -f "$3" ] && ! section "$1" "$3" | grep -qF -- "$2"; }
+# The section's text, blank lines left out, is exactly $2.
+section_is() { [ "$(section "$1" "$3" | sed '/^$/d')" = "$2" ]; }
 
 repo="$work/repo"
 mkdir -p "$repo"
@@ -73,7 +74,7 @@ check "test history shows the test edit in the green commit" section_has "Test f
 check "test history leaves out commits that touch no test" section_lacks "Test file history" "Remove old.rb" "$out"
 check "test history leaves out code changes" section_lacks "Test file history" "def slug = 2" "$out"
 check "says there is no hook log" section_has "Stop hook log" "no hook log at tmp/agent-check-feature-slug.log" "$out"
-check "says the tree is clean" section_has "Uncommitted changes" "none" "$out"
+check "says the tree is clean" section_is "Uncommitted changes" "none" "$out"
 check "has the full diff" section_has "Full diff" "-legacy" "$out"
 
 # 2. A hook log and an uncommitted file.
