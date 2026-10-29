@@ -14,9 +14,9 @@ description: Workflow for building a feature or changing behaviour in this repo,
    The plan must have scope in and out, the files each PR is expected to touch, and acceptance
    criteria with concrete examples (exact input, expected output). If any is missing, stop and
    ask. Do not invent them.
-2. **Branch** from an up-to-date `main`: `git fetch origin main:main`, then
-   `git switch -c <name> main`. Name it after the plan: `ai-feature-<doc-stem>`,
-   `guardrails-NN-<slug>` or `rails-to-node-NN-<slug>`. Exit: `git log main..` is empty.
+2. **Branch** from an up-to-date `main`: `git fetch origin`, then
+   `git switch -c <name> --no-track origin/main`. Name it after the plan: `ai-feature-<doc-stem>`,
+   `guardrails-NN-<slug>` or `rails-to-node-NN-<slug>`. Exit: `git log origin/main..` is empty.
 3. **One behaviour at a time**, using the plan's example values in the tests:
    - **Something that does not exist yet** (a script, an endpoint, a class): first commit an
      empty stub on its own, an executable that prints nothing or a route with an empty action.

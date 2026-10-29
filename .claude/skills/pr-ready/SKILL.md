@@ -24,7 +24,8 @@ description: Final steps before a pull request in this repo, shared by the featu
    Never edit a test to satisfy a finding without saying so. A clean review is not proof: the
    reviewer catches part of what is wrong, and the owner decides.
 5. **Draft the PR body** in `tmp/pr-body-<branch>.md`, from `.github/pull_request_template.md`:
-   - **Workflow:** the skill followed;
+   - **Workflow** section: the skill followed; if commits followed different workflows, name
+     each with its commits;
    - **The change:** what and why, naming the plan and its slice;
    - **Verified:** the commands and their output; per criterion the red and green output, or
      the break table, or the revert-the-fix proof;

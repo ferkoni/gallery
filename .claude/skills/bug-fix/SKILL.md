@@ -13,7 +13,9 @@ description: Workflow for fixing a bug in this repo, from the bug entry to a PR-
 1. **The bug entry is the plan.** Usually an entry in `bugs.md` in the docs folder (path in
    `CLAUDE.local.md`, or ask), or a bug folder with its own plan. It must say what is wrong,
    where, and the fix. If it has no fix written, ask for one before starting.
-2. **Branch** from an up-to-date `main`, named after the entry. Exit: `git log main..` is empty.
+2. **Branch** from an up-to-date `main` (`git fetch origin`, then
+   `git switch -c <name> --no-track origin/main`), named after the entry. Exit:
+   `git log origin/main..` is empty.
 3. **Reproduce.** Write a test that shows the bug, and run it on the current code. It must fail
    on its assertion (the wrong result), not on a load error or a missing component. Show the
    output. Commit it alone: this is the red commit.
@@ -21,8 +23,10 @@ description: Workflow for fixing a bug in this repo, from the bug entry to a PR-
 4. **Fix.** The smallest change that turns the test green. Do not touch the test. Commit: the
    green commit.
 5. **Prove the test.** With the test kept, revert only the fix and run the test: red. Restore the
-   fix and run it: green. For example `git checkout HEAD~1 -- <fixed files>`, run, then
-   `git checkout HEAD -- <fixed files>`, run. Show both outputs; they go in the PR.
+   fix and run it: green. Use the red commit's SHA, not `HEAD~1`, which is wrong once any commit
+   follows the fix: `git checkout <red-sha> -- <fixed files>`, run, then
+   `git checkout HEAD -- <fixed files>`, run, and `git status` is clean. Show both outputs; they
+   go in the PR.
 6. **Other problems seen on the way:** report them, do not fix them. The owner adds them to
    `bugs.md` or `unbuilt-work.md`.
 7. **Done** when steps 3 and 5 have their outputs and the full checks for every changed area

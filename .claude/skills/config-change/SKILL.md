@@ -15,9 +15,9 @@ description: Workflow for a configuration change in this repo, to a PR-ready bra
    reviewer needs it to tell what is outside the plan.
 2. **Branch** from an up-to-date `main`, named after the doc it implements.
 3. **Edit.**
-   - **Protected files** (the `Edit(...)` ask rules in `.claude/settings.json`: CI files,
-     `bin/ci`, `config/ci.rb`, `spec_helper.rb`, `.rspec`, `.claude/`, `bin/agent-*`,
-     `CLAUDE.md`): each edit asks the owner. Make all edits to one file as a single edit.
+   - **Protected files** are exactly the `Edit(...)` ask rules in `.claude/settings.json`; read
+     them there, since a list here goes stale. Only those paths prompt (not all of `.claude/`).
+     Each edit asks the owner. Make all edits to one file as a single edit.
    - Other config: no prompt. New gems or packages are listed in the PR.
 4. **Run the check for each changed area by hand.** The Stop hook only covers `gallery-api/`,
    `gallery-app/` and `sidecar/`.
