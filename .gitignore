@@ -13,3 +13,6 @@
 
 # Agent tooling scratch: bin/agent-check writes its log and test output here.
 /tmp/
+
+# Claude Code instructions for one person's machine (the docs folder path, for one). Not shared.
+/CLAUDE.local.md

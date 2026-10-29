@@ -28,7 +28,7 @@ description: Final steps before a pull request in this repo, shared by the featu
    - **The change:** what and why, naming the plan and its slice;
    - **Verified:** the commands and their output; per criterion the red and green output, or
      the break table, or the revert-the-fix proof;
-   - the reviewer's findings and what was done about each;
+     then, still under Verified, each reviewer finding and what was done about it;
    - **Scope:** files outside the plan's areas, deleted files and removed dependencies first, or
      "none";
    - leave **Review notes** empty: the owner writes it.

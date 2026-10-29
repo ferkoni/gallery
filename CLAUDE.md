@@ -9,6 +9,10 @@ Monorepo with a React/Vite/TypeScript frontend (`gallery-app/`) and a Rails 8.1 
 
 Auth flow: `POST /api/v1/users/login` returns a JWT token. Frontend stores it in `sessionStorage` and sends it as `Authorization: Bearer <token>` on subsequent requests.
 
+## Workflows
+
+Start work with the skill for its kind: `/feature`, `/bug-fix`, `/config-change`, or `/existing-behaviour` (tests only, for behaviour that already works). Finish with `/pr-ready`. The skills have the steps; this file has the rules.
+
 ## How to check your work
 
 Run the checks for every area you changed.
@@ -33,7 +37,8 @@ Show the command you ran and its output. Do not say tests pass without that. An 
 - Do not weaken or delete an assertion to make a test pass.
 - Do not add a `rescue` or `catch` that hides an error.
 - Do not mock our own classes; mock only external services.
-- TDD: two commits per cycle. A red commit with only the new test, failing, then a green commit with the code. The red test must fail on an assertion about the behaviour, not on a load error, missing constant, missing route or syntax error.
+- A new test is shown failing on an assertion about the behaviour before it is trusted, not on a load error, missing constant, missing route or syntax error. For something that does not exist yet, commit an empty stub on its own first.
+- TDD, when adding or changing behaviour: two commits per cycle. A red commit with only the new test, failing, then a green commit with the code. Tests only, for behaviour that already exists: no red commit; prove each test with a deliberate break instead (`/existing-behaviour`).
 - If a failing test is wrong, or cannot pass without editing it or special-casing, stop and say so. Do not edit the test, hard-code expected values or override equality.
 - If finishing the task needs a change outside its scope (removing a dependency, deleting a file, changing existing behavior or config), stop and ask. Do not do it as a side step.
-
+- A recommendation that goes into a plan or decides something: give the options, the criteria from the plan's goal (for guardrail work, first: does this open a way around a check?), the strongest argument against your pick, and what would change your mind. Label a quick lean "leaning X, not analysed".
