@@ -98,9 +98,11 @@ npm run test:node     # the parity assertion, once :4000 exists
   from `src/support/fixtures.ts`, so album, image and task ids are pinned and timestamps are
   explicit. That is what lets `total_count` and ordering be asserted as exact values rather
   than normalised away.
-- Only two things are normalised, in `src/support/normalise.ts`: the JWT, and the volatile
-  query parameters of a presigned URL. The URL's host and path survive, so the `s3_key` is
-  still asserted.
+- Three things are normalised, in `src/support/normalise.ts`: the JWT, the volatile query
+  parameters of a presigned URL, and **every ISO timestamp**, which becomes `<TIMESTAMP>`. The
+  URL's host and path survive, so the `s3_key` is still asserted. The seeded timestamps are
+  pinned, so ordering by them is asserted, but their values are not: a backend that serialised
+  `created_at` in another format would still pass.
 
 `src/support/db.ts` is the only part that speaks anything but HTTP. It talks to Postgres
 directly — no ActiveRecord, no `rails runner` — so it keeps working once Rails is gone.
