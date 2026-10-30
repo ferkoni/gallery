@@ -27,6 +27,10 @@ export const encryptionKeys = {
   keyDerivationSalt: required("ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT"),
 };
 
+// Optional. The backend's JWT signing secret (Rails: secret_key_base), for the
+// one test that needs a token the backend did not mint: an expired one.
+export const jwtSecret = process.env.CONTRACT_JWT_SECRET ?? "";
+
 export const liveS3 = process.env.CONTRACT_LIVE_S3 === "1";
 
 export const liveS3Credentials = {

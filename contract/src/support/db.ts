@@ -1,7 +1,7 @@
 import pg from "pg";
 import { databaseUrl } from "./config.js";
 import { encrypt } from "./ar-encryption.js";
-import { albums, asyncTasks, images, s3Credentials } from "./fixtures.js";
+import { PASSWORD_DIGEST, albums, asyncTasks, images, s3Credentials, users } from "./fixtures.js";
 
 // The one place the suite talks to something other than HTTP. It speaks
 // Postgres, not Rails — no ActiveRecord, no rails runner — so it keeps working
@@ -31,11 +31,23 @@ export async function resetData(): Promise<void> {
   });
 }
 
-// Truncates users too. Only the global setup calls this.
+// Truncates users too, and re-seeds them. Only the global setup calls this.
 export async function resetEverything(): Promise<void> {
   await withClient(async (client) => {
     await client.query(`TRUNCATE users, ${DATA_TABLES.join(", ")} RESTART IDENTITY CASCADE`);
+    await seedUsers(client);
+    await resyncSequence(client, "users");
   });
+}
+
+async function seedUsers(client: pg.Client): Promise<void> {
+  for (const user of Object.values(users)) {
+    await client.query(
+      `INSERT INTO users (id, email, encrypted_password, jti, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, now(), now())`,
+      [user.id, user.email, PASSWORD_DIGEST, user.jti],
+    );
+  }
 }
 
 async function seedS3Credentials(client: pg.Client): Promise<void> {
@@ -59,9 +71,9 @@ async function seedS3Credentials(client: pg.Client): Promise<void> {
 async function seedAlbums(client: pg.Client): Promise<void> {
   for (const album of albums) {
     await client.query(
-      `INSERT INTO albums (id, user_id, name, description, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $5)`,
-      [album.id, album.userId, album.name, album.description, album.createdAt],
+      `INSERT INTO albums (id, user_id, parent_id, name, description, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $6)`,
+      [album.id, album.userId, album.parentId, album.name, album.description, album.createdAt],
     );
   }
 }
@@ -70,8 +82,8 @@ async function seedImages(client: pg.Client): Promise<void> {
   for (const image of images) {
     await client.query(
       `INSERT INTO images
-         (id, user_id, album_id, title, description, s3_key, tags, favorited, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)`,
+         (id, user_id, album_id, title, description, s3_key, thumb_key, tags, favorited, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10)`,
       [
         image.id,
         image.userId,
@@ -79,6 +91,7 @@ async function seedImages(client: pg.Client): Promise<void> {
         image.title,
         image.description,
         image.s3Key,
+        image.thumbKey,
         image.tags,
         image.favorited,
         image.createdAt,
@@ -111,11 +124,38 @@ async function seedAsyncTasks(client: pg.Client): Promise<void> {
 // row the API creates would collide. Push each sequence past the seeded rows.
 async function resyncSequences(client: pg.Client): Promise<void> {
   for (const table of DATA_TABLES) {
-    await client.query(
-      `SELECT setval(pg_get_serial_sequence($1, 'id'), COALESCE((SELECT MAX(id) FROM ${table}), 0) + 1, false)`,
-      [table],
-    );
+    await resyncSequence(client, table);
   }
+}
+
+async function resyncSequence(client: pg.Client, table: string): Promise<void> {
+  await client.query(
+    `SELECT setval(pg_get_serial_sequence($1, 'id'), COALESCE((SELECT MAX(id) FROM ${table}), 0) + 1, false)`,
+    [table],
+  );
+}
+
+// A user's current jti, so the suite can sign a token the backend accepts in
+// every respect but the one under test.
+export async function readJti(userId: number): Promise<string> {
+  return withClient(async (client) => {
+    const result = await client.query<{ jti: string }>("SELECT jti FROM users WHERE id = $1", [userId]);
+    return result.rows[0]!.jti;
+  });
+}
+
+// For checking that a refused request wrote nothing, where the API cannot be
+// asked (a user without credentials cannot read their own images back).
+export async function readImageRow(
+  id: number,
+): Promise<{ title: string; album_id: string; favorited: boolean } | null> {
+  return withClient(async (client) => {
+    const result = await client.query<{ title: string; album_id: string; favorited: boolean }>(
+      "SELECT title, album_id, favorited FROM images WHERE id = $1",
+      [id],
+    );
+    return result.rows[0] ?? null;
+  });
 }
 
 // Used by the s3_credentials suite to assert that what Rails wrote to the

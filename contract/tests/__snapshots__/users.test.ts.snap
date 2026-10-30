@@ -1,0 +1,39 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`users > DELETE /api/v1/users/logout > answers 204 for an authenticated user 1`] = `
+{
+  "body": null,
+  "status": 204,
+}
+`;
+
+exports[`users > POST /api/v1/users/login > rejects a wrong password 1`] = `
+{
+  "body": {
+    "errors": [
+      "Invalid email or password",
+    ],
+  },
+  "status": 401,
+}
+`;
+
+exports[`users > POST /api/v1/users/login > returns a token and the serialized user 1`] = `
+{
+  "body": {
+    "token": "<JWT>",
+    "user": {
+      "data": {
+        "attributes": {
+          "email": "authfixture@contract.test",
+          "id": 4,
+          "s3_credential_configured": false,
+        },
+        "id": "4",
+        "type": "user",
+      },
+    },
+  },
+  "status": 200,
+}
+`;

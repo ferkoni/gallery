@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GET /health > reports ok without authentication 1`] = `
+{
+  "body": {
+    "database": "ok",
+    "status": "ok",
+  },
+  "status": 200,
+}
+`;

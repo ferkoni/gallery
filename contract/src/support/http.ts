@@ -1,5 +1,12 @@
 import { baseUrl } from "./config.js";
 
+// The API's version prefix, in one place. /health and /up are unversioned and are
+// requested without it. Test names spell the full path out, because they double as
+// documentation of the API.
+export const API_PREFIX = "/api/v1";
+
+export const api = (path: string) => `${API_PREFIX}${path}`;
+
 export interface ApiResponse {
   status: number;
   contentType: string | null;
@@ -28,7 +35,7 @@ export async function request(
   const headers: Record<string, string> = { Accept: "application/json", ...options.headers };
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
 
-  let body: BodyInit | undefined;
+  let body: RequestInit["body"];
   if (options.form) {
     // Let fetch set the multipart boundary itself.
     body = options.form;
@@ -37,7 +44,9 @@ export async function request(
     body = JSON.stringify(options.json);
   }
 
-  const response = await fetch(url, { method, headers, body });
+  // Never follow a redirect. The API answers 401, never 302 (#56); followed, a
+  // regression to a redirect would be recorded as a 200 HTML page.
+  const response = await fetch(url, { method, headers, body, redirect: "manual" });
   const text = await response.text();
   const contentType = response.headers.get("content-type");
 

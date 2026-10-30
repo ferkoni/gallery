@@ -1,0 +1,621 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`albums > DELETE /api/v1/albums/:id > answers 404 for another user's album 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`albums > DELETE /api/v1/albums/:id > destroys a folder and its empty subfolders without touching S3 1`] = `
+{
+  "body": null,
+  "status": 204,
+}
+`;
+
+exports[`albums > GET /api/v1/albums > answers 404 for another user's ?exclude_subtree= 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`albums > GET /api/v1/albums > answers 404 for another user's ?parent_id= 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`albums > GET /api/v1/albums > answers an out-of-range page with empty data and meta 1`] = `
+{
+  "body": {
+    "data": [],
+    "meta": {
+      "current_page": 99,
+      "per_page": 25,
+      "total_count": 3,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > GET /api/v1/albums > ignores ?parent_id= under ?q= 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "ancestors": [
+            {
+              "id": 1,
+              "name": "Alpha Album",
+            },
+            {
+              "id": 4,
+              "name": "Gamma Album",
+            },
+          ],
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 5,
+          "name": "Delta Album",
+          "parent_id": 4,
+        },
+        "id": "5",
+        "type": "album",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 1,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > GET /api/v1/albums > lists one level with ?parent_id= 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "created_at": "<TIMESTAMP>",
+          "description": "A folder whose only images are in its subfolder",
+          "id": 4,
+          "name": "Gamma Album",
+          "parent_id": 1,
+        },
+        "id": "4",
+        "type": "album",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 1,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > GET /api/v1/albums > never leaks another user's albums 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "created_at": "<TIMESTAMP>",
+          "description": "Belongs to another user",
+          "id": 3,
+          "name": "Stranger Album",
+          "parent_id": null,
+        },
+        "id": "3",
+        "type": "album",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 1,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > GET /api/v1/albums > removes a folder and its descendants from ?q= with ?exclude_subtree= 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "ancestors": [
+            {
+              "id": 2,
+              "name": "Beta Album",
+            },
+          ],
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 6,
+          "name": "Beta Child Album",
+          "parent_id": 2,
+        },
+        "id": "6",
+        "type": "album",
+      },
+      {
+        "attributes": {
+          "ancestors": [],
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 7,
+          "name": "Epsilon Album",
+          "parent_id": null,
+        },
+        "id": "7",
+        "type": "album",
+      },
+      {
+        "attributes": {
+          "ancestors": [],
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 2,
+          "name": "Beta Album",
+          "parent_id": null,
+        },
+        "id": "2",
+        "type": "album",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 3,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > GET /api/v1/albums > returns the current user's albums with Kaminari meta 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 7,
+          "name": "Epsilon Album",
+          "parent_id": null,
+        },
+        "id": "7",
+        "type": "album",
+      },
+      {
+        "attributes": {
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 2,
+          "name": "Beta Album",
+          "parent_id": null,
+        },
+        "id": "2",
+        "type": "album",
+      },
+      {
+        "attributes": {
+          "created_at": "<TIMESTAMP>",
+          "description": "The album that has images",
+          "id": 1,
+          "name": "Alpha Album",
+          "parent_id": null,
+        },
+        "id": "1",
+        "type": "album",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 3,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > GET /api/v1/albums > searches every level with ?q=, each hit carrying its ancestors 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "ancestors": [
+            {
+              "id": 2,
+              "name": "Beta Album",
+            },
+          ],
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 6,
+          "name": "Beta Child Album",
+          "parent_id": 2,
+        },
+        "id": "6",
+        "type": "album",
+      },
+      {
+        "attributes": {
+          "ancestors": [
+            {
+              "id": 1,
+              "name": "Alpha Album",
+            },
+            {
+              "id": 4,
+              "name": "Gamma Album",
+            },
+          ],
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 5,
+          "name": "Delta Album",
+          "parent_id": 4,
+        },
+        "id": "5",
+        "type": "album",
+      },
+      {
+        "attributes": {
+          "ancestors": [
+            {
+              "id": 1,
+              "name": "Alpha Album",
+            },
+          ],
+          "created_at": "<TIMESTAMP>",
+          "description": "A folder whose only images are in its subfolder",
+          "id": 4,
+          "name": "Gamma Album",
+          "parent_id": 1,
+        },
+        "id": "4",
+        "type": "album",
+      },
+      {
+        "attributes": {
+          "ancestors": [],
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 7,
+          "name": "Epsilon Album",
+          "parent_id": null,
+        },
+        "id": "7",
+        "type": "album",
+      },
+      {
+        "attributes": {
+          "ancestors": [],
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "id": 2,
+          "name": "Beta Album",
+          "parent_id": null,
+        },
+        "id": "2",
+        "type": "album",
+      },
+      {
+        "attributes": {
+          "ancestors": [],
+          "created_at": "<TIMESTAMP>",
+          "description": "The album that has images",
+          "id": 1,
+          "name": "Alpha Album",
+          "parent_id": null,
+        },
+        "id": "1",
+        "type": "album",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 6,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > GET /api/v1/albums/:id > answers 404 for an album that does not exist 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`albums > GET /api/v1/albums/:id > answers 404 for another user's album 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`albums > GET /api/v1/albums/:id > returns a nested folder with its ancestors, root first 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "ancestors": [
+          {
+            "id": 1,
+            "name": "Alpha Album",
+          },
+          {
+            "id": 4,
+            "name": "Gamma Album",
+          },
+        ],
+        "created_at": "<TIMESTAMP>",
+        "description": null,
+        "id": 5,
+        "name": "Delta Album",
+        "parent_id": 4,
+      },
+      "id": "5",
+      "type": "album",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > GET /api/v1/albums/:id > returns an owned album 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "ancestors": [],
+        "created_at": "<TIMESTAMP>",
+        "description": "The album that has images",
+        "id": 1,
+        "name": "Alpha Album",
+        "parent_id": null,
+      },
+      "id": "1",
+      "type": "album",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > PATCH /api/v1/albums/:id > answers 404 for a new parent that belongs to another user 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`albums > PATCH /api/v1/albums/:id > answers 404 for another user's album 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`albums > PATCH /api/v1/albums/:id > moves a folder to the top level with an explicit null parent_id 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "created_at": "<TIMESTAMP>",
+        "description": "A folder whose only images are in its subfolder",
+        "id": 4,
+        "name": "Gamma Album",
+        "parent_id": null,
+      },
+      "id": "4",
+      "type": "album",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > PATCH /api/v1/albums/:id > moves a folder under another of the user's folders 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "created_at": "<TIMESTAMP>",
+        "description": null,
+        "id": 7,
+        "name": "Epsilon Album",
+        "parent_id": 2,
+      },
+      "id": "7",
+      "type": "album",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > PATCH /api/v1/albums/:id > rejects a move into the folder itself 1`] = `
+{
+  "body": {
+    "errors": {
+      "parent_id": [
+        "cannot be the folder itself or one of its subfolders",
+      ],
+    },
+  },
+  "status": 422,
+}
+`;
+
+exports[`albums > PATCH /api/v1/albums/:id > rejects a move into the folder's own descendant 1`] = `
+{
+  "body": {
+    "errors": {
+      "parent_id": [
+        "cannot be the folder itself or one of its subfolders",
+      ],
+    },
+  },
+  "status": 422,
+}
+`;
+
+exports[`albums > PATCH /api/v1/albums/:id > rejects an invalid update 1`] = `
+{
+  "body": {
+    "errors": {
+      "name": [
+        "can't be blank",
+      ],
+    },
+  },
+  "status": 422,
+}
+`;
+
+exports[`albums > PATCH /api/v1/albums/:id > updates an owned album 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "created_at": "<TIMESTAMP>",
+        "description": "The album that has images",
+        "id": 1,
+        "name": "Renamed Album",
+        "parent_id": null,
+      },
+      "id": "1",
+      "type": "album",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > POST /api/v1/albums > answers 404 for a parent that belongs to another user 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`albums > POST /api/v1/albums > creates a folder under one of the user's own folders 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "created_at": "<TIMESTAMP>",
+        "description": null,
+        "id": "<ID>",
+        "name": "Created Child",
+        "parent_id": 1,
+      },
+      "id": "<ID>",
+      "type": "album",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > POST /api/v1/albums > creates an album 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "created_at": "<TIMESTAMP>",
+        "description": "made by the suite",
+        "id": "<ID>",
+        "name": "Created Album",
+        "parent_id": null,
+      },
+      "id": "<ID>",
+      "type": "album",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`albums > POST /api/v1/albums > rejects a blank name 1`] = `
+{
+  "body": {
+    "errors": {
+      "name": [
+        "can't be blank",
+      ],
+    },
+  },
+  "status": 422,
+}
+`;
+
+exports[`albums > POST /api/v1/albums > rejects a description over 500 characters 1`] = `
+{
+  "body": {
+    "errors": {
+      "description": [
+        "is too long (maximum is 500 characters)",
+      ],
+    },
+  },
+  "status": 422,
+}
+`;
+
+exports[`albums > POST /api/v1/albums > rejects a name over 50 characters 1`] = `
+{
+  "body": {
+    "errors": {
+      "name": [
+        "is too long (maximum is 50 characters)",
+      ],
+    },
+  },
+  "status": 422,
+}
+`;

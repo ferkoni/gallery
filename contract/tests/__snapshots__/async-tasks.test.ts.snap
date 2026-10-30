@@ -1,0 +1,176 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`async_tasks > GET /api/v1/async_tasks > never leaks another user's tasks 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "created_at": "<TIMESTAMP>",
+          "expires_at": null,
+          "payload": {
+            "album_id": 3,
+          },
+          "result": {
+            "error": "Album has no images",
+          },
+          "status": "failed",
+          "task_type": "album_download",
+        },
+        "id": "3",
+        "type": "async_task",
+      },
+    ],
+  },
+  "status": 200,
+}
+`;
+
+exports[`async_tasks > GET /api/v1/async_tasks > returns the current user's tasks newest first, with no pagination meta 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "created_at": "<TIMESTAMP>",
+          "expires_at": null,
+          "payload": {
+            "album_id": 1,
+          },
+          "result": {},
+          "status": "pending",
+          "task_type": "album_download",
+        },
+        "id": "1",
+        "type": "async_task",
+      },
+      {
+        "attributes": {
+          "created_at": "<TIMESTAMP>",
+          "expires_at": "<TIMESTAMP>",
+          "payload": {
+            "album_id": 1,
+          },
+          "result": {
+            "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/downloads/1/2/album.zip",
+          },
+          "status": "completed",
+          "task_type": "album_download",
+        },
+        "id": "2",
+        "type": "async_task",
+      },
+    ],
+  },
+  "status": 200,
+}
+`;
+
+exports[`async_tasks > GET /api/v1/async_tasks/:id > answers 404 for a task that does not exist 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`async_tasks > GET /api/v1/async_tasks/:id > answers 404 for another user's task 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`async_tasks > GET /api/v1/async_tasks/:id > returns a completed task with its result 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "created_at": "<TIMESTAMP>",
+        "expires_at": "<TIMESTAMP>",
+        "payload": {
+          "album_id": 1,
+        },
+        "result": {
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/downloads/1/2/album.zip",
+        },
+        "status": "completed",
+        "task_type": "album_download",
+      },
+      "id": "2",
+      "type": "async_task",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`async_tasks > GET /api/v1/async_tasks/:id > returns a pending task 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "created_at": "<TIMESTAMP>",
+        "expires_at": null,
+        "payload": {
+          "album_id": 1,
+        },
+        "result": {},
+        "status": "pending",
+        "task_type": "album_download",
+      },
+      "id": "1",
+      "type": "async_task",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`async_tasks > POST /api/v1/async_tasks — accepted > accepts a folder whose only images are in a subfolder, and leaves the task pending 1`] = `
+{
+  "body": {
+    "task_id": "<ID>",
+  },
+  "status": 201,
+}
+`;
+
+exports[`async_tasks > POST /api/v1/async_tasks — rejections that never enqueue > answers 404 for an album that does not exist 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`async_tasks > POST /api/v1/async_tasks — rejections that never enqueue > answers 404 for another user's album 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`async_tasks > POST /api/v1/async_tasks — rejections that never enqueue > rejects an album with no images 1`] = `
+{
+  "body": {
+    "errors": "Album has no images",
+  },
+  "status": 422,
+}
+`;
+
+exports[`async_tasks > POST /api/v1/async_tasks — rejections that never enqueue > rejects an unknown task_type 1`] = `
+{
+  "body": {
+    "errors": "Unknown task_type",
+  },
+  "status": 422,
+}
+`;
