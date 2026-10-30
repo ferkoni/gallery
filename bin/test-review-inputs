@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# Test for bin/review-inputs. Builds a throwaway git repo, runs the script in it, and checks the
+# file it writes. No CI area or Stop hook area covers bin/, so run it by hand:
+#
+#   bin/test-review-inputs
+#
+# docs: agent-guardrails/agent-workflow-plan.md, slice 11.1.
+
+set -uo pipefail
+
+script="$(cd "$(dirname "$0")" && pwd)/review-inputs"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+passed=0
+failed=0
+check() {
+  local name="$1"
+  shift
+  if "$@"; then
+    passed=$((passed + 1))
+    echo "pass: $name"
+  else
+    failed=$((failed + 1))
+    echo "FAIL: $name"
+  fi
+}
+has() { grep -qF -- "$1" "$2" 2>/dev/null; }
+# The text between a section heading and the next heading.
+section() { awk -v h="## $1" 'index($0, h) == 1 {on = 1; next} /^## / {on = 0} on' "$2" 2>/dev/null; }
+section_has() { section "$1" "$3" | grep -qF -- "$2"; }
+section_lacks() { [ -f "$3" ] && ! section "$1" "$3" | grep -qF -- "$2"; }
+# The section's text, blank lines left out, is exactly $2.
+section_is() { [ "$(section "$1" "$3" | sed '/^$/d')" = "$2" ]; }
+
+repo="$work/repo"
+mkdir -p "$repo"
+cd "$repo" || exit 1
+git init -q -b main
+git config user.email test@example.com
+git config user.name Test
+git config commit.gpgsign false
+
+mkdir -p gallery-api/app gallery-api/spec
+echo "def slug = 1" > gallery-api/app/slug.rb
+echo "legacy" > gallery-api/app/old.rb
+echo "expect(slug).to eq(1)" > gallery-api/spec/slug_spec.rb
+echo "/tmp/" > .gitignore
+git add -A && git commit -q -m "Base"
+
+# A branch with a slash in its name, a red commit, a green commit that edits the test written in
+# the red commit, and a commit that deletes a file.
+git switch -q -c feature/slug
+echo "expect(slug).to eq(2)" > gallery-api/spec/slug_spec.rb
+git commit -q -am "Red: slug is 2"
+echo "def slug = 2" > gallery-api/app/slug.rb
+echo "expect(slug).to be_present" > gallery-api/spec/slug_spec.rb
+git commit -q -am "Green: slug is 2"
+git rm -q gallery-api/app/old.rb
+git commit -q -m "Remove old.rb"
+
+out="$repo/tmp/review-inputs-feature-slug.txt"
+
+# 1. No hook log, clean tree.
+printed="$(REVIEW_BASE=main "$script" 2>&1)"
+check "prints the path of the file it wrote" [ "$printed" = "$out" ]
+check "writes the file" [ -s "$out" ]
+check "names the branch and the base" has "feature/slug against main" "$out"
+check "lists the deleted file in name-status" section_has "Changed files" "D	gallery-api/app/old.rb" "$out"
+check "has the diff stat" section_has "git diff --stat" "gallery-api/app/slug.rb" "$out"
+check "has every commit in the log" section_has "Commits" "Remove old.rb" "$out"
+check "test history has the green commit" section_has "Test file history" "Green: slug is 2" "$out"
+check "test history shows the test edit in the green commit" section_has "Test file history" "+expect(slug).to be_present" "$out"
+check "test history leaves out commits that touch no test" section_lacks "Test file history" "Remove old.rb" "$out"
+check "test history leaves out code changes" section_lacks "Test file history" "def slug = 2" "$out"
+check "says there is no hook log" section_has "Stop hook log" "no hook log at tmp/agent-check-feature-slug.log" "$out"
+check "says the tree is clean" section_is "Uncommitted changes" "none" "$out"
+check "has the full diff" section_has "Full diff" "-legacy" "$out"
+
+# 2. A hook log and an uncommitted file.
+mkdir -p tmp
+echo "2026-10-29T10:00:00+00:00 block areas=api failed=api" > tmp/agent-check-feature-slug.log
+echo "scratch" > notes.txt
+REVIEW_BASE=main "$script" >/dev/null 2>&1
+check "includes the hook log" section_has "Stop hook log" "block areas=api failed=api" "$out"
+check "lists an untracked file" section_has "Uncommitted changes" "notes.txt" "$out"
+
+# 3. One file per test-path pattern, each matched by that pattern alone, and one code file that
+# none match.
+rm notes.txt
+files=(gallery-app/src/tests/helpers.ts sidecar/tests/conftest.py contract/tests/setup.ts
+  bin/test-thing gallery-app/src/components/Share.test.tsx gallery-api/lib/share_spec.rb
+  sidecar/app/test_share.py sidecar/app/share.py)
+for f in "${files[@]}"; do
+  mkdir -p "$(dirname "$f")"
+  echo "marker for $f" > "$f"
+done
+git add "${files[@]}" && git commit -q -m "Tests in every test path"
+REVIEW_BASE=main "$script" >/dev/null 2>&1
+for f in "${files[@]:0:7}"; do
+  check "test history has $f" section_has "Test file history" "+marker for $f" "$out"
+done
+check "test history leaves out sidecar/app/share.py" section_lacks "Test file history" "+marker for sidecar/app/share.py" "$out"
+
+# 4. The base: main with no origin/main, origin/main when it exists, REVIEW_BASE over both.
+"$script" >/dev/null 2>&1
+check "base is main with no origin/main" has "feature/slug against main" "$out"
+git update-ref refs/remotes/origin/main main
+"$script" >/dev/null 2>&1
+check "base is origin/main when it exists" has "feature/slug against origin/main" "$out"
+REVIEW_BASE=main "$script" >/dev/null 2>&1
+check "REVIEW_BASE overrides origin/main" has "feature/slug against main" "$out"
+
+echo
+echo "$passed passed, $failed failed"
+[ "$passed" -gt 0 ] && [ "$failed" -eq 0 ]

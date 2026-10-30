@@ -1,10 +1,16 @@
+## Workflow
+
+<!-- The skill this branch followed: feature, bug-fix, config-change or existing-behaviour.
+The reviewer checks the commits fit it. -->
+
 ## The change
 
 <!-- What and why. Link the plan: docs/gallery/<feature>/03-implementation-plan.md, slice N. -->
 
 ## Verified
 
-<!-- The commands you ran and their output. -->
+<!-- The commands you ran and their output: per criterion the red and green output, the break
+table, or the revert-the-fix proof. Then each reviewer finding and what was done about it. -->
 
 ## Scope
 
