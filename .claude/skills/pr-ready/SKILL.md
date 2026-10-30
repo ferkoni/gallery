@@ -43,19 +43,23 @@ description: Final steps before a pull request in this repo, shared by the featu
    - Each change asked for follows the branch's workflow: a behaviour change gets its red and
      green commits (or the revert-the-fix proof), anything else its check. Then step 1 again.
    - Re-run the reviewer (steps 2 and 3) if a change touches behaviour or a protected file
-     (the `Edit(...)` ask rules in `.claude/settings.json`).
+     (the `Edit(...)` ask rules in `.claude/settings.json`). Its findings go through steps 4
+     and 5 like the first run's.
    - Add each change to **Changes after review**: what changed; the owner's reason, quoted when
      it was a sentence or two, paraphrased and marked "paraphrased" only after a longer
      discussion; the commit; "reviewed", or "not re-reviewed" and why.
    - Each point that ended with no change: "Raised: X. Kept, because Y."
    - Update the PR's row in `reviewer-log.md`: the changes after review, and as **missed** or
      **wrong** only what the owner names as such.
-   - If the PR is open, push and update its body with
+   - If the PR is already open, the owner asking for the change counts as asking to push: push,
+     then update its body with
      `gh api -X PATCH repos/<owner>/<repo>/pulls/<n> -F body=@tmp/pr-body-<branch>.md`
      (`gh pr edit` fails on GitHub's Projects classic deprecation), then check the body changed.
+     If the PR is not open yet, step 6 applies.
 
 ## Do not
 
-- Open or push the PR without being asked.
+- Open or push the PR without being asked. A change the owner asks for on an open PR counts as
+  asking to push it (step 8).
 - Say the checks pass without showing their output.
 - Summarise the reviewer's findings away: list each one and what happened to it.
