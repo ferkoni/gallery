@@ -5,8 +5,7 @@ description: Workflow for fixing a bug in this repo, from the bug entry to a PR-
 
 # Bug fix
 
-`CLAUDE.md` has the rules. This is the order to apply them in. The reasons are in the docs folder,
-`agent-guardrails/05-workflow-bug-fix.md`.
+`CLAUDE.md` has the rules. This is the order to apply them in.
 
 ## Steps
 

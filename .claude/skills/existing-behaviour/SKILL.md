@@ -6,8 +6,7 @@ description: Workflow for adding tests, and no production code, for behaviour th
 # Tests for existing behaviour
 
 The test passes the first time it runs, so there is no red commit. A deliberate break in the
-code under test proves it instead. The reasons are in the docs folder,
-`agent-guardrails/07-workflow-existing-behaviour.md`.
+code under test proves it instead.
 
 ## Steps
 

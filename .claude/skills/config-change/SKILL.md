@@ -5,8 +5,7 @@ description: Workflow for a configuration change in this repo, to a PR-ready bra
 
 # Config change
 
-`CLAUDE.md` has the rules. This is the order to apply them in. The reasons are in the docs folder,
-`agent-guardrails/06-workflow-config-change.md`.
+`CLAUDE.md` has the rules. This is the order to apply them in.
 
 ## Steps
 

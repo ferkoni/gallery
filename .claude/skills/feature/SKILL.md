@@ -5,8 +5,7 @@ description: Workflow for building a feature or changing behaviour in this repo,
 
 # Feature
 
-`CLAUDE.md` has the rules. This is the order to apply them in. The reasons are in the docs folder,
-`agent-guardrails/04-workflow-feature.md`.
+`CLAUDE.md` has the rules. This is the order to apply them in.
 
 ## Steps
 
