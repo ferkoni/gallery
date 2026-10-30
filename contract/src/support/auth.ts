@@ -37,8 +37,10 @@ function writeState(state: State): void {
   writeFileSync(stateFile, JSON.stringify(state, null, 2));
 }
 
+// Clears the tokens but keeps the login times: the throttle's window outlives a
+// run, so a run started within 60 seconds of the last one has to wait it out.
 export function resetState(): void {
-  writeState({ tokens: {}, loginAttempts: [] });
+  writeState({ tokens: {}, loginAttempts: readState().loginAttempts });
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

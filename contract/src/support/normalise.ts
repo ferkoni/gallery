@@ -62,3 +62,10 @@ export function snapshotOf(
 ): { status: number; body: unknown } {
   return { status: response.status, body: normalise(response.body, options) };
 }
+
+// The ids of a JSON:API collection, in response order. For assertions that
+// spell out which rows came back, next to the snapshot that freezes the rest.
+export function idsOf(response: { body: unknown }): string[] {
+  const body = response.body as { data?: { id: string }[] } | null;
+  return (body?.data ?? []).map((row) => row.id);
+}
