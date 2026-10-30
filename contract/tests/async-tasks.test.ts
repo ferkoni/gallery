@@ -98,4 +98,23 @@ describe("async_tasks", () => {
       expect(response.status).toBe(401);
     });
   });
+
+  // Acceptance needs no S3: the task row is written and the job enqueued, and
+  // only the job reaches AWS. No worker runs during a contract run, so the task
+  // stays pending, which is the state to assert.
+  describe("POST /api/v1/async_tasks — accepted", () => {
+    // The zip holds the whole subtree, so a folder with images only in a
+    // subfolder (album 4, image 4 in album 5) is downloadable.
+    it("accepts a folder whose only images are in a subfolder, and leaves the task pending", async () => {
+      const response = await post(api("/async_tasks"), {
+        token: tokenFor("owner"),
+        json: { async_task: { task_type: "album_download", payload: { album_id: 4 } } },
+      });
+      expect(snapshotOf(response, { redactIds: true })).toMatchSnapshot();
+
+      const taskId = (response.body as { task_id: number }).task_id;
+      const task = await get(api(`/async_tasks/${taskId}`), { token: tokenFor("owner") });
+      expect((task.body as { data: { attributes: { status: string } } }).data.attributes.status).toBe("pending");
+    });
+  });
 });
