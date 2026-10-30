@@ -57,6 +57,9 @@ npm install
 
 ## Running
 
+CI runs the default tier against Rails on every change to `gallery-api/` or `contract/`: the
+`contract-test` job in `.github/workflows/ci.yml`, set up as below. Locally:
+
 Start the backend under test against the contract databases, in its own terminal, with
 inference off:
 

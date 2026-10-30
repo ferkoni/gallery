@@ -27,6 +27,7 @@ jobs:
       app: ${{ steps.areas.outputs.app }}
       sidecar: ${{ steps.areas.outputs.sidecar }}
       infra: ${{ steps.areas.outputs.infra }}
+      contract: ${{ steps.areas.outputs.contract }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -62,8 +63,7 @@ jobs:
           changed() { [ "$all" = true ] || grep -qE "$1" <<<"$files"; }
 
           # This file and the contract suite run every area: a change to either can break
-          # any of them, and the contract suite is not run here on its own (it needs a
-          # running backend).
+          # any of them.
           if changed '^(\.github/workflows/ci\.yml$|contract/)'; then all=true; fi
 
           area() { if changed "$2"; then echo "$1=true"; else echo "$1=false"; fi; }
@@ -72,6 +72,8 @@ jobs:
             area app     '^gallery-app/'
             area sidecar '^sidecar/'
             area infra   '^(nginx/|docker-compose[^/]*\.yml$|install\.sh$|setup\.sh$|test-install\.sh$)'
+            # The contract suite tests the API from outside, so an API change runs it too.
+            area contract '^(gallery-api/|contract/)'
           )"
           echo "$areas" >> "$GITHUB_OUTPUT"
 
@@ -453,6 +455,99 @@ jobs:
         if: always()
         run: docker rm -f ci-nginx
 
+  # ---------------------------------------------------------------- Contract suite (contract/)
+
+  # The contract suite's default tier against Rails. It is the migration's parity proof, and
+  # it went unrun for two months while #49 and #60 broke it (rails-to-node ticket 12).
+  #
+  # Rails runs in development, which is what the snapshots were recorded against: the same
+  # rack-attack store, the same 401 handling, Solid Queue as the adapter. It uses three
+  # dedicated databases and INFERENCE_MODE=none, and no worker, so an accepted download stays
+  # pending. The live S3 tier is skipped: it needs real credentials. GitHub sets CI=true,
+  # under which Vitest fails on a missing snapshot rather than writing it.
+  contract-test:
+    needs: changes
+    if: needs.changes.outputs.contract == 'true'
+    runs-on: ubuntu-24.04
+
+    services:
+      postgres:
+        # The same image as api-test, for the same reason.
+        image: pgvector/pgvector:0.8.6-pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    # Rails reads the first block, the suite the second. The encryption keys must match: the
+    # suite writes s3_credentials rows in ActiveRecord Encryption's format.
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gallery_api_contract
+      POSTGRES_QUEUE_DB: gallery_api_contract_queue
+      POSTGRES_CABLE_DB: gallery_api_contract_cable
+      INFERENCE_MODE: none
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: SXfQ7DCcBD8Sqsav4DPVlxb3Rr7bvCrD
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: nzMgfs3mYOtaITTmgLzwviWaMd9kPYbn
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: AGLY8rjLJeBM7hiKIFYT3MZqTuILAhge
+      CONTRACT_BASE_URL: http://localhost:3000
+      CONTRACT_DATABASE_URL: postgres://postgres:postgres@localhost:5432/gallery_api_contract
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libvips-dev
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        with:
+          bundler-cache: true
+          working-directory: gallery-api
+
+      - name: Set up the contract databases
+        working-directory: gallery-api
+        run: bin/rails db:prepare
+
+      - name: Start Rails
+        working-directory: gallery-api
+        run: |
+          bin/rails server -p 3000 > "$RUNNER_TEMP/rails.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:3000/health && exit 0
+            sleep 1
+          done
+          echo "::error::Rails did not answer /health within 60 seconds."
+          cat "$RUNNER_TEMP/rails.log"
+          exit 1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: contract/.nvmrc
+          cache: npm
+          cache-dependency-path: contract/package-lock.json
+
+      - name: Install the suite
+        working-directory: contract
+        run: npm ci
+
+      - name: Typecheck the suite
+        working-directory: contract
+        run: npm run typecheck
+
+      - name: Run the contract suite against Rails
+        working-directory: contract
+        run: npm run test:rails
+
+      - name: Show the Rails log
+        if: failure()
+        run: tail -n 300 "$RUNNER_TEMP/rails.log"
+
   # ---------------------------------------------------------------- Gate
 
   # The only required check. Always runs, and passes only if `changes` succeeded, every job
@@ -471,6 +566,7 @@ jobs:
       - app-build
       - sidecar-test
       - infra-nginx
+      - contract-test
     runs-on: ubuntu-24.04
     steps:
       - name: Check every job against the changed areas
@@ -510,4 +606,5 @@ jobs:
           check app-build    app
           check sidecar-test sidecar
           check infra-nginx  infra
+          check contract-test contract
           exit "$fail"
