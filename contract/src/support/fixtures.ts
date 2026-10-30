@@ -5,21 +5,31 @@
 
 export const PASSWORD = "contract-password-1";
 
-// Users are seeded once per run, in this order, through POST /api/users — so
-// their ids follow registration order. They are deliberately NOT truncated
-// between files: re-registering would be free, but re-authenticating would burn
-// rack-attack's login budget (see support/auth.ts).
+// bcrypt of PASSWORD, seeded as every user's encrypted_password. Devise has no
+// pepper here, so this is plain bcrypt, and both backends verify it whatever its
+// cost. Produced once, from gallery-api, with:
+//
+//   bundle exec ruby -rbcrypt -e 'puts BCrypt::Password.create("contract-password-1", cost: 12)'
+//
+// Regenerate it if PASSWORD changes.
+export const PASSWORD_DIGEST = "$2a$12$AmkgFHkaWPZomEbP71zB9.Ofk1NxbPPnJMCBg6KgqIMdWi6VK52G6";
+
+// Users are inserted once per run, with these ids, by global setup. There is no
+// signup endpoint to create them through (accounts come from a CLI), and the
+// suite must not know which backend's CLI. They are deliberately NOT truncated
+// between files: re-seeding would rotate nothing, but the tokens minted for them
+// would have to be minted again, and logins are rate limited (see support/auth.ts).
+//
+// jti is NOT NULL and unique. Login rotates it, so these values only matter until
+// global setup logs in.
 export const users = {
-  owner: { id: 1, email: "owner@contract.test" },
-  stranger: { id: 2, email: "stranger@contract.test" },
-  nocreds: { id: 3, email: "nocreds@contract.test" },
-  authfixture: { id: 4, email: "authfixture@contract.test" },
+  owner: { id: 1, email: "owner@contract.test", jti: "00000000-0000-4000-8000-000000000001" },
+  stranger: { id: 2, email: "stranger@contract.test", jti: "00000000-0000-4000-8000-000000000002" },
+  nocreds: { id: 3, email: "nocreds@contract.test", jti: "00000000-0000-4000-8000-000000000003" },
+  authfixture: { id: 4, email: "authfixture@contract.test", jti: "00000000-0000-4000-8000-000000000004" },
 } as const;
 
 export type UserKey = keyof typeof users;
-
-// Registration order. Pinned ids above depend on it.
-export const userOrder: UserKey[] = ["owner", "stranger", "nocreds", "authfixture"];
 
 // Seeded straight into Postgres in AR Encryption's envelope format. These are
 // syntactically valid but entirely fake — the read endpoints never dereference

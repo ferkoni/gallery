@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { del, get, patch, post } from "../src/support/http.js";
+import { api, del, get, patch, post } from "../src/support/http.js";
 import { tokenFor } from "../src/support/auth.js";
 import { resetData } from "../src/support/db.js";
 import { snapshotOf } from "../src/support/normalise.js";
@@ -11,21 +11,21 @@ describe("albums", () => {
     await resetData();
   });
 
-  describe("GET /api/albums", () => {
+  describe("GET /api/v1/albums", () => {
     it("returns the current user's albums with Kaminari meta", async () => {
-      const response = await get("/api/albums", { token: tokenFor("owner") });
+      const response = await get(api("/albums"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     it("never leaks another user's albums", async () => {
-      const response = await get("/api/albums", { token: tokenFor("stranger") });
+      const response = await get(api("/albums"), { token: tokenFor("stranger") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     // The default page size is Kaminari's 25 — no paginates_per anywhere in the
     // app — and an out-of-range page answers 200 with an empty collection.
     it("answers an out-of-range page with empty data and meta", async () => {
-      const response = await get("/api/albums", {
+      const response = await get(api("/albums"), {
         token: tokenFor("owner"),
         query: { page: 99 },
       });
@@ -33,14 +33,14 @@ describe("albums", () => {
     });
 
     it("requires a token", async () => {
-      const response = await get("/api/albums");
+      const response = await get(api("/albums"));
       expect(response.status).toBe(401);
     });
   });
 
-  describe("GET /api/albums/:id", () => {
+  describe("GET /api/v1/albums/:id", () => {
     it("returns an owned album", async () => {
-      const response = await get("/api/albums/1", { token: tokenFor("owner") });
+      const response = await get(api("/albums/1"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
@@ -48,19 +48,19 @@ describe("albums", () => {
     // stranger's album is not found rather than forbidden. Images behave the
     // opposite way — see images.test.ts — and both are contract.
     it("answers 404 for another user's album", async () => {
-      const response = await get("/api/albums/3", { token: tokenFor("owner") });
+      const response = await get(api("/albums/3"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     it("answers 404 for an album that does not exist", async () => {
-      const response = await get("/api/albums/9999", { token: tokenFor("owner") });
+      const response = await get(api("/albums/9999"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
   });
 
-  describe("POST /api/albums", () => {
+  describe("POST /api/v1/albums", () => {
     it("creates an album", async () => {
-      const response = await post("/api/albums", {
+      const response = await post(api("/albums"), {
         token: tokenFor("owner"),
         json: { album: { name: "Created Album", description: "made by the suite" } },
       });
@@ -69,7 +69,7 @@ describe("albums", () => {
     });
 
     it("rejects a blank name", async () => {
-      const response = await post("/api/albums", {
+      const response = await post(api("/albums"), {
         token: tokenFor("owner"),
         json: { album: { name: "" } },
       });
@@ -77,7 +77,7 @@ describe("albums", () => {
     });
 
     it("rejects a name over 50 characters", async () => {
-      const response = await post("/api/albums", {
+      const response = await post(api("/albums"), {
         token: tokenFor("owner"),
         json: { album: { name: "x".repeat(51) } },
       });
@@ -85,7 +85,7 @@ describe("albums", () => {
     });
 
     it("rejects a description over 500 characters", async () => {
-      const response = await post("/api/albums", {
+      const response = await post(api("/albums"), {
         token: tokenFor("owner"),
         json: { album: { name: "Valid", description: "x".repeat(501) } },
       });
@@ -93,9 +93,9 @@ describe("albums", () => {
     });
   });
 
-  describe("PATCH /api/albums/:id", () => {
+  describe("PATCH /api/v1/albums/:id", () => {
     it("updates an owned album", async () => {
-      const response = await patch("/api/albums/1", {
+      const response = await patch(api("/albums/1"), {
         token: tokenFor("owner"),
         json: { album: { name: "Renamed Album" } },
       });
@@ -103,7 +103,7 @@ describe("albums", () => {
     });
 
     it("answers 404 for another user's album", async () => {
-      const response = await patch("/api/albums/3", {
+      const response = await patch(api("/albums/3"), {
         token: tokenFor("owner"),
         json: { album: { name: "Hijacked" } },
       });
@@ -111,7 +111,7 @@ describe("albums", () => {
     });
 
     it("rejects an invalid update", async () => {
-      const response = await patch("/api/albums/1", {
+      const response = await patch(api("/albums/1"), {
         token: tokenFor("owner"),
         json: { album: { name: "" } },
       });
@@ -119,22 +119,22 @@ describe("albums", () => {
     });
   });
 
-  describe("DELETE /api/albums/:id", () => {
+  describe("DELETE /api/v1/albums/:id", () => {
     // Images::AlbumDestroy short-circuits when the album has no images, so this
     // path never touches S3. Deleting album 1, which has images, does — that
     // lives in the live tier.
     it("destroys an empty album without touching S3", async () => {
-      const response = await del("/api/albums/2", { token: tokenFor("owner") });
+      const response = await del(api("/albums/2"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     it("answers 404 for another user's album", async () => {
-      const response = await del("/api/albums/3", { token: tokenFor("owner") });
+      const response = await del(api("/albums/3"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     it("requires a token", async () => {
-      const response = await del("/api/albums/2");
+      const response = await del(api("/albums/2"));
       expect(response.status).toBe(401);
     });
   });

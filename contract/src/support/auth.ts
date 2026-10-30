@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { stateFile } from "./config.js";
-import { post } from "./http.js";
+import { api, post } from "./http.js";
 import { PASSWORD, users, type UserKey } from "./fixtures.js";
 
-// rack-attack throttles POST /api/users/login at 5 per IP per 60s and 10 per
+// rack-attack throttles POST /api/v1/users/login at 5 per IP per 60s and 10 per
 // email per 60s (gallery-api/config/initializers/rack_attack.rb). The
 // middleware is mounted unconditionally in config/application.rb and dev's
 // cache_store is :memory_store, so the throttle is live in development — a
@@ -65,10 +65,10 @@ async function awaitLoginSlot(): Promise<void> {
   }
 }
 
-// The only way the suite should ever POST to /api/users/login.
+// The only way the suite should ever POST to /api/v1/users/login.
 export async function login(email: string, password: string) {
   await awaitLoginSlot();
-  return post("/api/users/login", { json: { user: { email, password } } });
+  return post(api("/users/login"), { json: { user: { email, password } } });
 }
 
 export async function mintTokens(): Promise<void> {

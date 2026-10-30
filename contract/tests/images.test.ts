@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { del, get, patch, post } from "../src/support/http.js";
+import { api, del, get, patch, post } from "../src/support/http.js";
 import { tokenFor } from "../src/support/auth.js";
 import { resetData } from "../src/support/db.js";
 import { snapshotOf } from "../src/support/normalise.js";
@@ -31,23 +31,23 @@ describe("images", () => {
     await resetData();
   });
 
-  describe("GET /api/images", () => {
+  describe("GET /api/v1/images", () => {
     // The url attribute is a presigned URL. Presigning is a local crypto
     // operation — no S3 call is made — so this works against seeded fake
     // credentials. The normaliser redacts the signature and its inputs but
     // keeps the host and path, so the s3_key is still asserted.
     it("returns the current user's images newest first, with presigned urls", async () => {
-      const response = await get("/api/images", { token: tokenFor("owner") });
+      const response = await get(api("/images"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     it("returns a null url for a user with no S3 credentials", async () => {
-      const response = await get("/api/images", { token: tokenFor("nocreds") });
+      const response = await get(api("/images"), { token: tokenFor("nocreds") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     it("filters by album_id", async () => {
-      const response = await get("/api/images", {
+      const response = await get(api("/images"), {
         token: tokenFor("owner"),
         query: { album_id: 1 },
       });
@@ -55,7 +55,7 @@ describe("images", () => {
     });
 
     it("filters favorites", async () => {
-      const response = await get("/api/images", {
+      const response = await get(api("/images"), {
         token: tokenFor("owner"),
         query: { favorited: "true" },
       });
@@ -63,7 +63,7 @@ describe("images", () => {
     });
 
     it("searches titles case-insensitively with q", async () => {
-      const response = await get("/api/images", {
+      const response = await get(api("/images"), {
         token: tokenFor("owner"),
         query: { q: "sunrise" },
       });
@@ -71,7 +71,7 @@ describe("images", () => {
     });
 
     it("searches tags with q", async () => {
-      const response = await get("/api/images", {
+      const response = await get(api("/images"), {
         token: tokenFor("owner"),
         query: { q: "morning" },
       });
@@ -79,7 +79,7 @@ describe("images", () => {
     });
 
     it("filters by title", async () => {
-      const response = await get("/api/images", {
+      const response = await get(api("/images"), {
         token: tokenFor("owner"),
         query: { title: "harbour" },
       });
@@ -87,7 +87,7 @@ describe("images", () => {
     });
 
     it("filters by exact tag", async () => {
-      const response = await get("/api/images", {
+      const response = await get(api("/images"), {
         token: tokenFor("owner"),
         query: { tag: "landscape" },
       });
@@ -95,7 +95,7 @@ describe("images", () => {
     });
 
     it("filters by from date", async () => {
-      const response = await get("/api/images", {
+      const response = await get(api("/images"), {
         token: tokenFor("owner"),
         query: { from: "2026-02-02" },
       });
@@ -103,14 +103,14 @@ describe("images", () => {
     });
 
     it("requires a token", async () => {
-      const response = await get("/api/images");
+      const response = await get(api("/images"));
       expect(response.status).toBe(401);
     });
   });
 
-  describe("GET /api/images/:id", () => {
+  describe("GET /api/v1/images/:id", () => {
     it("returns an owned image", async () => {
-      const response = await get("/api/images/1", { token: tokenFor("owner") });
+      const response = await get(api("/images/1"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
@@ -118,19 +118,19 @@ describe("images", () => {
     // reject — so this is 403 Forbidden, where the equivalent album request is
     // 404 Not found. The asymmetry is contract.
     it("answers 403 for another user's image", async () => {
-      const response = await get("/api/images/3", { token: tokenFor("owner") });
+      const response = await get(api("/images/3"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     it("answers 404 for an image that does not exist", async () => {
-      const response = await get("/api/images/9999", { token: tokenFor("owner") });
+      const response = await get(api("/images/9999"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
   });
 
-  describe("PATCH /api/images/:id", () => {
+  describe("PATCH /api/v1/images/:id", () => {
     it("updates metadata without touching S3", async () => {
-      const response = await patch("/api/images/1", {
+      const response = await patch(api("/images/1"), {
         token: tokenFor("owner"),
         json: { image: { title: "Renamed", description: "edited", favorited: false } },
       });
@@ -138,7 +138,7 @@ describe("images", () => {
     });
 
     it("replaces tags", async () => {
-      const response = await patch("/api/images/1", {
+      const response = await patch(api("/images/1"), {
         token: tokenFor("owner"),
         json: { image: { tags: ["dawn", "sea"] } },
       });
@@ -146,7 +146,7 @@ describe("images", () => {
     });
 
     it("rejects a tag over 25 characters", async () => {
-      const response = await patch("/api/images/1", {
+      const response = await patch(api("/images/1"), {
         token: tokenFor("owner"),
         json: { image: { tags: ["x".repeat(26)] } },
       });
@@ -154,7 +154,7 @@ describe("images", () => {
     });
 
     it("moves an image between the user's own albums", async () => {
-      const response = await patch("/api/images/1", {
+      const response = await patch(api("/images/1"), {
         token: tokenFor("owner"),
         json: { image: { album_id: 2 } },
       });
@@ -164,7 +164,7 @@ describe("images", () => {
     // The cross-user album guard: Album.with_user(current_user).find raises
     // RecordNotFound, so this is 404 even though the image itself is owned.
     it("answers 404 when moving an image into another user's album", async () => {
-      const response = await patch("/api/images/1", {
+      const response = await patch(api("/images/1"), {
         token: tokenFor("owner"),
         json: { image: { album_id: 3 } },
       });
@@ -172,7 +172,7 @@ describe("images", () => {
     });
 
     it("answers 403 for another user's image", async () => {
-      const response = await patch("/api/images/3", {
+      const response = await patch(api("/images/3"), {
         token: tokenFor("owner"),
         json: { image: { title: "Hijacked" } },
       });
@@ -182,9 +182,9 @@ describe("images", () => {
 
   // Everything below rejects before Images::Upload reaches S3, so it belongs in
   // the default tier. The successful upload is in the live tier.
-  describe("POST /api/images — rejections that never reach S3", () => {
+  describe("POST /api/v1/images — rejections that never reach S3", () => {
     it("answers 422 when the user has no S3 credentials", async () => {
-      const response = await post("/api/images", {
+      const response = await post(api("/images"), {
         token: tokenFor("nocreds"),
         form: imageForm({
           file: { bytes: GIF_BYTES, name: "tiny.gif", type: "image/gif" },
@@ -199,7 +199,7 @@ describe("images", () => {
     // POST accepted it and answered 201 — the image was filed into an album its owner
     // could not see and would delete out from under it.
     it("answers 404 when creating an image in another user's album", async () => {
-      const response = await post("/api/images", {
+      const response = await post(api("/images"), {
         token: tokenFor("owner"),
         form: imageForm({
           file: { bytes: GIF_BYTES, name: "tiny.gif", type: "image/gif" },
@@ -210,7 +210,7 @@ describe("images", () => {
     });
 
     it("rejects a disallowed content type", async () => {
-      const response = await post("/api/images", {
+      const response = await post(api("/images"), {
         token: tokenFor("owner"),
         form: imageForm({
           file: { bytes: Buffer.from("not an image"), name: "notes.txt", type: "text/plain" },
@@ -222,7 +222,7 @@ describe("images", () => {
 
     it("rejects a file over the 25 MB limit", async () => {
       const oversized = Buffer.alloc(25 * 1024 * 1024 + 1, 0);
-      const response = await post("/api/images", {
+      const response = await post(api("/images"), {
         token: tokenFor("owner"),
         form: imageForm({
           file: { bytes: oversized, name: "huge.jpg", type: "image/jpeg" },
@@ -233,7 +233,7 @@ describe("images", () => {
     });
 
     it("requires a token", async () => {
-      const response = await post("/api/images", {
+      const response = await post(api("/images"), {
         form: imageForm({
           file: { bytes: GIF_BYTES, name: "tiny.gif", type: "image/gif" },
           album_id: 1,
@@ -243,21 +243,21 @@ describe("images", () => {
     });
   });
 
-  describe("DELETE /api/images/:id — rejections that never reach S3", () => {
+  describe("DELETE /api/v1/images/:id — rejections that never reach S3", () => {
     // Pundit runs in a before_action, so authorization fails before
     // Images::Destroy is ever called.
     it("answers 403 for another user's image", async () => {
-      const response = await del("/api/images/3", { token: tokenFor("owner") });
+      const response = await del(api("/images/3"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     it("answers 404 for an image that does not exist", async () => {
-      const response = await del("/api/images/9999", { token: tokenFor("owner") });
+      const response = await del(api("/images/9999"), { token: tokenFor("owner") });
       expect(snapshotOf(response)).toMatchSnapshot();
     });
 
     it("requires a token", async () => {
-      const response = await del("/api/images/1");
+      const response = await del(api("/images/1"));
       expect(response.status).toBe(401);
     });
   });
