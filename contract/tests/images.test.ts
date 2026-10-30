@@ -300,6 +300,9 @@ describe("images", () => {
         json: { ids: [1], album_id: 3 },
       });
       expect(snapshotOf(response)).toMatchSnapshot();
+
+      const unmoved = await get(api("/albums/1/images"), { token: tokenFor("owner") });
+      expect(idsOf(unmoved)).toEqual(["5", "2", "1"]);
     });
 
     it("answers 404 for a missing album_id", async () => {

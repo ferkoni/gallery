@@ -53,9 +53,8 @@ describe("async_tasks", () => {
     });
   });
 
-  // A successful create enqueues AlbumDownloadJob, which streams the album to
-  // S3 — so only the rejections belong in the default tier. All of them fail
-  // before the job is enqueued.
+  // Every rejection fails before a job is enqueued. A successful create is in
+  // the default tier too (below): the job is what reaches S3, and no worker runs.
   describe("POST /api/v1/async_tasks — rejections that never enqueue", () => {
     it("rejects an unknown task_type", async () => {
       const response = await post(api("/async_tasks"), {

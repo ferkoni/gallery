@@ -141,8 +141,9 @@ export const albums = [
 // key (#50) with a thumbnail beside it (<name>.thumb.webp).
 //
 // Image 5 has image 2's created_at, so the index's id DESC tiebreaker shows,
-// and both titles contain "Harbour", so ?q=harbour (rank order, which is id
-// order with inference off) differs from the index's newest-first order.
+// and both titles contain "Harbour", so ?q=harbour returns two rows whose
+// order is asserted. Rails ranks lexical results newest first (5, 2), not by
+// id as Images::Search intends: a frozen quirk, bugs.md 14.
 export const images = [
   {
     id: 1,

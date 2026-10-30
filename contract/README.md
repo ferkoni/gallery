@@ -72,7 +72,10 @@ the search eval proves their parity. With inference off, uploads enqueue no embe
 either.
 
 Do not start a queue worker. A download the API accepts leaves its task `pending`, and that is
-the state the suite asserts.
+the state the suite asserts. Each run leaves one enqueued job in `gallery_api_contract_queue`,
+which the suite does not clear: it truncates only the database it seeds, and knows nothing of
+Solid Queue. The jobs are harmless while no worker runs. To clear them,
+`bin/rails db:reset:queue` with the same environment.
 
 Then record the golden snapshots from Rails:
 
