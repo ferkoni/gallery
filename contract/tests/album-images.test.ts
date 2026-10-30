@@ -2,18 +2,27 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { api, get } from "../src/support/http.js";
 import { tokenFor } from "../src/support/auth.js";
 import { resetData } from "../src/support/db.js";
-import { snapshotOf } from "../src/support/normalise.js";
+import { idsOf, snapshotOf } from "../src/support/normalise.js";
 
-// The nested index. Its ownership guard is Album.with_user(...).find, so a
-// stranger's album answers 404 — not the 403 the flat images index gives for a
-// stranger's image.
+// The nested index: "what is in this folder", exactly, with no subfolders. The
+// flat /images?album_id= spans the subtree instead (images.test.ts). Its
+// ownership guard is Album.with_user(...).find, so a stranger's album answers
+// 404 — not the 403 the flat images index gives for a stranger's image.
 describe("GET /api/v1/albums/:album_id/images", () => {
   beforeEach(async () => {
     await resetData();
   });
 
-  it("returns the album's images with meta", async () => {
+  // Image 4 is in a subfolder of album 1, so it is not listed here.
+  it("returns the album's own images with meta, not its subfolders'", async () => {
     const response = await get(api("/albums/1/images"), { token: tokenFor("owner") });
+    expect(idsOf(response)).toEqual(["5", "2", "1"]);
+    expect(snapshotOf(response)).toMatchSnapshot();
+  });
+
+  it("returns an empty collection for a folder whose images are all in a subfolder", async () => {
+    const response = await get(api("/albums/4/images"), { token: tokenFor("owner") });
+    expect(idsOf(response)).toEqual([]);
     expect(snapshotOf(response)).toMatchSnapshot();
   });
 
