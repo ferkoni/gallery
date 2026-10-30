@@ -1,0 +1,869 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`images > DELETE /api/v1/images/:id — rejections that never reach S3 > answers 403 for another user's image 1`] = `
+{
+  "body": {
+    "errors": "Forbidden",
+  },
+  "status": 403,
+}
+`;
+
+exports[`images > DELETE /api/v1/images/:id — rejections that never reach S3 > answers 404 for an image that does not exist 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`images > GET /api/v1/images > answers 404 for another user's album_id 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`images > GET /api/v1/images > answers 422 for a user with no S3 credentials 1`] = `
+{
+  "body": {
+    "errors": "No S3 credentials on file",
+  },
+  "status": 422,
+}
+`;
+
+exports[`images > GET /api/v1/images > filters by exact tag 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": false,
+          "id": 2,
+          "tags": [
+            "landscape",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour At Dusk",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "2",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": "First seeded image",
+          "favorited": true,
+          "id": 1,
+          "tags": [
+            "landscape",
+            "morning",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Sunrise Over Water",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "1",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 2,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images > filters by from date 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 5,
+          "created_at": "<TIMESTAMP>",
+          "description": "Two folders below the top level",
+          "favorited": false,
+          "id": 4,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/44444444-4444-4444-8444-444444444444/lighthouse.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Lighthouse Beam",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/44444444-4444-4444-8444-444444444444/lighthouse.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "4",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": true,
+          "id": 5,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour Lights",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "5",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": false,
+          "id": 2,
+          "tags": [
+            "landscape",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour At Dusk",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "2",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 3,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images > filters by title 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": true,
+          "id": 5,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour Lights",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "5",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": false,
+          "id": 2,
+          "tags": [
+            "landscape",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour At Dusk",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "2",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 2,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images > filters favorites 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": true,
+          "id": 5,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour Lights",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "5",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": "First seeded image",
+          "favorited": true,
+          "id": 1,
+          "tags": [
+            "landscape",
+            "morning",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Sunrise Over Water",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "1",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 2,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images > narrows album_id to the folder itself with album_scope=direct 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": true,
+          "id": 5,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour Lights",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "5",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": false,
+          "id": 2,
+          "tags": [
+            "landscape",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour At Dusk",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "2",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": "First seeded image",
+          "favorited": true,
+          "id": 1,
+          "tags": [
+            "landscape",
+            "morning",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Sunrise Over Water",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "1",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 3,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images > returns lexical ?q= results newest first, as Rails ranks them 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": true,
+          "id": 5,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour Lights",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "5",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": false,
+          "id": 2,
+          "tags": [
+            "landscape",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour At Dusk",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "2",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 2,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images > returns the current user's images newest first, with presigned urls 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 5,
+          "created_at": "<TIMESTAMP>",
+          "description": "Two folders below the top level",
+          "favorited": false,
+          "id": 4,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/44444444-4444-4444-8444-444444444444/lighthouse.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Lighthouse Beam",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/44444444-4444-4444-8444-444444444444/lighthouse.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "4",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": true,
+          "id": 5,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour Lights",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "5",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": false,
+          "id": 2,
+          "tags": [
+            "landscape",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour At Dusk",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "2",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": "First seeded image",
+          "favorited": true,
+          "id": 1,
+          "tags": [
+            "landscape",
+            "morning",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Sunrise Over Water",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "1",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 4,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images > searches tags with q 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": "First seeded image",
+          "favorited": true,
+          "id": 1,
+          "tags": [
+            "landscape",
+            "morning",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Sunrise Over Water",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "1",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 1,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images > searches titles case-insensitively with q 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": "First seeded image",
+          "favorited": true,
+          "id": 1,
+          "tags": [
+            "landscape",
+            "morning",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Sunrise Over Water",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "1",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 1,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images > spans the folder's subtree with album_id 1`] = `
+{
+  "body": {
+    "data": [
+      {
+        "attributes": {
+          "album_id": 5,
+          "created_at": "<TIMESTAMP>",
+          "description": "Two folders below the top level",
+          "favorited": false,
+          "id": 4,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/44444444-4444-4444-8444-444444444444/lighthouse.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Lighthouse Beam",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/44444444-4444-4444-8444-444444444444/lighthouse.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "4",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": true,
+          "id": 5,
+          "tags": [],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.thumb.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour Lights",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/images/55555555-5555-4555-8555-555555555555/harbour-lights.webp?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "5",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": null,
+          "favorited": false,
+          "id": 2,
+          "tags": [
+            "landscape",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Harbour At Dusk",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/22222222-2222-4222-8222-222222222222/harbour.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "2",
+        "type": "image",
+      },
+      {
+        "attributes": {
+          "album_id": 1,
+          "created_at": "<TIMESTAMP>",
+          "description": "First seeded image",
+          "favorited": true,
+          "id": 1,
+          "tags": [
+            "landscape",
+            "morning",
+          ],
+          "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+          "title": "Sunrise Over Water",
+          "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        },
+        "id": "1",
+        "type": "image",
+      },
+    ],
+    "meta": {
+      "current_page": 1,
+      "per_page": 25,
+      "total_count": 4,
+      "total_pages": 1,
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > GET /api/v1/images/:id > answers 403 for another user's image 1`] = `
+{
+  "body": {
+    "errors": "Forbidden",
+  },
+  "status": 403,
+}
+`;
+
+exports[`images > GET /api/v1/images/:id > answers 403 for another user's image even without S3 credentials 1`] = `
+{
+  "body": {
+    "errors": "Forbidden",
+  },
+  "status": 403,
+}
+`;
+
+exports[`images > GET /api/v1/images/:id > answers 404 for an image that does not exist 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`images > GET /api/v1/images/:id > answers 422 for the user's own image without S3 credentials 1`] = `
+{
+  "body": {
+    "errors": "No S3 credentials on file",
+  },
+  "status": 422,
+}
+`;
+
+exports[`images > GET /api/v1/images/:id > returns an owned image 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "album_id": 1,
+        "created_at": "<TIMESTAMP>",
+        "description": "First seeded image",
+        "favorited": true,
+        "id": 1,
+        "tags": [
+          "landscape",
+          "morning",
+        ],
+        "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        "title": "Sunrise Over Water",
+        "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+      },
+      "id": "1",
+      "type": "image",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/:id > answers 403 for another user's image 1`] = `
+{
+  "body": {
+    "errors": "Forbidden",
+  },
+  "status": 403,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/:id > answers 404 when moving an image into another user's album 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/:id > answers 422 without S3 credentials and writes nothing 1`] = `
+{
+  "body": {
+    "errors": "No S3 credentials on file",
+  },
+  "status": 422,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/:id > moves an image between the user's own albums 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "album_id": 2,
+        "created_at": "<TIMESTAMP>",
+        "description": "First seeded image",
+        "favorited": true,
+        "id": 1,
+        "tags": [
+          "landscape",
+          "morning",
+        ],
+        "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        "title": "Sunrise Over Water",
+        "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+      },
+      "id": "1",
+      "type": "image",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/:id > rejects a tag over 25 characters 1`] = `
+{
+  "body": {
+    "errors": {
+      "tags": [
+        "each tag must be 25 characters or fewer (got 26 for "xxxxxxxxxxxxxxxxxxxxxxxxxx")",
+      ],
+    },
+  },
+  "status": 422,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/:id > replaces tags 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "album_id": 1,
+        "created_at": "<TIMESTAMP>",
+        "description": "First seeded image",
+        "favorited": true,
+        "id": 1,
+        "tags": [
+          "dawn",
+          "sea",
+        ],
+        "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        "title": "Sunrise Over Water",
+        "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+      },
+      "id": "1",
+      "type": "image",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/:id > updates metadata without touching S3 1`] = `
+{
+  "body": {
+    "data": {
+      "attributes": {
+        "album_id": 1,
+        "created_at": "<TIMESTAMP>",
+        "description": "edited",
+        "favorited": false,
+        "id": 1,
+        "tags": [
+          "landscape",
+          "morning",
+        ],
+        "thumbnail_url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+        "title": "Renamed",
+        "url": "https://contract-owner-bucket.s3.eu-west-1.amazonaws.com/albums/1/11111111-1111-4111-8111-111111111111/sunrise.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=%3CREDACTED%3E&X-Amz-Date=%3CREDACTED%3E&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=%3CREDACTED%3E",
+      },
+      "id": "1",
+      "type": "image",
+    },
+  },
+  "status": 200,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/move > answers 204 and moves every photo 1`] = `
+{
+  "body": null,
+  "status": 204,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/move > answers 404 and moves nothing if a photo does not exist 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/move > answers 404 and moves nothing if any photo is not the user's 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/move > answers 404 for a folder that is not the user's 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/move > answers 404 for a missing album_id 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/move > answers 422 for 501 ids 1`] = `
+{
+  "body": {
+    "errors": "Choose between 1 and 500 photos to move",
+  },
+  "status": 422,
+}
+`;
+
+exports[`images > PATCH /api/v1/images/move > answers 422 for an empty list 1`] = `
+{
+  "body": {
+    "errors": "Choose between 1 and 500 photos to move",
+  },
+  "status": 422,
+}
+`;
+
+exports[`images > POST /api/v1/images — rejections that never reach S3 > answers 404 when creating an image in another user's album 1`] = `
+{
+  "body": {
+    "errors": "Not found",
+  },
+  "status": 404,
+}
+`;
+
+exports[`images > POST /api/v1/images — rejections that never reach S3 > answers 422 when the user has no S3 credentials 1`] = `
+{
+  "body": {
+    "errors": "No S3 credentials on file",
+  },
+  "status": 422,
+}
+`;
+
+exports[`images > POST /api/v1/images — rejections that never reach S3 > rejects a disallowed content type 1`] = `
+{
+  "body": {
+    "errors": "File type not allowed. Accepted: JPEG, PNG, WebP, GIF",
+  },
+  "status": 422,
+}
+`;
+
+exports[`images > POST /api/v1/images — rejections that never reach S3 > rejects a file over the 25 MB limit 1`] = `
+{
+  "body": {
+    "errors": "File is too large. Maximum size is 25 MB",
+  },
+  "status": 422,
+}
+`;
