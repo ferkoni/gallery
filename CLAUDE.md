@@ -22,9 +22,11 @@ Run the checks for every area you changed.
 | API (`gallery-api/`) | `cd gallery-api && bundle exec rspec` | `cd gallery-api && bin/ci` |
 | App (`gallery-app/`) | `cd gallery-app && npm run lint && npx tsc -b && npx vitest run` | same |
 | Sidecar (`sidecar/`) | `cd sidecar && .venv/bin/pytest -q` | same |
+| Node API (`gallery-api-node/`) | `cd gallery-api-node && npm run lint && npm run typecheck && npx vitest run` | same |
 | Infra (nginx, compose files, Dockerfiles) | `./test-install.sh`, run by the user only | |
 
 - API specs need PostgreSQL. If they fail with "Connection refused" on port 5432, start it with `cd gallery-api && docker compose up -d`.
+- Node API tests need the same PostgreSQL and a `gallery-api-node/.env` (copy `.env.example`; the user and password are in `gallery-api/.env`).
 - Sidecar: plain `pytest` is not installed globally; use the sidecar's `.venv`.
 - Infra: never run `./test-install.sh` yourself. When an infra change is ready, ask the user to run `! ./test-install.sh`, then read the output.
 

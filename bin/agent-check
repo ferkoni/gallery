@@ -68,6 +68,7 @@ areas=()
 grep -q '^gallery-api/' <<<"$changed" && areas+=(api)
 grep -q '^gallery-app/' <<<"$changed" && areas+=(app)
 grep -q '^sidecar/' <<<"$changed" && areas+=(sidecar)
+grep -q '^gallery-api-node/' <<<"$changed" && areas+=(node)
 [ "${#areas[@]}" -eq 0 ] && exit 0
 
 failed=()
@@ -114,6 +115,7 @@ run_area() {
     api)     (cd gallery-api && bundle exec rspec) ;;
     app)     (cd gallery-app && npx tsc -b && npx vitest run) ;;
     sidecar) (cd sidecar && .venv/bin/pytest -q) ;;
+    node)    (cd gallery-api-node && npm run typecheck && npx vitest run) ;;
   esac
 }
 
