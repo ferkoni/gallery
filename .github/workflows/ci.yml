@@ -27,6 +27,7 @@ jobs:
       app: ${{ steps.areas.outputs.app }}
       sidecar: ${{ steps.areas.outputs.sidecar }}
       infra: ${{ steps.areas.outputs.infra }}
+      node: ${{ steps.areas.outputs.node }}
       contract: ${{ steps.areas.outputs.contract }}
     steps:
       - name: Checkout code
@@ -72,8 +73,10 @@ jobs:
             area app     '^gallery-app/'
             area sidecar '^sidecar/'
             area infra   '^(nginx/|docker-compose[^/]*\.yml$|install\.sh$|setup\.sh$|test-install\.sh$)'
-            # The contract suite tests the API from outside, so an API change runs it too.
-            area contract '^(gallery-api/|contract/)'
+            area node    '^gallery-api-node/'
+            # The contract suite tests the API from outside, so a change to either API runs it
+            # too, and so does a change to the dev proxy that splits requests between them.
+            area contract '^(gallery-api/|gallery-api-node/|gallery-app/ported-endpoints\.json$|gallery-app/vite\.config\.ts$|contract/)'
           )"
           echo "$areas" >> "$GITHUB_OUTPUT"
 
@@ -455,6 +458,57 @@ jobs:
         if: always()
         run: docker rm -f ci-nginx
 
+  # ---------------------------------------------------------------- Node API (gallery-api-node/)
+
+  # The Node port of the API (rails-to-node ticket 04). Prisma owns no migrations, so this
+  # database has no schema: GET /health only runs SELECT 1. Load gallery-api/db/schema.rb here
+  # once a test reads a table.
+  node-test:
+    needs: changes
+    if: needs.changes.outputs.node == 'true'
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: gallery-api-node
+
+    services:
+      postgres:
+        # The same image as api-test, for the same reason.
+        image: pgvector/pgvector:0.8.6-pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: gallery-api-node/.nvmrc
+          cache: npm
+          cache-dependency-path: gallery-api-node/package-lock.json
+
+      # Also generates the Prisma client (postinstall), which is not committed.
+      - run: npm ci
+
+      # Fails on a high or critical advisory, as app-lint does.
+      - name: Audit dependencies for known vulnerabilities
+        run: npm audit --audit-level=high
+
+      - run: npm run lint
+
+      - run: npm run typecheck
+
+      - run: npx vitest run
+
+      - run: npm run build
+
   # ---------------------------------------------------------------- Contract suite (contract/)
 
   # The contract suite's default tier against Rails. It is the migration's parity proof, and
@@ -465,6 +519,10 @@ jobs:
   # dedicated databases and INFERENCE_MODE=none, and no worker, so an accepted download stays
   # pending. The live S3 tier is skipped: it needs real credentials. GitHub sets CI=true,
   # under which Vitest fails on a missing snapshot rather than writing it.
+  #
+  # It then runs again through the Vite dev proxy, with Node on :4000 serving the endpoints in
+  # gallery-app/ported-endpoints.json and Rails the rest (rails-to-node ticket 04). The login
+  # pacer may wait up to 60 seconds between the two runs: that is rack-attack's window.
   contract-test:
     needs: changes
     if: needs.changes.outputs.contract == 'true'
@@ -544,9 +602,51 @@ jobs:
         working-directory: contract
         run: npm run test:rails
 
-      - name: Show the Rails log
+      - name: Build the Node API
+        working-directory: gallery-api-node
+        run: npm ci && npm run build
+
+      - name: Start the Node API
+        working-directory: gallery-api-node
+        env:
+          DATABASE_URL: ${{ env.CONTRACT_DATABASE_URL }}
+          PORT: 4000
+        run: |
+          node dist/main.js > "$RUNNER_TEMP/node.log" 2>&1 &
+          for _ in $(seq 1 30); do
+            curl -sf -o /dev/null http://localhost:4000/health && exit 0
+            sleep 1
+          done
+          echo "::error::The Node API did not answer /health within 30 seconds."
+          cat "$RUNNER_TEMP/node.log"
+          exit 1
+
+      - name: Start the Vite dev proxy
+        working-directory: gallery-app
+        run: |
+          npm ci
+          npx vite --port 5173 --strictPort > "$RUNNER_TEMP/vite.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:5173/ && exit 0
+            sleep 1
+          done
+          echo "::error::Vite did not answer within 60 seconds."
+          cat "$RUNNER_TEMP/vite.log"
+          exit 1
+
+      - name: Run the contract suite through the proxy
+        working-directory: contract
+        env:
+          CONTRACT_BASE_URL: http://localhost:5173
+        run: npx vitest run
+
+      - name: Show the Rails, Node and Vite logs
         if: failure()
-        run: tail -n 300 "$RUNNER_TEMP/rails.log"
+        run: |
+          tail -n 300 "$RUNNER_TEMP/rails.log"
+          for f in node vite; do
+            if [ -f "$RUNNER_TEMP/$f.log" ]; then echo "--- $f"; tail -n 100 "$RUNNER_TEMP/$f.log"; fi
+          done
 
   # ---------------------------------------------------------------- Gate
 
@@ -566,6 +666,7 @@ jobs:
       - app-build
       - sidecar-test
       - infra-nginx
+      - node-test
       - contract-test
     runs-on: ubuntu-24.04
     steps:
@@ -606,5 +707,6 @@ jobs:
           check app-build    app
           check sidecar-test sidecar
           check infra-nginx  infra
+          check node-test    node
           check contract-test contract
           exit "$fail"
