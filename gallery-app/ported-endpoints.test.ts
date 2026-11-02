@@ -40,6 +40,13 @@ describe('ported endpoints: which requests go to Node', () => {
     expect(route(['GET /api/v1/images'], 'GET', '/api/v1/images?q=cat')).toBe(`${NODE_MARK}/api/v1/images?q=cat`);
   });
 
+  it('checks every entry in the list, not only the first or the last', () => {
+    const entries = ['GET /api/v1/albums', 'GET /health', 'DELETE /api/v1/albums/:id'];
+    expect(route(entries, 'GET', '/health')).toBe(`${NODE_MARK}/health`);
+    expect(route(entries, 'GET', '/api/v1/albums')).toBe(`${NODE_MARK}/api/v1/albums`);
+    expect(route(entries, 'DELETE', '/api/v1/albums/7')).toBe(`${NODE_MARK}/api/v1/albums/7`);
+  });
+
   it('rejects a list that is not an array', () => {
     expect(() => parsePortedEndpoints({ 'GET /health': true }, SOURCE)).toThrow(`${SOURCE} must be a JSON array`);
   });
