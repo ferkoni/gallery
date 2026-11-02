@@ -20,5 +20,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "ported-endpoints.ts"]
+  "include": ["vite.config.ts", "ported-endpoints.ts", "ported-endpoints.test.ts"]
 }
