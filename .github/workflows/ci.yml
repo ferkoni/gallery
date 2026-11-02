@@ -76,7 +76,7 @@ jobs:
             area node    '^gallery-api-node/'
             # The contract suite tests the API from outside, so a change to either API runs it
             # too, and so does a change to the dev proxy that splits requests between them.
-            area contract '^(gallery-api/|gallery-api-node/|gallery-app/ported-endpoints\.json$|gallery-app/vite\.config\.ts$|contract/)'
+            area contract '^(gallery-api/|gallery-api-node/|gallery-app/ported-endpoints\.(json|ts)$|gallery-app/vite\.config\.ts$|contract/)'
           )"
           echo "$areas" >> "$GITHUB_OUTPUT"
 
