@@ -15,7 +15,9 @@
       "Edit(/bin/agent-guard-bash)",
       "Edit(/bin/review-inputs)",
       "Edit(/bin/test-review-inputs)",
-      "Edit(/CLAUDE.md)"
+      "Edit(/CLAUDE.md)",
+      "Edit(/gallery-app/ported-endpoints.json)",
+      "Edit(/contract/tests/__snapshots__/**)"
     ],
     "deny": [
       "Bash(./test-install.sh *)",
