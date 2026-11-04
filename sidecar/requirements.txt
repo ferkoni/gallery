@@ -16,6 +16,6 @@ pillow==13.0.0
 #
 # 4.x, not 5.x: transformers 5.0 (Jan 2026) is a major release, and open_clip 3.3.0
 # predates it. Nothing here needs 5.x.
-transformers[sentencepiece]==5.20.2
+transformers[sentencepiece]==5.22.1
 torch==2.13.0
 torchvision==0.28.0
