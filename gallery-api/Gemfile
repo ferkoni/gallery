@@ -71,6 +71,6 @@ gem "kaminari"
 gem "pundit", "~> 2.5"
 
 # AWS
-gem "aws-sdk-s3", "~> 1.235"
+gem "aws-sdk-s3", "~> 1.237"
 
 gem "zip_kit", "~> 6.4"
