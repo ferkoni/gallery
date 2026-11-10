@@ -1,10 +1,8 @@
 import 'reflect-metadata';
-import { existsSync } from 'node:fs';
+import './load-env.js';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module.js';
-
-if (existsSync('.env')) process.loadEnvFile('.env');
 
 const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 app.enableShutdownHooks();
