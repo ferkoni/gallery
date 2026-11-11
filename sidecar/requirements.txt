@@ -1,7 +1,7 @@
 # Pinned exactly. An unpinned torch or open_clip is a silent re-embed waiting to
 # happen: a preprocessing change upstream moves the vector space without moving
 # model_id, and nothing in the system can detect that.
-fastapi==0.162.0
+fastapi==0.162.2
 uvicorn==0.54.0
 open_clip_torch==3.3.0
 pillow==13.0.0
@@ -16,6 +16,6 @@ pillow==13.0.0
 #
 # 4.x, not 5.x: transformers 5.0 (Jan 2026) is a major release, and open_clip 3.3.0
 # predates it. Nothing here needs 5.x.
-transformers[sentencepiece]==5.20.2
+transformers[sentencepiece]==5.22.2
 torch==2.13.0
 torchvision==0.28.0
