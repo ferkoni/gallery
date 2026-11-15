@@ -1,8 +1,7 @@
 import 'reflect-metadata';
-import { Test } from '@nestjs/testing';
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { AppModule } from '../src/app.module.js';
+import { createTestApp } from "./support/app.js";
 
 // Rails' HealthController#show rescues the database error: 503 with
 // {"status":"error","database":<message>}. The message is the driver's own, so only its
@@ -12,10 +11,7 @@ describe('GET /health when the database cannot be reached', () => {
 
   beforeAll(async () => {
     process.env['DATABASE_URL'] = 'postgres://nobody:nothing@127.0.0.1:1/no_database';
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
