@@ -1,15 +1,22 @@
-import { Controller, HttpCode, Logger, Post } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service.js";
+import { Body, Controller, HttpCode, Post } from "@nestjs/common";
+import { AuthService, invalidCredentials } from "./auth.service.js";
+
+interface LoginBody {
+  user?: {email?: unknown; password?: unknown};
+}
 
 @Controller('users')
 export class UsersController {
-  private readonly logger = new Logger(UsersController.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly auth: AuthService) {}
 
   @Post('login')
   @HttpCode(200)
-  async login(): Promise<void> {
-    // Stub: the route exists, so the first login test fails on its status, not on a 404.
+  async login(@Body() body: LoginBody | null): Promise<void> {
+    const email = body?.user?.email;
+    const password = body?.user?.password;
+    if (typeof email !== 'string' || typeof password !== 'string') throw invalidCredentials();
+
+    await this.auth.login(email, password);
   }
 }
