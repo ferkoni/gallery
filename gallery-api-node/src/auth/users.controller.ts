@@ -17,6 +17,6 @@ export class UsersController {
     const password = body?.user?.password;
     if (typeof email !== 'string' || typeof password !== 'string') throw invalidCredentials();
 
-    await this.auth.login(email, password);
+    await this.auth.login(email.trim().toLowerCase(), password);
   }
 }
