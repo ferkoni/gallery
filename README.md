@@ -192,9 +192,12 @@ docker compose down -v     # stop and delete all data
 
 - Ruby 3.4 (see `gallery-api/.ruby-version`)
 - Node.js 24 (see `gallery-app/.nvmrc`)
-- Docker, for PostgreSQL
+- libvips, which the API's `ruby-vips` gem loads at boot, so every `rails` command fails without it (`LoadError: Could not open library 'vips.so.42'`). On Debian or Ubuntu: `sudo apt install libvips42`
+- Docker with the Compose plugin, for PostgreSQL. On Linux, to run `docker` without `sudo`, follow Docker's [post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/). Joining the `docker` group takes effect only in a new login session, and that includes a terminal or editor that was already open.
 
-PostgreSQL must have the [pgvector](https://github.com/pgvector/pgvector) extension available, **version 0.8 or later** — `db/schema.rb` enables it, so `db:migrate` and `db:schema:load` both fail without it. The 0.8 minimum is for iterative index scans, which keep filtered vector search from silently returning too few rows. The bundled `gallery-api/docker-compose.yml` uses `pgvector/pgvector:0.8.6-pg16` and needs no extra setup; a system-installed PostgreSQL needs the extension added separately.
+PostgreSQL must have the [pgvector](https://github.com/pgvector/pgvector) extension available, **version 0.8 or later** — `db/schema.rb` enables it, so `db:migrate` and `db:schema:load` both fail without it. The 0.8 minimum is for iterative index scans, which keep filtered vector search from silently returning too few rows. The bundled `gallery-api/docker-compose.yml` uses `pgvector/pgvector:0.8.7-pg16` and needs no extra setup; a system-installed PostgreSQL needs the extension added separately.
+
+That container publishes port 5432, so a PostgreSQL already installed on the machine and running there stops it from starting (`failed to bind host port 0.0.0.0:5432/tcp: address already in use`). Stop it first, for example `sudo systemctl stop postgresql` (and `disable` to keep it from starting at boot), or set `POSTGRES_PORT` in `gallery-api/.env` to a free port and use that port in every `DATABASE_URL`. If the container was created while the port was taken, `docker compose ps` shows it running with no ports. Recreate it with `docker compose up -d --force-recreate`; the data volume is kept.
 
 ### API (`gallery-api/`)
 
@@ -202,10 +205,19 @@ PostgreSQL must have the [pgvector](https://github.com/pgvector/pgvector) extens
 cd gallery-api
 bundle install
 cp .env.example .env
+bin/rails db:encryption:init   # prints three keys: add them to .env as below
 docker compose up -d   # starts PostgreSQL
 rails db:create db:migrate
 rails server           # http://localhost:3000
 bin/rails solid_queue:start   # in a second terminal: runs background jobs
+```
+
+S3 credentials are stored encrypted, and the encryption keys in `.env.example` are empty. Fill them in `.env` with the three that `db:encryption:init` printed, or saving credentials and the specs that touch them fail with `Missing Active Record encryption credential: active_record_encryption.primary_key`:
+
+```bash
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=<primary_key>
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=<deterministic_key>
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=<key_derivation_salt>
 ```
 
 Development runs jobs through Solid Queue, as production does, so album downloads and AI search indexing happen only while `solid_queue:start` is running. Without it nothing fails: the job is queued and waits.
@@ -259,6 +271,19 @@ bin/rails inference:status     # progress
 If the API booted before the sidecar was ready, its log has `inference: dimension check skipped, adapter unavailable`. That check runs once at boot, so the line stays after the sidecar comes up; restart `rails server` to run it again.
 
 Model choice, settings and the sidecar's own tests are in [`sidecar/README.md`](sidecar/README.md).
+
+### Node API (`gallery-api-node/`)
+
+A port of the Rails API in progress. It uses the same PostgreSQL and the schema Rails creates, so set up `gallery-api/` first.
+
+```bash
+cd gallery-api-node
+npm ci                 # also runs prisma generate
+cp .env.example .env   # then replace USER:PASSWORD with POSTGRES_USER and POSTGRES_PASSWORD from gallery-api/.env
+npm run start:dev      # http://localhost:4000
+```
+
+Checks: `npm run lint && npm run typecheck && npx vitest run`. The tests need PostgreSQL running and read `.env`.
 
 ### Frontend (`gallery-app/`)
 
