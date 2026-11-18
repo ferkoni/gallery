@@ -174,9 +174,11 @@ check "the unknown-severity advisory is named" out_has "GHSA-uuuu-uuuu-uuuu"
 
 run "$work/no-severity.json" 1 --audit-level=high
 check "an advisory with no severity fails" status_is 1
+check "it says the severity is unknown" out_has "FAIL, unknown severity: GHSA-nnnn-nnnn-nnnn"
 
 run "$work/no-ids.json" 1 --audit-level=high
 check "advisories with no id keep the highest severity" status_is 1
+check "the critical one fails under its own id" out_has "FAIL: unnamed advisory 2 (critical)"
 
 # --- Bad arguments
 run "$work/clean.json" 0
