@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+# Test for bin/npm-audit-allowlisted. Puts a fake `npm` first on PATH that prints a canned
+# `npm audit --json` report, runs the script against it, and checks the exit code and output.
+# CI's app-lint job runs it; the Stop hook doesn't cover bin/, so after a change run it by hand:
+#
+#   bin/test-npm-audit-allowlisted
+
+set -uo pipefail
+
+script="$(cd "$(dirname "$0")" && pwd)/npm-audit-allowlisted"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+# The fake npm: records its arguments, prints $FAKE_REPORT, exits with $FAKE_EXIT (npm audit
+# exits 1 when it finds anything).
+mkdir -p "$work/bin"
+cat > "$work/bin/npm" <<'EOF'
+#!/usr/bin/env bash
+echo "$*" > "$FAKE_ARGS"
+cat "$FAKE_REPORT"
+exit "${FAKE_EXIT:-0}"
+EOF
+chmod +x "$work/bin/npm"
+
+passed=0
+failed=0
+check() {
+  local name="$1"
+  shift
+  if "$@"; then
+    passed=$((passed + 1))
+    echo "pass: $name"
+  else
+    failed=$((failed + 1))
+    echo "FAIL: $name"
+    sed 's/^/    | /' "$work/out"
+  fi
+}
+
+# run <report file> <npm exit code> <script args...>: sets $status, output in $work/out.
+run() {
+  local report="$1" npm_exit="$2"
+  shift 2
+  FAKE_REPORT="$report" FAKE_EXIT="$npm_exit" FAKE_ARGS="$work/args" PATH="$work/bin:$PATH" \
+    node "$script" "$@" > "$work/out" 2>&1
+  status=$?
+}
+out_has() { grep -qF -- "$1" "$work/out"; }
+status_is() { [ "$status" -eq "$1" ]; }
+
+# advisory <GHSA id> <severity> <package>: one entry of a report's "vulnerabilities" map.
+advisory() {
+  cat <<EOF
+"$3": {"name": "$3", "severity": "$2", "isDirect": false,
+  "via": [{"source": 1, "name": "$3", "title": "Example advisory", "severity": "$2",
+           "url": "https://github.com/advisories/$1", "range": "<=1.0.0"}],
+  "effects": [], "range": "<=1.0.0", "nodes": ["node_modules/$3"], "fixAvailable": false}
+EOF
+}
+# A package flagged only because it depends on another flagged one, as npm reports vite.
+transitive() {
+  cat <<EOF
+"$1": {"name": "$1", "severity": "$2", "isDirect": true, "via": ["$3"],
+  "effects": [], "range": "*", "nodes": ["node_modules/$1"], "fixAvailable": false}
+EOF
+}
+# report <file> <entries...>: writes a report holding the given vulnerabilities entries.
+report() {
+  local file="$1"
+  shift
+  local IFS=,
+  printf '{"auditReportVersion": 2, "vulnerabilities": {%s}, "metadata": {}}\n' "$*" > "$file"
+}
+
+FUTURE=2999-12-31
+PAST=2000-01-01
+
+report "$work/clean.json"
+report "$work/high.json" "$(advisory GHSA-aaaa-aaaa-aaaa high picomatch)" \
+  "$(transitive vite high picomatch)"
+report "$work/two-high.json" "$(advisory GHSA-aaaa-aaaa-aaaa high picomatch)" \
+  "$(advisory GHSA-bbbb-bbbb-bbbb high lodash)"
+report "$work/critical.json" "$(advisory GHSA-cccc-cccc-cccc critical minimist)"
+report "$work/moderate.json" "$(advisory GHSA-mmmm-mmmm-mmmm moderate postcss)"
+echo 'npm ERR! network request failed' > "$work/not-json.txt"
+echo '{"error": {"code": "ENOTFOUND", "summary": "request to registry failed"}}' > "$work/error.json"
+echo 'null' > "$work/null.json"
+echo '{"auditReportVersion": 2, "metadata": {}}' > "$work/no-vulnerabilities.json"
+report "$work/unknown-severity.json" "$(advisory GHSA-uuuu-uuuu-uuuu severe left-pad)"
+cat > "$work/no-severity.json" <<'EOF'
+{"auditReportVersion": 2, "vulnerabilities": {"left-pad": {"name": "left-pad", "severity": "high",
+  "via": [{"source": 7, "name": "left-pad", "title": "No severity",
+           "url": "https://github.com/advisories/GHSA-nnnn-nnnn-nnnn"}]}}, "metadata": {}}
+EOF
+# Two advisories with neither a GHSA url nor a source: a moderate one, then a critical one.
+cat > "$work/no-ids.json" <<'EOF'
+{"auditReportVersion": 2, "vulnerabilities": {
+  "a": {"name": "a", "severity": "moderate", "via": [{"name": "a", "title": "A", "severity": "moderate"}]},
+  "b": {"name": "b", "severity": "critical", "via": [{"name": "b", "title": "B", "severity": "critical"}]}},
+  "metadata": {}}
+EOF
+
+# --- Nothing found
+run "$work/clean.json" 0 --audit-level=high
+check "a clean report passes" status_is 0
+check "it runs npm audit --json" grep -qx "audit --json" "$work/args"
+
+# --- Findings that are not allowlisted
+run "$work/high.json" 1 --audit-level=high
+check "a high advisory fails" status_is 1
+check "the failure names the advisory" out_has "GHSA-aaaa-aaaa-aaaa"
+check "the failure names the package" out_has "picomatch"
+
+run "$work/critical.json" 1 --audit-level=high
+check "a critical advisory fails at level high" status_is 1
+check "the critical failure names the advisory" out_has "GHSA-cccc-cccc-cccc"
+
+run "$work/moderate.json" 1 --audit-level=high
+check "a moderate advisory passes at level high" status_is 0
+check "the moderate advisory is still reported" out_has "GHSA-mmmm-mmmm-mmmm"
+
+run "$work/moderate.json" 1 --audit-level=moderate
+check "a moderate advisory fails at level moderate" status_is 1
+
+# --- Allowlisted
+run "$work/high.json" 1 --audit-level=high --allow="GHSA-aaaa-aaaa-aaaa:$FUTURE"
+check "an allowlisted high advisory passes" status_is 0
+check "the advisory is printed as ignored, with its expiry" out_has "IGNORED until $FUTURE: GHSA-aaaa-aaaa-aaaa"
+
+run "$work/two-high.json" 1 --audit-level=high --allow="GHSA-aaaa-aaaa-aaaa:$FUTURE"
+check "an allowlist entry does not cover a second advisory" status_is 1
+check "the second advisory is named" out_has "GHSA-bbbb-bbbb-bbbb"
+
+run "$work/high.json" 1 --audit-level=high --allow="GHSA-aaaa-aaaa-aaaa:$PAST"
+check "an expired allowlist entry fails" status_is 1
+check "the expired entry says it expired" out_has "expired"
+
+run "$work/clean.json" 0 --audit-level=high --allow="GHSA-aaaa-aaaa-aaaa:$FUTURE"
+check "an allowlist entry no longer reported still passes" status_is 0
+check "it says the entry can be removed" out_has "no longer reported"
+
+run "$work/clean.json" 0 --audit-level=high --allow="GHSA-aaaa-aaaa-aaaa:$PAST"
+check "an expired entry fails even when no longer reported" status_is 1
+
+# --- npm audit itself fails: never a pass
+run "$work/not-json.txt" 1 --audit-level=high
+check "output that is not JSON fails" status_is 1
+check "it says the report could not be read" out_has "could not read"
+
+run "$work/error.json" 1 --audit-level=high
+check "an npm error report fails" status_is 1
+check "the npm error is shown" out_has "ENOTFOUND"
+
+run "$work/no-vulnerabilities.json" 0 --audit-level=high
+check "a report with no vulnerabilities map fails" status_is 1
+check "it says the map is missing" out_has 'no "vulnerabilities"'
+
+# No npm on PATH at all: only node, through a directory holding just a link to it.
+mkdir -p "$work/node-only"
+ln -sf "$(command -v node)" "$work/node-only/node"
+PATH="$work/node-only" node "$script" --audit-level=high > "$work/out" 2>&1
+status=$?
+check "npm that cannot be run fails" status_is 1
+check "it says npm audit could not run" out_has "could not run npm audit"
+
+run "$work/null.json" 1 --audit-level=high
+check "a report that is JSON null fails" status_is 1
+check "it says the null report could not be read" out_has "could not read"
+
+# --- A report the script can't rate: never a pass
+run "$work/unknown-severity.json" 1 --audit-level=high
+check "an advisory with an unknown severity fails" status_is 1
+check "the unknown-severity advisory is named" out_has "GHSA-uuuu-uuuu-uuuu"
+
+run "$work/no-severity.json" 1 --audit-level=high
+check "an advisory with no severity fails" status_is 1
+check "it says the severity is unknown" out_has "FAIL, unknown severity: GHSA-nnnn-nnnn-nnnn"
+
+run "$work/no-ids.json" 1 --audit-level=high
+check "advisories with no id keep the highest severity" status_is 1
+check "the critical one fails under its own id" out_has "FAIL: unnamed advisory 2 (critical)"
+
+# --- Bad arguments
+run "$work/clean.json" 0
+check "a missing --audit-level is refused" status_is 2
+
+run "$work/clean.json" 0 --audit-level=severe
+check "an unknown audit level is refused" status_is 2
+
+run "$work/clean.json" 0 --audit-level=high --allow=GHSA-aaaa-aaaa-aaaa
+check "an allow entry without a date is refused" status_is 2
+
+run "$work/clean.json" 0 --audit-level=high --allow=GHSA-aaaa-aaaa-aaaa:2026-13-45
+check "an allow entry with an impossible date is refused" status_is 2
+
+run "$work/clean.json" 0 --audit-level=high --allow=CVE-2026-1:$FUTURE
+check "an allow entry that is not a GHSA id is refused" status_is 2
+
+run "$work/clean.json" 0 --audit-level=high --allow GHSA-aaaa-aaaa-aaaa:$FUTURE
+check "a flag without = is refused" status_is 2
+
+run "$work/clean.json" 0 --audit-level=high --omit=dev
+check "an unknown flag is refused" status_is 2
+
+echo
+echo "$passed passed, $failed failed"
+[ "$failed" -eq 0 ]

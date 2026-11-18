@@ -70,10 +70,10 @@ jobs:
           area() { if changed "$2"; then echo "$1=true"; else echo "$1=false"; fi; }
           areas="$(
             area api     '^gallery-api/'
-            area app     '^gallery-app/'
+            area app     '^(gallery-app/|bin/(test-)?npm-audit-allowlisted$)'
             area sidecar '^sidecar/'
             area infra   '^(nginx/|docker-compose[^/]*\.yml$|install\.sh$|setup\.sh$|test-install\.sh$)'
-            area node    '^gallery-api-node/'
+            area node    '^(gallery-api-node/|bin/(test-)?npm-audit-allowlisted$)'
             # The contract suite tests the API from outside, so a change to either API runs it
             # too, and so does a change to the dev proxy that splits requests between them.
             area contract '^(gallery-api/|gallery-api-node/|gallery-app/ported-endpoints\.(json|ts)$|gallery-app/vite\.config\.ts$|contract/)'
@@ -144,7 +144,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
         with:
           bundler-cache: true
           working-directory: gallery-api
@@ -169,7 +169,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
         with:
           bundler-cache: true
           working-directory: gallery-api
@@ -218,7 +218,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libvips-dev
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
         with:
           bundler-cache: true
           working-directory: gallery-api
@@ -282,10 +282,18 @@ jobs:
 
       - run: npm ci
 
+      - name: Test the audit allowlist script
+        run: ../bin/test-npm-audit-allowlisted
+
       # Fails on a high or critical advisory, as bundler-audit does for the api. Moderate and
       # low ones are reported but do not fail. docs: agent-guardrails/03, slice 4.
+      #
+      # --allow=GHSA-xxxx-xxxx-xxxx:YYYY-MM-DD ignores one advisory until a date, for an
+      # advisory with no fixed release. Each entry is printed on every run, and fails again once
+      # its date passes. Keep the list the same in node-test. None at the moment (the last one,
+      # GHSA-fc5q-39xc-vjpf, was withdrawn on 2026-11-18). docs: agent-guardrails/npm-audit-allowlist.md.
       - name: Audit dependencies for known vulnerabilities
-        run: npm audit --audit-level=high
+        run: ../bin/npm-audit-allowlisted --audit-level=high
 
       - run: npm run lint
 
@@ -497,9 +505,9 @@ jobs:
       # Also generates the Prisma client (postinstall), which is not committed.
       - run: npm ci
 
-      # Fails on a high or critical advisory, as app-lint does.
+      # Fails on a high or critical advisory, as app-lint does, with the same allowlist.
       - name: Audit dependencies for known vulnerabilities
-        run: npm audit --audit-level=high
+        run: ../bin/npm-audit-allowlisted --audit-level=high
 
       - run: npm run lint
 
@@ -563,7 +571,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libvips-dev
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
+        uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
         with:
           bundler-cache: true
           working-directory: gallery-api

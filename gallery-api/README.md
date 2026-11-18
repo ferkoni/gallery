@@ -138,18 +138,19 @@ docker run -d -p 80:80 \
 For full-stack deployment the project is Kamal-ready (`gem "kamal"` in the Gemfile). For local development only PostgreSQL runs in Docker:
 
 ```bash
-docker compose up -d   # starts pgvector/pgvector:0.8.6-pg16 with a persistent volume
+docker compose up -d   # starts pgvector/pgvector:0.8.7-pg16 with a persistent volume
 ```
 
 ---
 
 ## Development setup
 
-**Requirements:** Ruby 3.4, Docker (for PostgreSQL)
+**Requirements:** Ruby 3.4, libvips (`sudo apt install libvips42` on Debian or Ubuntu), Docker (for PostgreSQL). See [Local development → Prerequisites](../README.md#prerequisites) for Docker group membership and a PostgreSQL already using port 5432.
 
 ```bash
 bundle install
 cp .env.example .env
+bin/rails db:encryption:init   # fill the empty ACTIVE_RECORD_ENCRYPTION_* lines in .env with the keys it prints
 docker compose up -d       # start PostgreSQL
 rails db:create db:migrate
 rails server               # http://localhost:3000
