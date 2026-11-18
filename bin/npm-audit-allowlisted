@@ -1,2 +1,133 @@
 #!/usr/bin/env node
-// Stub. See bin/test-npm-audit-allowlisted.
+// `npm audit --audit-level=<level>` that can ignore named advisories until a date.
+//
+//   bin/npm-audit-allowlisted --audit-level=high --allow=GHSA-xxxx-xxxx-xxxx:2026-12-18
+//
+// Run it in the package's directory. It fails (exit 1) on any advisory at or above the level
+// that is not allowlisted, on an allowlist entry past its date (whether or not npm still
+// reports it), and whenever npm's report cannot be read. Every ignored advisory is printed on
+// every run. An entry is good through its date, in UTC.
+//
+// For an advisory with no fixed release yet. The allowlist lives in the caller
+// (.github/workflows/ci.yml), so adding to it needs the owner's approval.
+// Tests: bin/test-npm-audit-allowlisted.
+
+'use strict';
+
+const { spawnSync } = require('node:child_process');
+
+const LEVELS = ['info', 'low', 'moderate', 'high', 'critical'];
+
+function usage(message) {
+  console.error(`npm-audit-allowlisted: ${message}`);
+  console.error('usage: npm-audit-allowlisted --audit-level=<level> [--allow=GHSA-xxxx-xxxx-xxxx:YYYY-MM-DD ...]');
+  process.exit(2);
+}
+
+function isRealDate(text) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const date = new Date(`${text}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === text;
+}
+
+function parseArgs(argv) {
+  let level = null;
+  const allow = new Map();
+  for (const arg of argv) {
+    const eq = arg.indexOf('=');
+    if (eq === -1) usage(`unexpected argument ${arg}`);
+    const flag = arg.slice(0, eq);
+    const value = arg.slice(eq + 1);
+    if (flag === '--audit-level') {
+      if (!LEVELS.includes(value)) usage(`unknown audit level ${value}`);
+      level = value;
+    } else if (flag === '--allow') {
+      const match = /^(GHSA(?:-[a-z0-9]{4}){3}):(.+)$/.exec(value);
+      if (!match) usage(`--allow must be GHSA-xxxx-xxxx-xxxx:YYYY-MM-DD, got ${value}`);
+      if (!isRealDate(match[2])) usage(`not a date: ${match[2]}`);
+      allow.set(match[1], match[2]);
+    } else {
+      usage(`unexpected argument ${arg}`);
+    }
+  }
+  if (!level) usage('--audit-level is required');
+  return { level, allow };
+}
+
+function readReport() {
+  const result = spawnSync('npm', ['audit', '--json'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  if (result.error) {
+    console.error(`could not run npm audit: ${result.error.message}`);
+    process.exit(1);
+  }
+  let report;
+  try {
+    report = JSON.parse(result.stdout);
+  } catch {
+    console.error('could not read the npm audit report. npm printed:');
+    console.error(result.stdout + result.stderr);
+    process.exit(1);
+  }
+  if (report.error) {
+    console.error(`npm audit failed: ${report.error.code ?? ''} ${report.error.summary ?? ''}`.trim());
+    process.exit(1);
+  }
+  if (typeof report.vulnerabilities !== 'object' || report.vulnerabilities === null) {
+    console.error('could not read the npm audit report: no "vulnerabilities" in it');
+    process.exit(1);
+  }
+  return report;
+}
+
+// One entry per advisory. Packages flagged only through a dependency ("via" is a package
+// name, as for vite through picomatch) add no advisory of their own.
+function advisories(report) {
+  const found = new Map();
+  for (const vulnerability of Object.values(report.vulnerabilities)) {
+    for (const via of vulnerability.via ?? []) {
+      if (typeof via !== 'object') continue;
+      const id = /(GHSA(?:-[a-z0-9]{4}){3})$/.exec(via.url ?? '')?.[1] ?? `npm advisory ${via.source}`;
+      const entry = found.get(id) ?? { id, severity: via.severity, title: via.title, packages: new Set() };
+      entry.packages.add(via.name);
+      found.set(id, entry);
+    }
+  }
+  return [...found.values()];
+}
+
+const { level, allow } = parseArgs(process.argv.slice(2));
+const today = new Date().toISOString().slice(0, 10);
+const report = readReport();
+const found = advisories(report);
+const describe = (a) => `${a.id} (${a.severity}) in ${[...a.packages].join(', ')}: ${a.title}`;
+
+let failed = false;
+for (const advisory of found) {
+  const atLevel = LEVELS.indexOf(advisory.severity) >= LEVELS.indexOf(level);
+  const until = allow.get(advisory.id);
+  if (!atLevel) {
+    console.log(`below ${level}, not failing: ${describe(advisory)}`);
+  } else if (until && today <= until) {
+    console.log(`IGNORED until ${until}: ${describe(advisory)}`);
+  } else if (until) {
+    console.log(`FAIL, allowlist entry expired on ${until}: ${describe(advisory)}`);
+    failed = true;
+  } else {
+    console.log(`FAIL: ${describe(advisory)}`);
+    failed = true;
+  }
+}
+
+const reported = new Set(found.map((a) => a.id));
+for (const [id, until] of allow) {
+  if (reported.has(id)) continue;
+  if (today > until) {
+    console.log(`FAIL, allowlist entry expired on ${until}: ${id}, no longer reported; remove the entry`);
+    failed = true;
+  } else {
+    console.log(`${id} is no longer reported; its allowlist entry (until ${until}) can be removed`);
+  }
+}
+
+console.log(failed ? `npm audit: failing at level ${level}` : `npm audit: nothing failing at level ${level}`);
+process.exit(failed ? 1 : 0);
