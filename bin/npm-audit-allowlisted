@@ -68,6 +68,10 @@ function readReport() {
     console.error(result.stdout + result.stderr);
     process.exit(1);
   }
+  if (typeof report !== 'object' || report === null) {
+    console.error(`could not read the npm audit report: it is ${JSON.stringify(report)}`);
+    process.exit(1);
+  }
   if (report.error) {
     console.error(`npm audit failed: ${report.error.code ?? ''} ${report.error.summary ?? ''}`.trim());
     process.exit(1);
@@ -79,15 +83,24 @@ function readReport() {
   return report;
 }
 
+// A severity npm doesn't document ranks above critical, so it always fails: never a pass on
+// a report this script can't rate.
+const UNKNOWN = LEVELS.length;
+const rank = (severity) => (LEVELS.includes(severity) ? LEVELS.indexOf(severity) : UNKNOWN);
+
 // One entry per advisory. Packages flagged only through a dependency ("via" is a package
-// name, as for vite through picomatch) add no advisory of their own.
+// name, as for vite through picomatch) add no advisory of their own. An advisory with neither
+// a GHSA url nor a source gets an id of its own, so it is never merged with another.
 function advisories(report) {
   const found = new Map();
+  let unnamed = 0;
   for (const vulnerability of Object.values(report.vulnerabilities)) {
     for (const via of vulnerability.via ?? []) {
-      if (typeof via !== 'object') continue;
-      const id = /(GHSA(?:-[a-z0-9]{4}){3})$/.exec(via.url ?? '')?.[1] ?? `npm advisory ${via.source}`;
+      if (typeof via !== 'object' || via === null) continue;
+      const ghsa = /(GHSA(?:-[a-z0-9]{4}){3})$/.exec(via.url ?? '')?.[1];
+      const id = ghsa ?? (via.source !== undefined ? `npm advisory ${via.source}` : `unnamed advisory ${++unnamed}`);
       const entry = found.get(id) ?? { id, severity: via.severity, title: via.title, packages: new Set() };
+      if (rank(via.severity) > rank(entry.severity)) entry.severity = via.severity;
       entry.packages.add(via.name);
       found.set(id, entry);
     }
@@ -103,9 +116,12 @@ const describe = (a) => `${a.id} (${a.severity}) in ${[...a.packages].join(', ')
 
 let failed = false;
 for (const advisory of found) {
-  const atLevel = LEVELS.indexOf(advisory.severity) >= LEVELS.indexOf(level);
+  const atLevel = rank(advisory.severity) >= LEVELS.indexOf(level);
   const until = allow.get(advisory.id);
-  if (!atLevel) {
+  if (rank(advisory.severity) === UNKNOWN) {
+    console.log(`FAIL, unknown severity: ${describe(advisory)}`);
+    failed = true;
+  } else if (!atLevel) {
     console.log(`below ${level}, not failing: ${describe(advisory)}`);
   } else if (until && today <= until) {
     console.log(`IGNORED until ${until}: ${describe(advisory)}`);
