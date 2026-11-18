@@ -288,14 +288,12 @@ jobs:
       # Fails on a high or critical advisory, as bundler-audit does for the api. Moderate and
       # low ones are reported but do not fail. docs: agent-guardrails/03, slice 4.
       #
-      # --allow ignores one advisory until a date, for an advisory with no fixed release.
-      # Each entry is printed on every run, and fails again once its date passes. Keep the
-      # list the same in node-test.
-      # - GHSA-fc5q-39xc-vjpf, picomatch ReDoS: no patched release (micromatch/picomatch#234).
-      #   Build and test tooling only (vite, vitest, @nestjs/cli); no runtime code matches
-      #   globs from user input. Remove once a fixed picomatch ships.
+      # --allow=GHSA-xxxx-xxxx-xxxx:YYYY-MM-DD ignores one advisory until a date, for an
+      # advisory with no fixed release. Each entry is printed on every run, and fails again once
+      # its date passes. Keep the list the same in node-test. None at the moment (the last one,
+      # GHSA-fc5q-39xc-vjpf, was withdrawn on 2026-11-18). docs: agent-guardrails/npm-audit-allowlist.md.
       - name: Audit dependencies for known vulnerabilities
-        run: ../bin/npm-audit-allowlisted --audit-level=high --allow=GHSA-fc5q-39xc-vjpf:2026-12-18
+        run: ../bin/npm-audit-allowlisted --audit-level=high
 
       - run: npm run lint
 
@@ -509,7 +507,7 @@ jobs:
 
       # Fails on a high or critical advisory, as app-lint does, with the same allowlist.
       - name: Audit dependencies for known vulnerabilities
-        run: ../bin/npm-audit-allowlisted --audit-level=high --allow=GHSA-fc5q-39xc-vjpf:2026-12-18
+        run: ../bin/npm-audit-allowlisted --audit-level=high
 
       - run: npm run lint
 
