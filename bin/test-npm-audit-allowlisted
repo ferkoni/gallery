@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Test for bin/npm-audit-allowlisted. Puts a fake `npm` first on PATH that prints a canned
 # `npm audit --json` report, runs the script against it, and checks the exit code and output.
-# No CI area or Stop hook area covers bin/, so run it by hand:
+# CI's app-lint job runs it; the Stop hook doesn't cover bin/, so after a change run it by hand:
 #
 #   bin/test-npm-audit-allowlisted
 
@@ -46,7 +46,6 @@ run() {
   status=$?
 }
 out_has() { grep -qF -- "$1" "$work/out"; }
-out_lacks() { ! grep -qF -- "$1" "$work/out"; }
 status_is() { [ "$status" -eq "$1" ]; }
 
 # advisory <GHSA id> <severity> <package>: one entry of a report's "vulnerabilities" map.
@@ -86,6 +85,7 @@ report "$work/moderate.json" "$(advisory GHSA-mmmm-mmmm-mmmm moderate postcss)"
 echo 'npm ERR! network request failed' > "$work/not-json.txt"
 echo '{"error": {"code": "ENOTFOUND", "summary": "request to registry failed"}}' > "$work/error.json"
 echo 'null' > "$work/null.json"
+echo '{"auditReportVersion": 2, "metadata": {}}' > "$work/no-vulnerabilities.json"
 report "$work/unknown-severity.json" "$(advisory GHSA-uuuu-uuuu-uuuu severe left-pad)"
 cat > "$work/no-severity.json" <<'EOF'
 {"auditReportVersion": 2, "vulnerabilities": {"left-pad": {"name": "left-pad", "severity": "high",
@@ -125,8 +125,7 @@ check "a moderate advisory fails at level moderate" status_is 1
 # --- Allowlisted
 run "$work/high.json" 1 --audit-level=high --allow="GHSA-aaaa-aaaa-aaaa:$FUTURE"
 check "an allowlisted high advisory passes" status_is 0
-check "the ignored advisory is printed with its expiry" out_has "GHSA-aaaa-aaaa-aaaa"
-check "the expiry date is printed" out_has "$FUTURE"
+check "the advisory is printed as ignored, with its expiry" out_has "IGNORED until $FUTURE: GHSA-aaaa-aaaa-aaaa"
 
 run "$work/two-high.json" 1 --audit-level=high --allow="GHSA-aaaa-aaaa-aaaa:$FUTURE"
 check "an allowlist entry does not cover a second advisory" status_is 1
@@ -151,6 +150,18 @@ check "it says the report could not be read" out_has "could not read"
 run "$work/error.json" 1 --audit-level=high
 check "an npm error report fails" status_is 1
 check "the npm error is shown" out_has "ENOTFOUND"
+
+run "$work/no-vulnerabilities.json" 0 --audit-level=high
+check "a report with no vulnerabilities map fails" status_is 1
+check "it says the map is missing" out_has 'no "vulnerabilities"'
+
+# No npm on PATH at all: only node, through a directory holding just a link to it.
+mkdir -p "$work/node-only"
+ln -sf "$(command -v node)" "$work/node-only/node"
+PATH="$work/node-only" node "$script" --audit-level=high > "$work/out" 2>&1
+status=$?
+check "npm that cannot be run fails" status_is 1
+check "it says npm audit could not run" out_has "could not run npm audit"
 
 run "$work/null.json" 1 --audit-level=high
 check "a report that is JSON null fails" status_is 1
@@ -182,6 +193,12 @@ check "an allow entry with an impossible date is refused" status_is 2
 
 run "$work/clean.json" 0 --audit-level=high --allow=CVE-2026-1:$FUTURE
 check "an allow entry that is not a GHSA id is refused" status_is 2
+
+run "$work/clean.json" 0 --audit-level=high --allow GHSA-aaaa-aaaa-aaaa:$FUTURE
+check "a flag without = is refused" status_is 2
+
+run "$work/clean.json" 0 --audit-level=high --omit=dev
+check "an unknown flag is refused" status_is 2
 
 echo
 echo "$passed passed, $failed failed"
