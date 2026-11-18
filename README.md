@@ -205,10 +205,19 @@ That container publishes port 5432, so a PostgreSQL already installed on the mac
 cd gallery-api
 bundle install
 cp .env.example .env
+bin/rails db:encryption:init   # prints three keys: add them to .env as below
 docker compose up -d   # starts PostgreSQL
 rails db:create db:migrate
 rails server           # http://localhost:3000
 bin/rails solid_queue:start   # in a second terminal: runs background jobs
+```
+
+S3 credentials are stored encrypted, and `.env.example` has no encryption keys. Add the three that `db:encryption:init` printed to `.env`, or saving credentials and the specs that touch them fail with `Missing Active Record encryption credential: active_record_encryption.primary_key`:
+
+```bash
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=<primary_key>
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=<deterministic_key>
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=<key_derivation_salt>
 ```
 
 Development runs jobs through Solid Queue, as production does, so album downloads and AI search indexing happen only while `solid_queue:start` is running. Without it nothing fails: the job is queued and waits.

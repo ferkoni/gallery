@@ -150,6 +150,7 @@ docker compose up -d   # starts pgvector/pgvector:0.8.7-pg16 with a persistent v
 ```bash
 bundle install
 cp .env.example .env
+bin/rails db:encryption:init   # add the three keys it prints to .env as ACTIVE_RECORD_ENCRYPTION_*; see the root README
 docker compose up -d       # start PostgreSQL
 rails db:create db:migrate
 rails server               # http://localhost:3000
