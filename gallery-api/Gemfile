@@ -63,7 +63,7 @@ group :test do
   gem "shoulda-matchers"
   gem "factory_bot_rails"
   gem "simplecov", require: false
-  gem "pbt", "~> 0.7"
+  gem "pbt", "~> 0.8"
   gem "mutant-rspec", "~> 0.17", require: false
 end
 
@@ -71,6 +71,6 @@ gem "kaminari"
 gem "pundit", "~> 2.5"
 
 # AWS
-gem "aws-sdk-s3", "~> 1.242"
+gem "aws-sdk-s3", "~> 1.245"
 
 gem "zip_kit", "~> 6.4"
